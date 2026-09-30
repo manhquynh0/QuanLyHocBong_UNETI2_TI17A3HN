@@ -1,0 +1,27 @@
+# Build output
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+
+# Visual Studio and VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# .NET tooling
+.project.assets.json
+*.csproj.user
+*.cache
+
+# Logs and diagnostics
+*.log
+*.dmp
+
+# Local configuration and secrets
+appsettings.*.local.json
+secrets.json
