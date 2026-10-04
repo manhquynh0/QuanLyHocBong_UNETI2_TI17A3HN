@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "mssql1": {
+      "type": "mssql",
+      "connectionId": "ConnectionStrings:QuanLyHocBong_UNETI2_TI17A3HNContext"
+    }
+  }
+}

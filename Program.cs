@@ -1,4 +1,9 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
