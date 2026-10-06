@@ -1,31 +1,324 @@
+:root {
+  --sidebar-bg: #0e1d35;
+  --sidebar-text: #a6b2c4;
+  --primary-blue: #2160ad;
+  --page-bg: #f3f5f9;
+  --text-color: #253247;
+  --muted-color: #788497;
+  --border-color: #e5e9f0;
+}
+
 html {
+  min-width: 320px;
+  min-height: 100%;
   font-size: 14px;
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  color: var(--text-color);
+  background: var(--page-bg);
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  font-size: 14px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 5;
+  display: flex;
+  width: 250px;
+  flex-direction: column;
+  padding: 23px 22px 17px;
+  color: var(--sidebar-text);
+  background: var(--sidebar-bg);
+}
+
+.brand {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+  color: #fff;
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--primary-blue);
+}
+
+.brand-mark .bi {
+  color: #fff;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.brand-copy,
+.user-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.brand-copy strong {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.15px;
+}
+
+.brand-copy small {
+  margin-top: 2px;
+  color: #8c9ab0;
+  font-size: 11px;
+}
+
+.side-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-item {
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 0 14px;
+  border-radius: 9px;
+  color: var(--sidebar-text);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color .15s ease, color .15s ease;
+}
+
+.nav-item .bi {
+  display: inline-flex;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.nav-item:hover,
+.nav-item:focus-visible {
+  color: #fff;
+  background: rgba(255, 255, 255, .08);
+}
+
+.nav-item.active {
+  color: #fff;
+  background: var(--primary-blue);
+  font-weight: 650;
+}
+
+.logout-link {
+  margin-top: auto;
+}
+
+.workspace {
+  min-height: 100vh;
+  margin-left: 250px;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 24px;
+  padding: 0 30px;
+  border-bottom: 1px solid var(--border-color);
+  background: #fff;
+}
+
+.topbar-title {
+  overflow: hidden;
+  margin: 0;
+  color: #293549;
+  font-size: 17px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+}
+
+.notification-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  color: #677487;
+  background: #f3f5f9;
+}
+
+.notification-button .bi {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.user-copy {
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.user-copy strong {
+  color: #2e394b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-copy small {
+  color: var(--muted-color);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.user-avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 2px solid #e8edf4;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(145deg, #d8ad85, #825f50);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.page-content {
+  min-height: calc(100vh - 72px);
+  padding: 24px;
+  background: var(--page-bg);
+}
+
+@media (max-width: 1050px) {
+  .sidebar {
+    width: 210px;
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+
+  .workspace {
+    margin-left: 210px;
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+@media (max-width: 800px) {
+  .sidebar {
+    width: 72px;
+    align-items: center;
+    padding: 18px 8px 14px;
+  }
+
+  .brand {
+    margin-bottom: 25px;
+  }
+
+  .brand-copy,
+  .nav-item span {
+    display: none;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    flex-basis: 42px;
+  }
+
+  .side-nav {
+    width: 100%;
+  }
+
+  .nav-item {
+    width: 100%;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .nav-item .bi {
+    width: 19px;
+    height: 19px;
+    flex-basis: 19px;
+    font-size: 19px;
+  }
+
+  .workspace {
+    margin-left: 72px;
+  }
+
+  .topbar {
+    padding: 0 20px;
+  }
 }
 
-html {
-  position: relative;
-  min-height: 100%;
-}
+@media (max-width: 560px) {
+  .topbar {
+    min-height: 64px;
+    gap: 10px;
+    padding: 0 13px;
+  }
 
-body {
-  margin-bottom: 60px;
-}
+  .topbar-title {
+    font-size: 14px;
+  }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
-}
+  .topbar-user {
+    gap: 8px;
+  }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+  .notification-button {
+    width: 32px;
+    height: 32px;
+  }
+
+  .user-copy {
+    display: none;
+  }
+
+  .user-avatar {
+    width: 33px;
+    height: 33px;
+  }
+
+  .page-content {
+    min-height: calc(100vh - 64px);
+    padding: 16px 13px;
+  }
 }
