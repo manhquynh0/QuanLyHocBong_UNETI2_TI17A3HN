@@ -1,0 +1,100 @@
+@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong>
+
+@{
+    ViewData["Title"] = "Quản lý học bổng";
+}
+
+<section class="scholarship-list-page">
+    <header class="scholarship-list-heading">
+        <div>
+            <h1>Quản lý học bổng</h1>
+            <p>Danh sách các chương trình học bổng và thông tin tuyển chọn.</p>
+        </div>
+        <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
+            <i class="bi bi-plus-lg"></i>
+            <span>Thêm học bổng</span>
+        </a>
+    </header>
+
+    @if (Model.Any())
+    {
+        <div class="scholarship-list-grid">
+            @foreach (var item in Model)
+            {
+                var dangMo = string.Equals(item.TrangThai, "Đang mở", StringComparison.OrdinalIgnoreCase);
+
+                <article class="scholarship-list-card">
+                    <div class="scholarship-list-card-header">
+                        <span class="scholarship-list-status @(dangMo ? "is-open" : "")">
+                            @item.TrangThai
+                        </span>
+                        <span class="scholarship-list-code">Mã #@item.MaHocBong</span>
+                    </div>
+
+                    <h2>@item.TenHocBong</h2>
+                    <p class="scholarship-list-sponsor">
+                        <i class="bi bi-building"></i>
+                        @(item.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có đơn vị tài trợ")
+                    </p>
+
+                    <div class="scholarship-list-stats">
+                        <div>
+                            <strong>@item.SoSuat</strong>
+                            <span>Số suất</span>
+                        </div>
+                        <div>
+                            <strong>@item.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</strong>
+                            <span>Điểm tối thiểu</span>
+                        </div>
+                        <div>
+                            <strong>@item.BacDaoTao</strong>
+                            <span>Bậc đào tạo</span>
+                        </div>
+                        <div>
+                            <strong>@item.HanNopHoSo.ToString("dd/MM/yyyy")</strong>
+                            <span>Hạn nộp</span>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(item.MoTaHocBong))
+                    {
+                        <p class="scholarship-list-description">@item.MoTaHocBong</p>
+                    }
+
+                    <footer class="scholarship-list-card-footer">
+                        <a class="scholarship-list-action scholarship-list-action-details" asp-action="Details" asp-route-id="@item.MaHocBong">
+                            <i class="bi bi-eye"></i>
+                            Chi tiết
+                        </a>
+                        <a class="scholarship-list-action" asp-action="Edit" asp-route-id="@item.MaHocBong">
+                            <i class="bi bi-pencil"></i>
+                            Chỉnh sửa
+                        </a>
+                        <a class="scholarship-list-action scholarship-list-action-delete"
+                           asp-action="Delete"
+                           asp-route-id="@item.MaHocBong">
+                            <i class="bi bi-trash3"></i>
+                            Xóa
+                        </a>
+                    </footer>
+                </article>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="scholarship-list-empty">
+            <i class="bi bi-award"></i>
+            <h2>Chưa có chương trình học bổng</h2>
+            <p>Thêm chương trình đầu tiên để bắt đầu quản lý học bổng.</p>
+            <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
+                <i class="bi bi-plus-lg"></i>
+                <span>Thêm học bổng</span>
+            </a>
+        </div>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/hocbong/index.css" asp-append-version="true" />
+}

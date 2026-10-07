@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/QuanLyHocBong_UNETI2_TI17A3HN.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
     @{
@@ -36,7 +37,7 @@
                     <i class="bi bi-house-door-fill"></i>
                     <span>Trang tổng quan</span>
                 </a>
-                <a class="nav-item" href="#">
+                <a class="nav-item" asp-controller="HocBong" asp-action="Index">
                     <i class="bi bi-award"></i>
                     <span>Quản lý học bổng</span>
                 </a>
