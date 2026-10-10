@@ -8,6 +8,14 @@ builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(o =>
+{
+    o.IdleTimeout = TimeSpan.FromMinutes(30);
+    o.Cookie.HttpOnly = true;
+    o.Cookie.IsEssential = true;
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -18,8 +26,18 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+var enUS = new System.Globalization.CultureInfo("en-US");
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(enUS),
+    SupportedCultures = new[] { enUS },
+    SupportedUICultures = new[] { enUS }
+});
+
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseSession();
 
 app.UseAuthorization();
 

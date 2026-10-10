@@ -1,0 +1,121 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - form nộp hồ sơ xin học bổng (hiện điều kiện, chặn nộp khi không hợp lệ). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model NopHoSoViewModel
+@{
+    ViewData["Title"] = "Nộp hồ sơ xin học bổng";
+    var hb = Model.HocBong!;
+    var sv = Model.SinhVien;
+}
+
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a asp-controller="HocBongSinhVien" asp-action="Index">Học bổng</a></li>
+        <li class="breadcrumb-item"><a asp-controller="HocBongSinhVien" asp-action="Details" asp-route-id="@hb.MaHocBong">@hb.TenHocBong</a></li>
+        <li class="breadcrumb-item active">Nộp hồ sơ</li>
+    </ol>
+</nav>
+
+<h2 class="mb-3">Nộp hồ sơ xin học bổng</h2>
+
+@if (!Model.DuDieuKien)
+{
+    <div class="alert alert-danger">
+        <div class="fw-semibold mb-1">Không thể nộp hồ sơ vì:</div>
+        <ul class="mb-0 ps-3">
+            @foreach (var l in Model.LyDoKhongHopLe)
+            {
+                <li>@l</li>
+            }
+        </ul>
+        @if (sv != null && Model.LyDoKhongHopLe.Any(x => x.StartsWith("Hồ sơ cá nhân")))
+        {
+            <a asp-controller="HoSoCaNhan" asp-action="Edit" class="alert-link">Cập nhật hồ sơ cá nhân</a>
+        }
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-7 order-lg-2">
+        <form asp-action="Create" method="post" novalidate>
+            <input type="hidden" asp-for="MaHocBong" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="card">
+                <div class="card-header fw-semibold">Nội dung hồ sơ</div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label asp-for="ThuXinHocBong" class="form-label"></label>
+                        <textarea asp-for="ThuXinHocBong" rows="9" class="form-control" disabled="@(!Model.DuDieuKien)"
+                                  placeholder="Giới thiệu bản thân, lý do xin học bổng, kế hoạch học tập..."></textarea>
+                        <div class="form-text">Từ 30 đến 2000 ký tự.</div>
+                        <span asp-validation-for="ThuXinHocBong" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="GhiChu" class="form-label"></label>
+                        <textarea asp-for="GhiChu" rows="3" class="form-control" disabled="@(!Model.DuDieuKien)"
+                                  placeholder="Thông tin bổ sung (không bắt buộc)"></textarea>
+                        <span asp-validation-for="GhiChu" class="text-danger"></span>
+                    </div>
+                    <div class="small text-muted mb-0">
+                        Ngày nộp do hệ thống ghi nhận khi bạn bấm nộp. Hồ sơ mới có trạng thái <strong>Chờ duyệt</strong>.
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <button type="submit" class="btn btn-primary" disabled="@(!Model.DuDieuKien)">Nộp hồ sơ</button>
+                    <a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-5 order-lg-1">
+        <div class="card mb-3">
+            <div class="card-header fw-semibold">Học bổng đăng ký</div>
+            <div class="card-body">
+                <h5 class="mb-1">@hb.TenHocBong</h5>
+                <div class="text-muted small mb-2">@hb.DonViTaiTro?.TenDonViTaiTro</div>
+                <ul class="list-unstyled small mb-0">
+                    <li><span class="text-muted">Bậc đào tạo:</span> @hb.BacDaoTao</li>
+                    <li><span class="text-muted">ĐTB tối thiểu:</span> @hb.DiemTrungBinhToiThieu.ToString("0.00")</li>
+                    <li><span class="text-muted">Số suất:</span> @hb.SoSuat</li>
+                    <li><span class="text-muted">Hạn nộp:</span> @hb.HanNopHoSo.ToString("dd/MM/yyyy")</li>
+                </ul>
+            </div>
+        </div>
+
+        @if (sv != null)
+        {
+            <div class="card">
+                <div class="card-header fw-semibold">Thông tin của bạn</div>
+                <div class="card-body">
+                    <ul class="list-unstyled small mb-2">
+                        <li><span class="text-muted">Họ tên:</span> @sv.HoTen</li>
+                        <li><span class="text-muted">Bậc đào tạo:</span> @sv.BacDaoTao
+                            @if (!string.Equals(sv.BacDaoTao, hb.BacDaoTao, StringComparison.OrdinalIgnoreCase))
+                            {
+                                <span class="text-warning">(khác với bậc của học bổng)</span>
+                            }
+                        </li>
+                        <li><span class="text-muted">Ngành:</span> @sv.Nganh</li>
+                        <li><span class="text-muted">ĐTB tích lũy:</span> @sv.DiemTrungBinhTichLuy.ToString("0.00")
+                            @if (sv.DiemTrungBinhTichLuy >= hb.DiemTrungBinhToiThieu)
+                            {
+                                <span class="text-success">(đạt yêu cầu)</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">(chưa đạt yêu cầu)</span>
+                            }
+                        </li>
+                    </ul>
+                    <a asp-controller="HoSoCaNhan" asp-action="Edit" class="small">Chỉnh sửa thông tin cá nhân</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

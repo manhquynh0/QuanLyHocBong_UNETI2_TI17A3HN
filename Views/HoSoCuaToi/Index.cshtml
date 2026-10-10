@@ -1,0 +1,93 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - danh sách hồ sơ đã nộp, trạng thái, lịch phỏng vấn, kết quả; hủy hồ sơ. *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model List<HoSoDaNopViewModel>
+@{
+    ViewData["Title"] = "Hồ sơ đã nộp";
+}
+
+<h2 class="mt-3 mb-3">Hồ sơ xin học bổng của tôi</h2>
+
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["ThongBao"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Loi"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="card card-body text-center py-5">
+        <p class="mb-3">Bạn chưa nộp hồ sơ xin học bổng nào.</p>
+        <div><a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-primary">Xem danh sách học bổng</a></div>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Học bổng</th>
+                    <th>Ngày nộp</th>
+                    <th>Trạng thái</th>
+                    <th>Lịch phỏng vấn</th>
+                    <th>Kết quả</th>
+                    <th class="text-end">Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var h in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@h.MaHoSoHocBong" class="fw-semibold text-decoration-none">@h.TenHocBong</a>
+                            <div class="text-muted small">@h.TenDonViTaiTro</div>
+                        </td>
+                        <td class="text-nowrap">@h.NgayNop.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><partial name="_TrangThaiBadge" model="@h.TrangThai" /></td>
+                        <td class="small">
+                            @if (h.LichPhongVan != null)
+                            {
+                                <div>@h.LichPhongVan.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @h.LichPhongVan.ThoiGianKetThuc.ToString("HH:mm")</div>
+                                <div class="text-muted">@h.LichPhongVan.DiaDiemHoacLienKet</div>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa có</span>
+                            }
+                        </td>
+                        <td class="small">
+                            @if (h.DaCongBoKetQua)
+                            {
+                                <span class="@(h.KetQua!.KetQua == "Được cấp học bổng" ? "text-success fw-semibold" : "text-danger")">@h.KetQua.KetQua</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Chưa công bố</span>
+                            }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a asp-action="Details" asp-route-id="@h.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                            @if (h.CoTheHuy)
+                            {
+                                <form asp-action="Huy" asp-route-id="@h.MaHoSoHocBong" method="post" class="d-inline"
+                                      onsubmit="return confirm('Bạn chắc chắn muốn hủy hồ sơ này?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Hủy hồ sơ</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

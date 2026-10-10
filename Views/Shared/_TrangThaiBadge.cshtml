@@ -1,0 +1,17 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - badge màu theo trạng thái hồ sơ. Dùng: <partial name="_TrangThaiBadge" model="@x.TrangThai" /> *@
+@model string
+@{
+    var cls = Model switch
+    {
+        "Chờ duyệt" => "text-bg-warning",
+        "Đạt xét duyệt sơ bộ" => "text-bg-info",
+        "Không đạt xét duyệt sơ bộ" => "text-bg-danger",
+        "Chờ phỏng vấn" => "text-bg-primary",
+        "Đã phỏng vấn" => "text-bg-secondary",
+        "Được cấp học bổng" => "text-bg-success",
+        "Không được cấp học bổng" => "text-bg-danger",
+        _ => "text-bg-light border text-muted"
+    };
+}
+<span class="badge @cls">@Model</span>
