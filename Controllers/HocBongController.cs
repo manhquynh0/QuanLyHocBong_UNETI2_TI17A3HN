@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
@@ -22,8 +23,110 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // GET: HocBong
         public async Task<IActionResult> Index()
         {
-            var quanLyHocBong_UNETI2_TI17A3HNContext = _context.HocBong.Include(h => h.DonViTaiTro);
-            return View(await quanLyHocBong_UNETI2_TI17A3HNContext.ToListAsync());
+            var model = new HocBongIndexViewModel
+            {
+                HocBongs = await _context.HocBong
+                .Include(h => h.DonViTaiTro)
+                    .OrderBy(h => h.MaHocBong)
+                    .ToListAsync()
+            };
+
+            model.SoKetQua = model.HocBongs.Count;
+            await PopulateFilterOptionsAsync(model);
+            return View(model);
+        }
+
+        // GET: HocBong/Search
+        public async Task<IActionResult> Search([FromQuery] HocBongIndexViewModel filters)
+        {
+            var query = _context.HocBong
+                .Include(h => h.DonViTaiTro)
+                .AsQueryable();
+
+            var tuKhoa = filters.TuKhoa?.Trim();
+            if (!string.IsNullOrEmpty(tuKhoa))
+            {
+                query = query.Where(h =>
+                    h.TenHocBong.Contains(tuKhoa)
+                    || h.DonViTaiTro.TenDonViTaiTro.Contains(tuKhoa));
+            }
+
+            if (filters.MaDonViTaiTro.HasValue)
+            {
+                query = query.Where(h => h.MaDonViTaiTro == filters.MaDonViTaiTro.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filters.BacDaoTao))
+            {
+                query = query.Where(h => h.BacDaoTao == filters.BacDaoTao);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filters.TrangThai))
+            {
+                query = query.Where(h => h.TrangThai == filters.TrangThai);
+            }
+
+            if (filters.DiemToiThieu.HasValue && ModelState.IsValid)
+            {
+                query = query.Where(h => h.DiemTrungBinhToiThieu >= filters.DiemToiThieu.Value);
+            }
+
+            var today = DateTime.Today;
+            if (filters.HanNop == "con-han")
+            {
+                query = query.Where(h => h.HanNopHoSo >= today);
+            }
+            else if (filters.HanNop == "het-han")
+            {
+                query = query.Where(h => h.HanNopHoSo < today);
+            }
+
+            filters.SapXep = filters.SapXep switch
+            {
+                "ten-az" or "ten-za" or "han-tang" or "han-giam" or "suat-tang" or "suat-giam" => filters.SapXep,
+                _ => "ma-tang"
+            };
+
+            query = filters.SapXep switch
+            {
+                "ten-az" => query.OrderBy(h => h.TenHocBong).ThenBy(h => h.MaHocBong),
+                "ten-za" => query.OrderByDescending(h => h.TenHocBong).ThenBy(h => h.MaHocBong),
+                "han-tang" => query.OrderBy(h => h.HanNopHoSo).ThenBy(h => h.MaHocBong),
+                "han-giam" => query.OrderByDescending(h => h.HanNopHoSo).ThenBy(h => h.MaHocBong),
+                "suat-tang" => query.OrderBy(h => h.SoSuat).ThenBy(h => h.MaHocBong),
+                "suat-giam" => query.OrderByDescending(h => h.SoSuat).ThenBy(h => h.MaHocBong),
+                _ => query.OrderBy(h => h.MaHocBong)
+            };
+
+            filters.HocBongs = await query.ToListAsync();
+            filters.SoKetQua = filters.HocBongs.Count;
+            await PopulateFilterOptionsAsync(filters);
+
+            return View("Index", filters);
+        }
+
+        private async Task PopulateFilterOptionsAsync(HocBongIndexViewModel model)
+        {
+            model.DonViTaiTroOptions = await _context.DonViTaiTro
+                .OrderBy(d => d.TenDonViTaiTro)
+                .Select(d => new SelectListItem
+                {
+                    Value = d.MaDonViTaiTro.ToString(),
+                    Text = d.TenDonViTaiTro
+                })
+                .ToListAsync();
+            model.BacDaoTaoOptions = await _context.HocBong
+                .Select(h => h.BacDaoTao)
+                .Distinct()
+                .OrderBy(value => value)
+                .Select(value => new SelectListItem { Value = value, Text = value })
+                .ToListAsync();
+            model.TrangThaiOptions = await _context.HocBong
+                .Select(h => h.TrangThai)
+                .Distinct()
+                .OrderBy(value => value)
+                .Select(value => new SelectListItem { Value = value, Text = value })
+                .ToListAsync();
         }
 
         // GET: HocBong/Details/5

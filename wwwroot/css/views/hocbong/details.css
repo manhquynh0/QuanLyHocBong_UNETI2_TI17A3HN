@@ -1,5 +1,4 @@
 .scholarship-details {
-  max-width: 1200px;
   margin: 0 auto;
 }
 
@@ -135,7 +134,9 @@
 }
 
 .scholarship-stat span {
-  color: #586579;
+  color: #1d3557;
+  font-size: 16px;
+  font-weight: 750;
 }
 
 .scholarship-info-card {
@@ -150,7 +151,7 @@
   padding: 15px 19px;
   border-bottom: 1px solid var(--border-color);
   color: #253247;
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
 }
 
@@ -200,15 +201,16 @@
 
 .scholarship-meta dt {
   margin-bottom: 4px;
-  color: var(--muted-color);
-  font-size: 12px;
-  font-weight: 500;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .scholarship-meta dd {
   margin: 0;
   color: #253247;
-  font-weight: 650;
+  font-size: 15px;
+  font-weight: 600;
 }
 
 @media (max-width: 1050px) {

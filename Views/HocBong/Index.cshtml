@@ -1,4 +1,4 @@
-@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong>
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong.HocBongIndexViewModel
 
 @{
     ViewData["Title"] = "Quản lý học bổng";
@@ -16,16 +16,104 @@
         </a>
     </header>
 
-    @if (Model.Any())
+    <form asp-action="Search" method="get" class="scholarship-filter-form">
+        <div class="scholarship-filter-search">
+            <label asp-for="TuKhoa">Tìm kiếm</label>
+            <div class="scholarship-filter-search-control">
+                <i class="bi bi-search" aria-hidden="true"></i>
+                <input asp-for="TuKhoa" type="search" placeholder="Tên học bổng hoặc đơn vị tài trợ" />
+            </div>
+        </div>
+        <div class="scholarship-filter-field">
+            <label asp-for="MaDonViTaiTro">Đơn vị tài trợ</label>
+            <select asp-for="MaDonViTaiTro" asp-items="Model.DonViTaiTroOptions">
+                <option value="">Tất cả đơn vị</option>
+            </select>
+        </div>
+        <div class="scholarship-filter-field">
+            <label asp-for="BacDaoTao">Bậc đào tạo</label>
+            <select asp-for="BacDaoTao" asp-items="Model.BacDaoTaoOptions">
+                <option value="">Tất cả bậc</option>
+            </select>
+        </div>
+        <div class="scholarship-filter-field">
+            <label asp-for="TrangThai">Trạng thái</label>
+            <select asp-for="TrangThai" asp-items="Model.TrangThaiOptions">
+                <option value="">Tất cả trạng thái</option>
+            </select>
+        </div>
+        <div class="scholarship-filter-field scholarship-filter-score">
+            <label asp-for="DiemToiThieu">Điểm tối thiểu từ</label>
+            <input asp-for="DiemToiThieu" type="number" min="0" max="4" step="0.01" placeholder="0 - 4" />
+            <span asp-validation-for="DiemToiThieu" class="scholarship-filter-validation"></span>
+        </div>
+        <div class="scholarship-filter-field">
+            <label asp-for="HanNop">Hạn nộp hồ sơ</label>
+            <select asp-for="HanNop">
+                <option value="">Tất cả</option>
+                <option value="con-han">Còn hạn</option>
+                <option value="het-han">Hết hạn</option>
+            </select>
+        </div>
+        <div class="scholarship-filter-field scholarship-filter-sort">
+            <label asp-for="SapXep">Sắp xếp</label>
+            <select asp-for="SapXep">
+                <option value="ma-tang">Mặc định</option>
+                <option value="ten-az">Tên học bổng A - Z</option>
+                <option value="ten-za">Tên học bổng Z - A</option>
+                <option value="han-tang">Hạn nộp tăng dần</option>
+                <option value="han-giam">Hạn nộp giảm dần</option>
+                <option value="suat-tang">Số suất tăng dần</option>
+                <option value="suat-giam">Số suất giảm dần</option>
+            </select>
+        </div>
+        <div class="scholarship-filter-actions">
+            <button type="submit" class="scholarship-filter-submit">
+                <i class="bi bi-funnel" aria-hidden="true"></i>
+                Lọc danh sách
+            </button>
+            <a asp-action="Index" class="scholarship-filter-reset">Xóa bộ lọc</a>
+        </div>
+    </form>
+
+    <p class="scholarship-list-count">
+        Hiển thị <strong>@Model.SoKetQua</strong> học bổng
+    </p>
+
+    @if (Model.HocBongs.Any())
     {
         <div class="scholarship-list-grid">
-            @foreach (var item in Model)
+            @foreach (var item in Model.HocBongs)
             {
-                var dangMo = string.Equals(item.TrangThai, "Đang mở", StringComparison.OrdinalIgnoreCase);
+                var trangThai = item.TrangThai?.Trim() ?? string.Empty;
+                var statusClass = "is-unknown";
+
+                if (trangThai.Contains("nhận hồ sơ", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(trangThai, "Đang mở", StringComparison.OrdinalIgnoreCase))
+                {
+                    statusClass = "is-open";
+                }
+                else if (trangThai.Contains("sắp", StringComparison.OrdinalIgnoreCase)
+                    || trangThai.Contains("chờ", StringComparison.OrdinalIgnoreCase)
+                    || trangThai.Contains("chưa mở", StringComparison.OrdinalIgnoreCase))
+                {
+                    statusClass = "is-upcoming";
+                }
+                else if (trangThai.Contains("đóng", StringComparison.OrdinalIgnoreCase)
+                    || trangThai.Contains("hết hạn", StringComparison.OrdinalIgnoreCase)
+                    || trangThai.Contains("kết thúc", StringComparison.OrdinalIgnoreCase))
+                {
+                    statusClass = "is-closed";
+                }
+                else if (trangThai.Contains("tạm dừng", StringComparison.OrdinalIgnoreCase)
+                    || trangThai.Contains("ngừng", StringComparison.OrdinalIgnoreCase))
+                {
+                    statusClass = "is-paused";
+                }
 
                 <article class="scholarship-list-card">
                     <div class="scholarship-list-card-header">
-                        <span class="scholarship-list-status @(dangMo ? "is-open" : "")">
+                        <span class="scholarship-list-status @statusClass">
                             @item.TrangThai
                         </span>
                         <span class="scholarship-list-code">Mã #@item.MaHocBong</span>
@@ -39,20 +127,20 @@
 
                     <div class="scholarship-list-stats">
                         <div>
-                            <strong>@item.SoSuat</strong>
                             <span>Số suất</span>
+                            <strong>@item.SoSuat</strong>
                         </div>
                         <div>
-                            <strong>@item.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</strong>
                             <span>Điểm tối thiểu</span>
+                            <strong>@item.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</strong>
                         </div>
                         <div>
-                            <strong>@item.BacDaoTao</strong>
                             <span>Bậc đào tạo</span>
+                            <strong>@item.BacDaoTao</strong>
                         </div>
                         <div>
-                            <strong>@item.HanNopHoSo.ToString("dd/MM/yyyy")</strong>
                             <span>Hạn nộp</span>
+                            <strong>@item.HanNopHoSo.ToString("dd/MM/yyyy")</strong>
                         </div>
                     </div>
 
@@ -85,12 +173,21 @@
     {
         <div class="scholarship-list-empty">
             <i class="bi bi-award"></i>
-            <h2>Chưa có chương trình học bổng</h2>
-            <p>Thêm chương trình đầu tiên để bắt đầu quản lý học bổng.</p>
-            <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
-                <i class="bi bi-plus-lg"></i>
-                <span>Thêm học bổng</span>
-            </a>
+            @if (Model.CoBoLoc)
+            {
+                <h2>Không tìm thấy học bổng phù hợp</h2>
+                <p>Thử thay đổi từ khóa hoặc điều kiện lọc.</p>
+                <a asp-action="Index" class="scholarship-filter-reset">Xóa bộ lọc</a>
+            }
+            else
+            {
+                <h2>Chưa có chương trình học bổng</h2>
+                <p>Thêm chương trình đầu tiên để bắt đầu quản lý học bổng.</p>
+                <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Thêm học bổng</span>
+                </a>
+            }
         </div>
     }
 </section>
