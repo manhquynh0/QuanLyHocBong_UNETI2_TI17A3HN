@@ -16,7 +16,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(2000)]
         [Column(TypeName = "nvarchar(2000)")]
-        public string MoTa { get; set; } 
+        public string MoTa { get; set; }
 
         [EmailAddress(ErrorMessage = "Email liên hệ không đúng định dạng")]
         [StringLength(100)]
