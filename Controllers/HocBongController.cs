@@ -129,6 +129,81 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 .ToListAsync();
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> BulkAction(
+            List<int>? selectedIds,
+            string bulkAction,
+            string? newStatus,
+            string? returnUrl)
+        {
+            var ids = (selectedIds ?? new List<int>()).Where(id => id > 0).Distinct().ToList();
+            if (ids.Count == 0)
+            {
+                TempData["HocBongMessage"] = "Hãy chọn ít nhất một học bổng.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            var hocBongs = await _context.HocBong
+                .Where(h => ids.Contains(h.MaHocBong))
+                .ToListAsync();
+
+            if (hocBongs.Count == 0)
+            {
+                TempData["HocBongMessage"] = "Không tìm thấy học bổng nào trong lựa chọn.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            if (bulkAction == "status")
+            {
+                var allowedStatuses = new[] { "Đang nhận hồ sơ", "Sắp mở", "Đã đóng", "Tạm dừng" };
+                if (newStatus is null || !allowedStatuses.Contains(newStatus, StringComparer.Ordinal))
+                {
+                    TempData["HocBongMessage"] = "Hãy chọn một trạng thái hợp lệ trước khi cập nhật.";
+                    return RedirectToLocal(returnUrl);
+                }
+
+                foreach (var hocBong in hocBongs)
+                {
+                    hocBong.TrangThai = newStatus;
+                }
+
+                await _context.SaveChangesAsync();
+                TempData["HocBongMessage"] = $"Đã cập nhật trạng thái cho {hocBongs.Count} học bổng.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            if (bulkAction == "delete")
+            {
+                var idsWithApplications = await _context.HoSoHocBong
+                    .Where(h => ids.Contains(h.MaHocBong))
+                    .Select(h => h.MaHocBong)
+                    .Distinct()
+                    .ToListAsync();
+                var blockedIds = idsWithApplications.ToHashSet();
+                var deletableHocBongs = hocBongs
+                    .Where(h => !blockedIds.Contains(h.MaHocBong))
+                    .ToList();
+
+                _context.HocBong.RemoveRange(deletableHocBongs);
+                await _context.SaveChangesAsync();
+
+                TempData["HocBongMessage"] = blockedIds.Count == 0
+                    ? $"Đã xóa {deletableHocBongs.Count} học bổng."
+                    : $"Đã xóa {deletableHocBongs.Count} học bổng. Không thể xóa {blockedIds.Count} học bổng đã có hồ sơ đăng ký.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            return BadRequest("Thao tác hàng loạt không hợp lệ.");
+        }
+
+        private IActionResult RedirectToLocal(string? returnUrl)
+        {
+            return !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl)
+                : RedirectToAction(nameof(Index));
+        }
+
         // GET: HocBong/Details/5
         public async Task<IActionResult> Details(int? id)
         {
