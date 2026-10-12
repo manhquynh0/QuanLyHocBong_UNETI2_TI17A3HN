@@ -1,10 +1,14 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
-   Nội dung thực hiện: Module 3 - trang hồ sơ cá nhân của sinh viên. *@
+   Nội dung thực hiện: Module 3 - trang hồ sơ cá nhân của sinh viên (mức hoàn thiện, thông tin, thành tích). *@
 @model SinhVien
 @{
     ViewData["Title"] = "Thông tin cá nhân";
     var thieu = (List<string>)ViewBag.ThongTinThieu;
     int soHoSo = (int)ViewBag.SoHoSo;
+    const int tongTruong = 7;                       // số thông tin bắt buộc để nộp hồ sơ
+    var daCo = tongTruong - thieu.Count;
+    var phanTram = daCo * 100 / tongTruong;
+    string Hien(string? v) => string.IsNullOrWhiteSpace(v) ? "Chưa cập nhật" : v;
 }
 
 <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
@@ -20,33 +24,47 @@
     </div>
 }
 
-@if (thieu.Any())
-{
-    <div class="alert alert-warning">
-        Hồ sơ cá nhân còn thiếu: <strong>@string.Join(", ", thieu)</strong>.
-        Bạn cần bổ sung trước khi nộp hồ sơ xin học bổng.
-        <a asp-action="Edit" class="alert-link">Cập nhật ngay</a>
+<div class="card card-info mb-3">
+    <div class="card-body py-3">
+        <div class="d-flex justify-content-between small mb-1">
+            <span>Mức hoàn thiện hồ sơ cá nhân</span>
+            <strong>@daCo/@tongTruong thông tin bắt buộc</strong>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Mức hoàn thiện hồ sơ" aria-valuenow="@phanTram" aria-valuemin="0" aria-valuemax="100" style="height:.6rem;">
+            <div class="progress-bar" style="width:@(phanTram)%; background-color:@(thieu.Any() ? "#CA8A04" : "#16A34A");"></div>
+        </div>
+        @if (thieu.Any())
+        {
+            <div class="small mt-2">
+                Còn thiếu: <strong>@string.Join(", ", thieu)</strong>. Cần bổ sung trước khi nộp hồ sơ xin học bổng.
+                <a asp-action="Edit">Cập nhật ngay</a>
+            </div>
+        }
+        else
+        {
+            <div class="small mt-2 text-success">Hồ sơ đã đủ thông tin để nộp xin học bổng.</div>
+        }
     </div>
-}
+</div>
 
 <div class="row g-3">
     <div class="col-lg-8">
-        <div class="card">
+        <div class="card card-info">
             <div class="card-header fw-semibold">Thông tin chung</div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Mã sinh viên</dt>
                     <dd class="col-sm-8">@Model.MaSinhVien</dd>
                     <dt class="col-sm-4">Họ và tên</dt>
-                    <dd class="col-sm-8">@Model.HoTen</dd>
+                    <dd class="col-sm-8">@Hien(Model.HoTen)</dd>
                     <dt class="col-sm-4">Ngày sinh</dt>
-                    <dd class="col-sm-8">@Model.NgaySinh.ToString("dd/MM/yyyy")</dd>
+                    <dd class="col-sm-8">@(Model.NgaySinh == default ? "Chưa cập nhật" : Model.NgaySinh.ToString("dd/MM/yyyy"))</dd>
                     <dt class="col-sm-4">Giới tính</dt>
-                    <dd class="col-sm-8">@Model.GioiTinh</dd>
+                    <dd class="col-sm-8">@Hien(Model.GioiTinh)</dd>
                     <dt class="col-sm-4">Số điện thoại</dt>
-                    <dd class="col-sm-8">@Model.SoDienThoai</dd>
+                    <dd class="col-sm-8">@Hien(Model.SoDienThoai)</dd>
                     <dt class="col-sm-4">Email</dt>
-                    <dd class="col-sm-8">@Model.Email</dd>
+                    <dd class="col-sm-8">@Hien(Model.Email)</dd>
                     <dt class="col-sm-4">Địa chỉ</dt>
                     <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.DiaChi) ? "—" : Model.DiaChi)</dd>
                 </dl>
@@ -54,22 +72,22 @@
         </div>
     </div>
     <div class="col-lg-4">
-        <div class="card mb-3">
+        <div class="card card-info mb-3">
             <div class="card-header fw-semibold">Học tập</div>
             <div class="card-body">
                 <dl class="mb-0">
                     <dt>Bậc đào tạo</dt>
-                    <dd>@Model.BacDaoTao</dd>
+                    <dd>@Hien(Model.BacDaoTao)</dd>
                     <dt>Ngành</dt>
-                    <dd>@Model.Nganh</dd>
+                    <dd>@Hien(Model.Nganh)</dd>
                     <dt>Điểm trung bình tích lũy</dt>
                     <dd class="fs-5 fw-semibold">@Model.DiemTrungBinhTichLuy.ToString("0.00") <small class="text-muted fw-normal">/ 4.00</small></dd>
                     <dt>Trạng thái</dt>
-                    <dd class="mb-0"><span class="badge text-bg-success">@Model.TrangThai</span></dd>
+                    <dd class="mb-0"><span class="st st-green">@Model.TrangThai</span></dd>
                 </dl>
             </div>
         </div>
-        <a asp-controller="HoSoCuaToi" asp-action="Index" class="btn btn-outline-secondary w-100">
+        <a asp-controller="HoSoCuaToi" asp-action="Index" class="btn btn-outline-purple w-100">
             Xem hồ sơ đã nộp (@soHoSo)
         </a>
     </div>

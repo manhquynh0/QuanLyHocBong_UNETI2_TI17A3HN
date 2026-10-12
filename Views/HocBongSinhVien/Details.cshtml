@@ -26,9 +26,9 @@
                         <h2 class="mb-1">@hb.TenHocBong</h2>
                         <div class="text-muted">Đơn vị tài trợ: @hb.DonViTaiTro?.TenDonViTaiTro</div>
                     </div>
-                    @if (hetHan) { <span class="badge text-bg-secondary fs-6">Hết hạn</span> }
-                    else if (chuaDen) { <span class="badge text-bg-info fs-6">Sắp mở</span> }
-                    else { <span class="badge text-bg-success fs-6">Còn hạn</span> }
+                    @if (hetHan) { <span class="st st-lg st-gray">Hết hạn</span> }
+                    else if (chuaDen) { <span class="st st-lg st-blue">Sắp mở</span> }
+                    else { <span class="st st-lg st-green">Còn hạn</span> }
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
     </div>
 
     <div class="col-lg-4">
-        <div class="card mb-3">
+        <div class="card card-info mb-3">
             <div class="card-header fw-semibold">Thông tin chung</div>
             <div class="card-body">
                 <dl class="mb-0">
@@ -60,7 +60,7 @@
         @if (Model.DuocNop)
         {
             <div class="alert alert-success">Bạn đủ điều kiện nộp hồ sơ cho học bổng này.</div>
-            <a asp-controller="HoSoCuaToi" asp-action="Create" asp-route-maHocBong="@hb.MaHocBong" class="btn btn-primary w-100">Nộp hồ sơ xin học bổng</a>
+            <a asp-controller="HoSoCuaToi" asp-action="Create" asp-route-maHocBong="@hb.MaHocBong" class="btn btn-cta w-100">Nộp hồ sơ xin học bổng</a>
         }
         else
         {
@@ -69,7 +69,13 @@
                 <ul class="mb-0 ps-3">
                     @foreach (var l in Model.LyDoKhongNop)
                     {
-                        <li>@l</li>
+                        <li>
+                            @l
+                            @if (l.StartsWith("Hồ sơ cá nhân"))
+                            {
+                                <a asp-controller="HoSoCaNhan" asp-action="Edit" asp-route-returnUrl="@(Context.Request.Path.Add(Context.Request.QueryString))" class="alert-link">Cập nhật ngay</a>
+                            }
+                        </li>
                     }
                 </ul>
             </div>

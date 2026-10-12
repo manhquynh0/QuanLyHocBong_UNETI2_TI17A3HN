@@ -6,7 +6,21 @@ builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    var p = options.ModelBindingMessageProvider;
+    p.SetValueMustBeANumberAccessor(name => $"{name} phải là một số (ví dụ 3.25).");
+    p.SetValueIsInvalidAccessor(v => $"Giá trị '{v}' không hợp lệ.");
+    p.SetAttemptedValueIsInvalidAccessor((v, name) => $"Giá trị '{v}' không hợp lệ cho {name}.");
+    p.SetUnknownValueIsInvalidAccessor(name => $"Giá trị không hợp lệ cho {name}.");
+    p.SetValueMustNotBeNullAccessor(_ => "Vui lòng nhập giá trị.");
+    p.SetMissingBindRequiredValueAccessor(name => $"Thiếu giá trị cho {name}.");
+    p.SetMissingKeyOrValueAccessor(() => "Vui lòng nhập giá trị.");
+    p.SetMissingRequestBodyRequiredValueAccessor(() => "Dữ liệu gửi lên không hợp lệ.");
+    p.SetNonPropertyAttemptedValueIsInvalidAccessor(v => $"Giá trị '{v}' không hợp lệ.");
+    p.SetNonPropertyUnknownValueIsInvalidAccessor(() => "Giá trị không hợp lệ.");
+    p.SetNonPropertyValueMustBeANumberAccessor(() => "Giá trị phải là một số.");
+});
 
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(o =>

@@ -30,7 +30,7 @@
         </ul>
         @if (sv != null && Model.LyDoKhongHopLe.Any(x => x.StartsWith("Hồ sơ cá nhân")))
         {
-            <a asp-controller="HoSoCaNhan" asp-action="Edit" class="alert-link">Cập nhật hồ sơ cá nhân</a>
+            <a asp-controller="HoSoCaNhan" asp-action="Edit" asp-route-returnUrl="@(Context.Request.Path.Add(Context.Request.QueryString))" class="alert-link">Cập nhật hồ sơ cá nhân</a>
         }
     </div>
 }
@@ -41,7 +41,7 @@
             <input type="hidden" asp-for="MaHocBong" />
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-            <div class="card">
+            <div class="card card-cta">
                 <div class="card-header fw-semibold">Nội dung hồ sơ</div>
                 <div class="card-body">
                     <div class="mb-3">
@@ -62,7 +62,7 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <button type="submit" class="btn btn-primary" disabled="@(!Model.DuDieuKien)">Nộp hồ sơ</button>
+                    <button type="submit" class="btn btn-cta" disabled="@(!Model.DuDieuKien)">Nộp hồ sơ</button>
                     <a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-outline-secondary">Quay lại</a>
                 </div>
             </div>
@@ -70,7 +70,7 @@
     </div>
 
     <div class="col-lg-5 order-lg-1">
-        <div class="card mb-3">
+        <div class="card card-info mb-3">
             <div class="card-header fw-semibold">Học bổng đăng ký</div>
             <div class="card-body">
                 <h5 class="mb-1">@hb.TenHocBong</h5>
@@ -86,7 +86,7 @@
 
         @if (sv != null)
         {
-            <div class="card">
+            <div class="card card-info">
                 <div class="card-header fw-semibold">Thông tin của bạn</div>
                 <div class="card-body">
                     <ul class="list-unstyled small mb-2">
@@ -109,7 +109,7 @@
                             }
                         </li>
                     </ul>
-                    <a asp-controller="HoSoCaNhan" asp-action="Edit" class="small">Chỉnh sửa thông tin cá nhân</a>
+                    <a asp-controller="HoSoCaNhan" asp-action="Edit" asp-route-returnUrl="@(Context.Request.Path.Add(Context.Request.QueryString))" class="small">Chỉnh sửa thông tin cá nhân</a>
                 </div>
             </div>
         }
