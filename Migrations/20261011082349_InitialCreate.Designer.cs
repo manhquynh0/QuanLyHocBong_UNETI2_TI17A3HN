@@ -12,8 +12,8 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 {
     [DbContext(typeof(QuanLyHocBong_UNETI2_TI17A3HNContext))]
-    [Migration("20261004143129_init")]
-    partial class init
+    [Migration("20261011082349_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
