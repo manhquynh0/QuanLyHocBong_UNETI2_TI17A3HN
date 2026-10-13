@@ -1,27 +1,52 @@
-# Build output
+## ==========================================
+## 1. BUILD & PUBLISH OUTPUT (.NET)
+## ==========================================
 [Bb]in/
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
+publish/
 artifacts/
+*.cache
+.project.assets.json
 
-# Visual Studio and VS Code
+## ==========================================
+## 2. BẢO MẬT & MẬT KHẨU CÁ NHÂN (SECRETS)
+## ==========================================
+.env
+.env.*
+secrets.json
+appsettings.*.local.json
+
+## ==========================================
+## 3. IDE & CÀI ĐẶT CÁ NHÂN (VS, VS CODE)
+## ==========================================
 .vs/
-.vscode/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-
-# .NET tooling
-.project.assets.json
 *.csproj.user
-*.cache
 
-# Logs and diagnostics
+## ==========================================
+## 4. NODE.JS (SOCKET SERVER)
+## ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## ==========================================
+## 5. CƠ SỞ DỮ LIỆU & FILE TẠM THỜI
+## ==========================================
+*.mdf
+*.ldf
+*.db
+*.sqlite
 *.log
 *.dmp
-
-# Local configuration and secrets
-appsettings.*.local.json
-secrets.json
+doc_content.txt
+*.tmp
