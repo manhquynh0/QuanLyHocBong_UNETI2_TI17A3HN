@@ -1,7 +1,7 @@
 :root {
-    --c-navy: #0F172A;
-    --c-blue: #2563EB;
-    --c-blue-dark: #1D4ED8;
+    --c-navy: var(--sidebar-bg, #0e1d35);
+    --c-blue: var(--primary-blue, #2160ad);
+    --c-blue-dark: #1a4f8c;
     --c-blue-soft: #DBEAFE;
     --c-cyan-soft: #CFFAFE;
     --c-green: #16A34A;
@@ -15,14 +15,14 @@
     --c-violet: #9333EA;
     --c-red: #DC2626;
     --c-white: #FFFFFF;
-    --c-bg: #F8FAFC;
-    --c-text: #111827;
-    --c-muted: #64748B;
-    --c-line: #E2E8F0;
+    --c-bg: var(--page-bg, #f3f5f9);
+    --c-text: var(--text-color, #253247);
+    --c-muted: var(--muted-color, #788497);
+    --c-line: var(--border-color, #e5e9f0);
 }
 
 /* ---------- Nền, chữ ---------- */
-body { background: var(--c-bg); color: var(--c-text); }
+body { color: var(--c-text); }
 h1, h2, h3, h4, h5, h6 { color: var(--c-text); }
 .text-muted { color: var(--c-muted) !important; }
 .text-success { color: var(--c-green) !important; }
@@ -31,17 +31,6 @@ h1, h2, h3, h4, h5, h6 { color: var(--c-text); }
 main a:not(.btn):not(.page-link) { color: var(--c-blue); }
 main a:not(.btn):not(.page-link):hover { color: var(--c-blue-dark); }
 .breadcrumb-item.active { color: var(--c-muted); }
-
-/* ---------- Header (navy) ---------- */
-header .navbar { background: var(--c-navy) !important; border-bottom: 0 !important; }
-header .navbar .navbar-brand,
-header .navbar .nav-link { color: #fff !important; }
-header .navbar .nav-link { border-radius: .375rem; opacity: .85; }
-header .navbar .nav-link:hover { opacity: 1; background: rgba(255, 255, 255, .08); }
-header .navbar .nav-link.active { opacity: 1; background: var(--c-blue); }
-header .navbar .navbar-toggler { border-color: rgba(255, 255, 255, .4); }
-header .navbar .navbar-toggler-icon { filter: invert(1); }
-footer.footer { background: transparent; }
 
 /* ---------- Nút ---------- */
 .btn-primary {
@@ -119,10 +108,10 @@ footer.footer { background: transparent; }
 
 /* ---------- Form ---------- */
 .form-control:focus, .form-select:focus {
-    border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .2);
+    border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(33, 96, 173, .2);
 }
 .form-check-input:checked { background-color: var(--c-blue); border-color: var(--c-blue); }
-.form-check-input:focus { border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(37, 99, 235, .2); }
+.form-check-input:focus { border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(33, 96, 173, .2); }
 .form-label { color: var(--c-text); font-weight: 500; }
 
 /* ---------- Bảng ---------- */
