@@ -48,6 +48,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = new[] { enUS }
 });
 
+app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
+
 app.UseHttpsRedirection();
 app.UseRouting();
 

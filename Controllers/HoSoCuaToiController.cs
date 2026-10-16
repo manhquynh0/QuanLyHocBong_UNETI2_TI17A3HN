@@ -24,6 +24,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 {
                     MaHoSoHocBong = h.MaHoSoHocBong,
                     MaHocBong = h.MaHocBong,
+                    MaSinhVien = h.MaSinhVien,
+                    HoTenSinhVien = h.SinhVien.HoTen,
+                    Nganh = h.SinhVien.Nganh,
+                    BacDaoTao = h.SinhVien.BacDaoTao,
+                    DiemTrungBinhTichLuy = h.SinhVien.DiemTrungBinhTichLuy,
                     TenHocBong = h.HocBong.TenHocBong,
                     TenDonViTaiTro = h.HocBong.DonViTaiTro.TenDonViTaiTro,
                     NgayNop = h.NgayNop,
@@ -90,6 +95,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (hb == null) return NotFound();
 
             var model = new NopHoSoViewModel { MaHocBong = maHocBong };
+            if (sv != null && string.IsNullOrWhiteSpace(model.GhiChu))
+                model.GhiChu = sv.ThanhTichHocTap;
             await NapDuLieuHienThiAsync(model, sv, hb);
             return View(model);
         }
@@ -157,6 +164,31 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             TempData["ThongBao"] = "Đã hủy hồ sơ.";
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> KetQua()
+        {
+            var sv = await LaySinhVienHienTaiAsync();
+            if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
+
+            var list = await HoSoCuaSinhVien(sv.MaSinhVien)
+                .OrderByDescending(h => h.NgayNop)
+                .ToListAsync();
+            ViewData["Nav"] = "KetQua";
+            return View(list);
+        }
+
+        public async Task<IActionResult> LichPhongVan()
+        {
+            var sv = await LaySinhVienHienTaiAsync();
+            if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
+
+            var list = (await HoSoCuaSinhVien(sv.MaSinhVien).ToListAsync())
+                .Where(h => h.LichPhongVan != null)
+                .OrderByDescending(h => h.LichPhongVan!.ThoiGianBatDau)
+                .ToList();
+            ViewData["Nav"] = "LichPhongVan";
+            return View(list);
         }
 
         private async Task NapDuLieuHienThiAsync(NopHoSoViewModel model, SinhVien? sv, HocBong hb)

@@ -2,7 +2,16 @@
    Nội dung thực hiện: Module 3 - thông báo khi tài khoản chưa gắn với hồ sơ sinh viên. *@
 @{
     ViewData["Title"] = "Chưa có hồ sơ sinh viên";
+    ViewData["Nav"] = "TaiKhoan";
 }
-<div class="alert alert-warning mt-4">
-    Tài khoản của bạn chưa được gắn với hồ sơ sinh viên. Vui lòng liên hệ cán bộ học bổng để được cấp hồ sơ.
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Thông tin cá nhân</h2>
+        <p>Thông tin được đồng bộ với hồ sơ sinh viên UNETI.</p>
+    </div>
+</div>
+<div class="ui-card">
+    <div class="empty-state">
+        Tài khoản của bạn chưa được gắn với hồ sơ sinh viên. Vui lòng liên hệ cán bộ học bổng để được cấp hồ sơ.
+    </div>
 </div>

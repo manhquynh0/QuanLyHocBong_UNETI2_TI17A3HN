@@ -4,14 +4,15 @@
 @{
     var cls = Model switch
     {
-        "Chờ duyệt" => "text-bg-warning",
-        "Đạt xét duyệt sơ bộ" => "text-bg-info",
-        "Không đạt xét duyệt sơ bộ" => "text-bg-danger",
-        "Chờ phỏng vấn" => "text-bg-primary",
-        "Đã phỏng vấn" => "text-bg-secondary",
-        "Được cấp học bổng" => "text-bg-success",
-        "Không được cấp học bổng" => "text-bg-danger",
-        _ => "text-bg-light border text-muted"
+        "Chờ duyệt" => "st-yellow",
+        "Đạt xét duyệt sơ bộ" => "st-blue",
+        "Không đạt xét duyệt sơ bộ" => "st-red",
+        "Chờ phỏng vấn" => "st-blue",
+        "Đã phỏng vấn" => "st-purple",
+        "Được cấp học bổng" => "st-green",
+        "Không được cấp học bổng" => "st-red",
+        "Đã hủy" => "st-gray",
+        _ => "st-gray"
     };
 }
-<span class="badge @cls">@Model</span>
+<span class="st @cls">@Model</span>

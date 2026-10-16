@@ -6,107 +6,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Học bổng UNETI</title>
     <script type="importmap"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/QuanLyHocBong_UNETI2_TI17A3HN.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/theme-uneti.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/ui-uneti.css" asp-append-version="true" />
 </head>
 <body>
     @{
-        var isDashboard = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
-            && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
         var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+        var action = ViewContext.RouteData.Values["action"]?.ToString();
+        var nav = ViewData["Nav"] as string;
 
         string? vaiTro = null;
         string? hoTenSession = null;
+        string? tenDangNhap = null;
+        int? maTaiKhoan = null;
         try
         {
             vaiTro = Context.Session.GetString("VaiTro");
             hoTenSession = Context.Session.GetString("HoTen");
+            tenDangNhap = Context.Session.GetString("TenDangNhap");
+            maTaiKhoan = Context.Session.GetInt32("MaTaiKhoan");
         }
         catch (InvalidOperationException) { }
 
         var laSinhVien = vaiTro == "Sinh viên";
-        var tenHienThi = laSinhVien && !string.IsNullOrWhiteSpace(hoTenSession) ? hoTenSession.Trim() : "Nguyễn Thị B";
+        var tenHienThi = !string.IsNullOrWhiteSpace(hoTenSession) ? hoTenSession.Trim() : (laSinhVien ? "Sinh viên" : "Nguyễn Thị B");
         var chuCai = tenHienThi.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
+        var maHienThi = !string.IsNullOrWhiteSpace(tenDangNhap) ? tenDangNhap : maTaiKhoan?.ToString();
+
+        bool NavActive(string key) => string.Equals(nav, key, StringComparison.OrdinalIgnoreCase);
+
+        var homeActive = NavActive("TrangChu") || (ctrl == "Home" && action == "Index");
+        var dsHbActive = NavActive("DanhSachHocBong") || ctrl == "HocBongSinhVien";
+        var hoSoActive = NavActive("HoSoCuaToi") || (ctrl == "HoSoCuaToi" && action is "Index" or "Details" or "Create");
+        if (NavActive("DanhSachHocBong")) hoSoActive = false;
+        var lichActive = NavActive("LichPhongVan") || (ctrl == "HoSoCuaToi" && action == "LichPhongVan");
+        var kqActive = NavActive("KetQua") || (ctrl == "HoSoCuaToi" && action == "KetQua");
+        var tbActive = NavActive("ThongBao") || (ctrl == "Home" && action == "ThongBao");
+        var tkActive = NavActive("TaiKhoan") || ctrl == "HoSoCaNhan";
+        var qlHbActive = ctrl == "DonViTaiTroes" || NavActive("QuanLyHocBong");
     }
 
     <div class="app-shell">
         <aside class="sidebar" aria-label="Điều hướng chính">
-            <a class="brand" asp-area="" asp-controller="@(laSinhVien ? "HocBongSinhVien" : "Home")" asp-action="Index">
+            <a class="brand" asp-area="" asp-controller="@(laSinhVien ? "Home" : "Home")" asp-action="Index">
                 <span class="brand-mark">
                     <i class="bi bi-mortarboard-fill"></i>
                 </span>
                 <span class="brand-copy">
                     <strong>Học bổng UNETI</strong>
-                    <small>@(laSinhVien ? "Cổng sinh viên" : "Cổng quản trị admin")</small>
+                    <small>@(laSinhVien ? "Hệ thống xét duyệt" : "Cổng quản trị admin")</small>
                 </span>
             </a>
 
             <nav class="side-nav">
                 @if (laSinhVien)
                 {
-                    <a class="nav-item @(ctrl == "HocBongSinhVien" ? "active" : "")"
-                       asp-controller="HocBongSinhVien"
-                       asp-action="Index"
-                       aria-current="@(ctrl == "HocBongSinhVien" ? "page" : null)">
-                        <i class="bi bi-mortarboard"></i>
-                        <span>Học bổng</span>
+                    <a class="nav-item @(homeActive ? "active" : "")" asp-controller="Home" asp-action="Index" aria-current="@(homeActive ? "page" : null)">
+                        <i class="bi bi-house-door"></i>
+                        <span>Trang chủ</span>
                     </a>
-                    <a class="nav-item @(ctrl == "HoSoCuaToi" ? "active" : "")"
-                       asp-controller="HoSoCuaToi"
-                       asp-action="Index"
-                       aria-current="@(ctrl == "HoSoCuaToi" ? "page" : null)">
-                        <i class="bi bi-folder-check"></i>
-                        <span>Hồ sơ đã nộp</span>
+                    <a class="nav-item @(dsHbActive ? "active" : "")" asp-controller="HocBongSinhVien" asp-action="Index" aria-current="@(dsHbActive ? "page" : null)">
+                        <i class="bi bi-journal-text"></i>
+                        <span>Danh sách học bổng</span>
                     </a>
-                    <a class="nav-item @(ctrl == "HoSoCaNhan" ? "active" : "")"
-                       asp-controller="HoSoCaNhan"
-                       asp-action="Index"
-                       aria-current="@(ctrl == "HoSoCaNhan" ? "page" : null)">
-                        <i class="bi bi-person-vcard"></i>
-                        <span>Thông tin cá nhân</span>
+                    <a class="nav-item @(hoSoActive ? "active" : "")" asp-controller="HoSoCuaToi" asp-action="Index" aria-current="@(hoSoActive ? "page" : null)">
+                        <i class="bi bi-file-earmark-text"></i>
+                        <span>Hồ sơ của tôi</span>
+                    </a>
+                    <a class="nav-item @(lichActive ? "active" : "")" asp-controller="HoSoCuaToi" asp-action="LichPhongVan" aria-current="@(lichActive ? "page" : null)">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a class="nav-item @(kqActive ? "active" : "")" asp-controller="HoSoCuaToi" asp-action="KetQua" aria-current="@(kqActive ? "page" : null)">
+                        <i class="bi bi-award"></i>
+                        <span>Kết quả học bổng</span>
+                    </a>
+                    <a class="nav-item @(tbActive ? "active" : "")" asp-controller="Home" asp-action="ThongBao" aria-current="@(tbActive ? "page" : null)">
+                        <i class="bi bi-bell"></i>
+                        <span>Thông báo</span>
+                    </a>
+                    <a class="nav-item @(tkActive ? "active" : "")" asp-controller="HoSoCaNhan" asp-action="Index" aria-current="@(tkActive ? "page" : null)">
+                        <i class="bi bi-person"></i>
+                        <span>Tài khoản</span>
                     </a>
                 }
                 else
                 {
-                <a class="nav-item @(isDashboard ? "active" : "")"
-                       asp-controller="Home"
-                       asp-action="Index"
-                       aria-current="@(isDashboard ? "page" : null)">
-                    <i class="bi bi-house-door-fill"></i>
-                    <span>Trang tổng quan</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-award"></i>
-                    <span>Quản lý học bổng</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-people-fill"></i>
-                    <span>Quản lý sinh viên</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-file-earmark-check"></i>
-                    <span>Xét duyệt hồ sơ</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-calendar-event"></i>
-                    <span>Lịch phỏng vấn</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-bell"></i>
-                    <span>Thông báo</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-shield-lock"></i>
-                    <span>Tài khoản cán bộ</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-gear"></i>
-                    <span>Cài đặt hệ thống</span>
-                </a>
-                            }
+                    <a class="nav-item @(homeActive ? "active" : "")" asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Trang tổng quan</span>
+                    </a>
+                    <a class="nav-item @(qlHbActive ? "active" : "")" asp-controller="DonViTaiTroes" asp-action="Index">
+                        <i class="bi bi-award"></i>
+                        <span>Quản lý học bổng</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Quản lý sinh viên</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Xét duyệt hồ sơ</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a class="nav-item @(tbActive ? "active" : "")" asp-controller="Home" asp-action="ThongBao">
+                        <i class="bi bi-bell"></i>
+                        <span>Thông báo</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <i class="bi bi-person-badge"></i>
+                        <span>Tài khoản cán bộ</span>
+                    </a>
+                    <a class="nav-item" href="#">
+                        <i class="bi bi-gear"></i>
+                        <span>Cài đặt hệ thống</span>
+                    </a>
+                }
             </nav>
 
             <a class="nav-item logout-link" asp-area="" asp-controller="Home" asp-action="Index">
@@ -117,17 +142,23 @@
 
         <div class="workspace">
             <header class="topbar">
-                @if (laSinhVien)
-                {
-                    <h1 class="topbar-title">@ViewData["Title"]</h1>
-                }
+                <h1 class="topbar-title">@ViewData["Title"]</h1>
                 <div class="topbar-user">
-                    <button class="notification-button" type="button" aria-label="Thông báo">
+                    <a class="notification-button" asp-controller="Home" asp-action="ThongBao" aria-label="Thông báo">
                         <i class="bi bi-bell"></i>
-                    </button>
+                    </a>
                     <div class="user-copy">
                         <strong>@tenHienThi</strong>
-                        <small>@(laSinhVien ? "Sinh viên" : "Phòng CTSV - Cán bộ xét duyệt")</small>
+                        <small>
+                            @if (laSinhVien)
+                            {
+                                <text>Sinh viên@(string.IsNullOrEmpty(maHienThi) ? "" : " - " + maHienThi)</text>
+                            }
+                            else
+                            {
+                                <text>Phòng CTSV - Cán bộ xét duyệt</text>
+                            }
+                        </small>
                     </div>
                     <div class="user-avatar" aria-label="Ảnh đại diện @tenHienThi">@chuCai</div>
                 </div>
@@ -136,6 +167,32 @@
             <main class="page-content" role="main">
                 @RenderBody()
             </main>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-busy="true">
+        <div class="loading-dialog">
+            <div class="loading-spinner" role="status"></div>
+            <strong>Đang tải dữ liệu...</strong>
+            <span>Vui lòng chờ trong giây lát</span>
+        </div>
+    </div>
+
+    <div class="modal fade modal-uneti" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body px-4 py-4">
+                    <div class="confirm-icon"><i class="bi bi-exclamation-circle"></i></div>
+                    <h5 class="modal-title mb-2" id="confirmModalTitle">Xác nhận?</h5>
+                    <p class="text-muted mb-4" id="confirmModalBody">Hành động này không thể hoàn tác.</p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                        <button type="button" class="btn btn-danger px-4" id="confirmModalOk">
+                            <i class="bi bi-trash me-1"></i> Xác nhận
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

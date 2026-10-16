@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
@@ -27,6 +28,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             ViewBag.ThongTinThieu = NopHoSoRules.ThongTinCaNhanConThieu(sv);
             ViewBag.SoHoSo = await _context.HoSoHocBong.CountAsync(h => h.MaSinhVien == sv.MaSinhVien);
+            NapThongTinHoSo(sv);
             return View(sv);
         }
 
@@ -50,6 +52,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 ThanhTichHocTap = sv.ThanhTichHocTap,
                 ReturnUrl = Url.IsLocalUrl(returnUrl) ? returnUrl : null
             };
+            NapThongTinHoSo(sv);
             return View(model);
         }
 
@@ -85,7 +88,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 decimal.Round(model.DiemTrungBinhTichLuy.Value, 2) != model.DiemTrungBinhTichLuy.Value)
                 ModelState.AddModelError(nameof(model.DiemTrungBinhTichLuy), "Điểm trung bình chỉ nhập tối đa 2 chữ số thập phân (ví dụ 3.25)");
 
-            if (!ModelState.IsValid) return View(model);
+            if (!ModelState.IsValid)
+            {
+                NapThongTinHoSo(sv);
+                return View(model);
+            }
 
             // ---- Ghi dữ liệu ----
             var soDienThoai = model.SoDienThoai.StartsWith("+84") ? "0" + model.SoDienThoai[3..] : model.SoDienThoai;
@@ -108,12 +115,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             catch (DbUpdateException)
             {
                 ModelState.AddModelError(string.Empty, "Không thể lưu thay đổi. Vui lòng kiểm tra lại dữ liệu và thử lại.");
+                NapThongTinHoSo(sv);
                 return View(model);
             }
 
             TempData["ThongBao"] = "Đã cập nhật hồ sơ cá nhân.";
             if (model.ReturnUrl != null) return LocalRedirect(model.ReturnUrl);
             return RedirectToAction(nameof(Index));
+        }
+
+        private void NapThongTinHoSo(SinhVien sv)
+        {
+            ViewBag.MaSinhVien = sv.MaSinhVien;
+            ViewBag.TrangThaiHocTap = sv.TrangThai;
+            ViewBag.HoTenHoSo = sv.HoTen;
         }
     }
 }

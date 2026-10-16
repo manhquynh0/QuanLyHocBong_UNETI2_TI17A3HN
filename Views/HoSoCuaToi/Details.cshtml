@@ -1,110 +1,131 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
    Nội dung thực hiện: Module 3 - chi tiết một hồ sơ đã nộp (chỉ hồ sơ của chính sinh viên). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.Helpers
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model HoSoDaNopViewModel
 @{
-    ViewData["Title"] = "Chi tiết hồ sơ";
+    ViewData["Title"] = "Chi tiết hồ sơ đã nộp";
+    ViewData["Nav"] = "HoSoCuaToi";
+    var nopXong = true;
+    var daXuLy = Model.NgayXuLy.HasValue || Model.TrangThai != TrangThaiHoSo.ChoDuyet;
+    var dangXet = Model.TrangThai is TrangThaiHoSo.ChoDuyet or TrangThaiHoSo.DatSoBo or TrangThaiHoSo.ChoPhongVan or TrangThaiHoSo.DaPhongVan;
 }
 
-<nav aria-label="breadcrumb" class="mt-3">
-    <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a asp-action="Index">Hồ sơ đã nộp</a></li>
-        <li class="breadcrumb-item active">@Model.TenHocBong</li>
-    </ol>
-</nav>
-
-<div class="d-flex justify-content-between align-items-start mb-3">
-    <div>
-        <h2 class="mb-1">@Model.TenHocBong</h2>
-        <div class="text-muted">@Model.TenDonViTaiTro · Nộp lúc @Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</div>
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Chi tiết hồ sơ đã nộp</h2>
+        <p>@Model.TenHocBong</p>
     </div>
-    <div class="fs-5"><partial name="_TrangThaiBadge" model="@Model.TrangThai" /></div>
+    <partial name="_TrangThaiBadge" model="@Model.TrangThai" />
 </div>
 
 <div class="row g-3">
     <div class="col-lg-8">
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Thư xin học bổng</div>
-            <div class="card-body" style="white-space: pre-line;">@Model.ThuXinHocBong</div>
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title mb-3">Thông tin sinh viên</h3>
+                <div class="info-grid">
+                    <div>
+                        <span class="field-label">Họ và tên</span>
+                        <div class="field-value">@Model.HoTenSinhVien</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Mã sinh viên</span>
+                        <div class="field-value">@Model.MaSinhVien</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Ngành</span>
+                        <div class="field-value">@Model.Nganh</div>
+                    </div>
+                    <div>
+                        <span class="field-label">GPA</span>
+                        <div class="field-value accent">@Model.DiemTrungBinhTichLuy.ToString("0.00") / 4.0</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Bậc đào tạo</span>
+                        <div class="field-value">@Model.BacDaoTao</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Ngày nộp</span>
+                        <div class="field-value">@Model.NgayNop.ToString("dd/MM/yyyy · HH:mm")</div>
+                    </div>
+                </div>
+            </div>
         </div>
+
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Thư xin học bổng</h3>
+                <p class="mb-0" style="white-space:pre-line;">@Model.ThuXinHocBong</p>
+            </div>
+        </div>
+
         @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
         {
-            <div class="card mb-3">
-                <div class="card-header fw-semibold">Ghi chú của bạn</div>
-                <div class="card-body" style="white-space: pre-line;">@Model.GhiChu</div>
-            </div>
-        }
-        @if (Model.NgayXuLy.HasValue)
-        {
-            <div class="card mb-3">
-                <div class="card-header fw-semibold">Kết quả xét duyệt sơ bộ</div>
-                <div class="card-body">
-                    <div class="text-muted small mb-1">Xử lý ngày @Model.NgayXuLy.Value.ToString("dd/MM/yyyy HH:mm")</div>
-                    <div style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(Model.NhanXetXetDuyet) ? "Không có nhận xét." : Model.NhanXetXetDuyet)</div>
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Thành tích / ghi chú</h3>
+                    <p class="mb-0" style="white-space:pre-line;">@Model.GhiChu</p>
                 </div>
             </div>
         }
+
+        <div class="ui-card">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Tài liệu hồ sơ</h3>
+                <p class="ui-card-sub">Minh chứng đính kèm (nếu có)</p>
+                <div class="text-muted">Chưa có tệp minh chứng được lưu trên hệ thống.</div>
+            </div>
+        </div>
     </div>
 
     <div class="col-lg-4">
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Lịch phỏng vấn</div>
-            <div class="card-body">
-                @if (Model.LichPhongVan != null)
-                {
-                    var l = Model.LichPhongVan;
-                    <dl class="mb-0">
-                        <dt>Thời gian</dt>
-                        <dd>@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</dd>
-                        <dt>Hình thức</dt>
-                        <dd>@(l.HinhThucPhongVan ?? "—")</dd>
-                        <dt>Địa điểm / liên kết</dt>
-                        <dd>@(l.DiaDiemHoacLienKet ?? "—")</dd>
-                        <dt>Người phỏng vấn</dt>
-                        <dd>@(l.NguoiPhongVan ?? "—")</dd>
-                        @if (!string.IsNullOrWhiteSpace(l.GhiChu))
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title mb-3">Tiến trình hồ sơ</h3>
+                <ul class="timeline">
+                    <li class="@(nopXong ? "done" : "")">Đã nộp hồ sơ · @Model.NgayNop.ToString("dd/MM")</li>
+                    <li class="@(daXuLy ? "done" : "current")">
+                        @(daXuLy ? "Kiểm tra điều kiện" : "Đang kiểm tra điều kiện")
+                        @if (Model.NgayXuLy.HasValue)
                         {
-                            <dt>Lưu ý</dt>
-                            <dd>@l.GhiChu</dd>
+                            <text> · @Model.NgayXuLy.Value.ToString("dd/MM")</text>
                         }
-                        <dt>Trạng thái lịch</dt>
-                        <dd class="mb-0">@l.TrangThai</dd>
-                    </dl>
-                }
-                else
-                {
-                    <span class="text-muted">Chưa có lịch phỏng vấn.</span>
-                }
+                    </li>
+                    <li class="@(dangXet && daXuLy ? "current" : (Model.DaCongBoKetQua ? "done" : ""))">
+                        @(Model.DaCongBoKetQua ? "Đã có kết quả xét duyệt" : "Hội đồng đang xét duyệt")
+                    </li>
+                </ul>
             </div>
         </div>
 
-        <div class="card mb-3">
-            <div class="card-header fw-semibold">Kết quả xét học bổng</div>
-            <div class="card-body">
-                @if (Model.DaCongBoKetQua)
-                {
-                    <div class="fs-5 fw-semibold @(Model.KetQua!.KetQua == "Được cấp học bổng" ? "text-success" : "text-danger")">@Model.KetQua.KetQua</div>
-                    @if (Model.KetQua.DiemDanhGia.HasValue)
-                    {
-                        <div class="small">Điểm đánh giá: @Model.KetQua.DiemDanhGia.Value.ToString("0.##")</div>
-                    }
-                    @if (!string.IsNullOrWhiteSpace(Model.KetQua.NhanXet))
-                    {
-                        <div class="small mt-2" style="white-space: pre-line;">@Model.KetQua.NhanXet</div>
-                    }
-                    <div class="text-muted small mt-2">Cập nhật @Model.KetQua.NgayCapNhat.ToString("dd/MM/yyyy")</div>
-                }
-                else
-                {
-                    <span class="text-muted">Chưa công bố.</span>
-                }
+        @if (Model.LichPhongVan != null)
+        {
+            var l = Model.LichPhongVan;
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title mb-3">Lịch phỏng vấn</h3>
+                    <div class="mb-2"><span class="field-label">Thời gian</span><div class="field-value">@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</div></div>
+                    <div class="mb-2"><span class="field-label">Hình thức</span><div class="field-value">@(l.HinhThucPhongVan ?? "—")</div></div>
+                    <div><span class="field-label">Địa điểm</span><div class="field-value">@(l.DiaDiemHoacLienKet ?? "—")</div></div>
+                </div>
+            </div>
+        }
+
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Hỗ trợ</h3>
+                <p class="ui-card-sub mb-3">Nếu cần cập nhật tài liệu, vui lòng liên hệ Phòng Công tác sinh viên trước hạn xét duyệt.</p>
+                <a class="btn btn-outline-secondary w-100" href="mailto:scholarship@uneti.edu.vn">Gửi yêu cầu hỗ trợ</a>
             </div>
         </div>
 
         @if (Model.CoTheHuy)
         {
-            <form asp-action="Huy" asp-route-id="@Model.MaHoSoHocBong" method="post"
-                  onsubmit="return confirm('Bạn chắc chắn muốn hủy hồ sơ này?');">
+            <form asp-action="Huy" asp-route-id="@Model.MaHoSoHocBong" method="post" class="js-confirm"
+                  data-confirm-title="Xác nhận hủy hồ sơ?"
+                  data-confirm-body="Hồ sơ sẽ bị hủy. Hành động này không thể hoàn tác."
+                  data-confirm-ok="Hủy hồ sơ">
                 <button type="submit" class="btn btn-outline-danger w-100">Hủy hồ sơ</button>
             </form>
         }

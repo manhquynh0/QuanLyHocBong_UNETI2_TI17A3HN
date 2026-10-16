@@ -3,31 +3,57 @@
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model HoSoCaNhanViewModel
 @{
-    ViewData["Title"] = "Cập nhật thông tin cá nhân";
+    ViewData["Title"] = "Chỉnh sửa thông tin cá nhân";
+    ViewData["Nav"] = "TaiKhoan";
     var huyUrl = !string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : Url.Action("Index", "HoSoCaNhan");
+    var hoTen = ViewBag.HoTenHoSo as string ?? Model.HoTen;
+    var chuCai = (hoTen ?? "S").Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
 }
 
-<h2 class="mt-3 mb-3">Cập nhật thông tin cá nhân</h2>
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Cập nhật hồ sơ sinh viên</h2>
+        <p>Thông tin được đồng bộ với hồ sơ sinh viên UNETI.</p>
+    </div>
+</div>
 
-<form asp-action="Edit" method="post" novalidate>
+<form asp-action="Edit" method="post" novalidate data-loading>
     <input type="hidden" asp-for="ReturnUrl" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-    <div class="row g-3">
-        <div class="col-lg-8">
-            <div class="card card-info mb-3">
-                <div class="card-header fw-semibold">Thông tin chung</div>
-                <div class="card-body">
+    <div class="profile-layout">
+        <div class="ui-card profile-side">
+            <div class="avatar-lg">@chuCai</div>
+            <h3>@hoTen</h3>
+            <div class="profile-meta">@ViewBag.MaSinhVien · @Model.Nganh</div>
+            <span class="badge-verified">Hồ sơ đã xác thực</span>
+        </div>
+
+        <div class="info-stack">
+            <div class="ui-card">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Thông tin cơ bản</h3>
+                    <p class="ui-card-sub">Dữ liệu định danh và liên hệ</p>
                     <div class="row g-3">
-                        <div class="col-md-8">
-                            <label asp-for="HoTen" class="form-label"></label>
+                        <div class="col-md-6">
+                            <label asp-for="HoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
                             <input asp-for="HoTen" class="form-control" maxlength="100" autocomplete="name" />
                             <span asp-validation-for="HoTen" class="text-danger"></span>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <label asp-for="NgaySinh" class="form-label"></label>
                             <input asp-for="NgaySinh" type="date" class="form-control" autocomplete="bday" />
                             <span asp-validation-for="NgaySinh" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Email" class="form-label"></label>
+                            <input asp-for="Email" type="email" maxlength="100" class="form-control" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="SoDienThoai" class="form-label"></label>
+                            <input asp-for="SoDienThoai" type="tel" inputmode="tel" maxlength="12" class="form-control" autocomplete="tel" />
+                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
                         </div>
                         <div class="col-12">
                             <label asp-for="GioiTinh" class="form-label d-block"></label>
@@ -45,22 +71,8 @@
                             </div>
                             <div><span asp-validation-for="GioiTinh" class="text-danger"></span></div>
                         </div>
-                        <div class="col-md-6">
-                            <label asp-for="SoDienThoai" class="form-label"></label>
-                            <input asp-for="SoDienThoai" type="tel" inputmode="tel" maxlength="12" class="form-control"
-                                   placeholder="0912345678" autocomplete="tel" />
-                            <div class="form-text">10 chữ số bắt đầu bằng 0, hoặc dạng +84…, nhập liền.</div>
-                            <span asp-validation-for="SoDienThoai" class="text-danger"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="Email" class="form-label"></label>
-                            <input asp-for="Email" type="email" maxlength="100" class="form-control"
-                                   placeholder="ten@uneti.edu.vn" autocomplete="email" />
-                            <div class="form-text">Dùng chữ không dấu, ví dụ ten@uneti.edu.vn.</div>
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
                         <div class="col-12">
-                            <label asp-for="DiaChi" class="form-label"></label>
+                            <label asp-for="DiaChi" class="form-label">Địa chỉ liên hệ</label>
                             <input asp-for="DiaChi" maxlength="500" class="form-control" autocomplete="street-address" />
                             <span asp-validation-for="DiaChi" class="text-danger"></span>
                         </div>
@@ -68,49 +80,48 @@
                 </div>
             </div>
 
-            <div class="card">
-                <div class="card-header fw-semibold">Thành tích học tập</div>
-                <div class="card-body">
-                    <textarea asp-for="ThanhTichHocTap" rows="4" maxlength="1000" class="form-control"
-                              placeholder="Giải thưởng, chứng chỉ, hoạt động nổi bật..."></textarea>
-                    <span asp-validation-for="ThanhTichHocTap" class="text-danger"></span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card card-info">
-                <div class="card-header fw-semibold">Học tập</div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <label asp-for="BacDaoTao" class="form-label"></label>
-                        <select asp-for="BacDaoTao" class="form-select">
-                            <option value="">-- Chọn bậc đào tạo --</option>
-                            <option value="Cao đẳng">Cao đẳng</option>
-                            <option value="Đại học">Đại học</option>
-                            <option value="Thạc sĩ">Thạc sĩ</option>
-                        </select>
-                        <span asp-validation-for="BacDaoTao" class="text-danger"></span>
-                    </div>
-                    <div class="mb-3">
-                        <label asp-for="Nganh" class="form-label"></label>
-                        <input asp-for="Nganh" maxlength="100" class="form-control" />
-                        <span asp-validation-for="Nganh" class="text-danger"></span>
-                    </div>
-                    <div class="mb-0">
-                        <label asp-for="DiemTrungBinhTichLuy" class="form-label"></label>
-                        <input asp-for="DiemTrungBinhTichLuy" type="number" step="0.01" class="form-control" />
-                        <div class="form-text">Từ 0 đến 4, tối đa 2 chữ số thập phân (ví dụ 3.25).</div>
-                        <span asp-validation-for="DiemTrungBinhTichLuy" class="text-danger"></span>
+            <div class="ui-card">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Thông tin học tập</h3>
+                    <p class="ui-card-sub">Kết quả gần nhất từ hệ thống đào tạo</p>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label asp-for="BacDaoTao" class="form-label"></label>
+                            <select asp-for="BacDaoTao" class="form-select">
+                                <option value="">-- Chọn bậc đào tạo --</option>
+                                <option value="Cao đẳng">Cao đẳng</option>
+                                <option value="Đại học">Đại học</option>
+                                <option value="Thạc sĩ">Thạc sĩ</option>
+                            </select>
+                            <span asp-validation-for="BacDaoTao" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="Nganh" class="form-label">Chuyên ngành</label>
+                            <input asp-for="Nganh" maxlength="100" class="form-control" />
+                            <span asp-validation-for="Nganh" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-4">
+                            <label asp-for="DiemTrungBinhTichLuy" class="form-label">GPA tích lũy</label>
+                            <input asp-for="DiemTrungBinhTichLuy" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="DiemTrungBinhTichLuy" class="text-danger"></span>
+                        </div>
+                        <div class="col-12">
+                            <label asp-for="ThanhTichHocTap" class="form-label"></label>
+                            <textarea asp-for="ThanhTichHocTap" rows="3" maxlength="1000" class="form-control"
+                                      placeholder="Giải thưởng, chứng chỉ, hoạt động nổi bật..."></textarea>
+                            <span asp-validation-for="ThanhTichHocTap" class="text-danger"></span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="mt-3">
-        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
-        <a href="@huyUrl" class="btn btn-outline-secondary">Hủy</a>
+    <div class="form-actions">
+        <a href="@huyUrl" class="btn btn-outline-secondary px-4">Hủy</a>
+        <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save me-1"></i> Lưu thay đổi
+        </button>
     </div>
 </form>
 
@@ -118,7 +129,6 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/validation-vi.js" asp-append-version="true"></script>
     <script>
-        // Cắt khoảng trắng thừa ở đầu/cuối khi rời ô nhập để không bị báo sai định dạng.
         document.querySelectorAll('form input[type=text], form input[type=email], form input[type=tel]').forEach(function (el) {
             el.addEventListener('blur', function () { el.value = el.value.trim(); });
         });

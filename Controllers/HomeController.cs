@@ -16,10 +16,33 @@ public class HomeController : Controller
         return View();
     }
 
+    public IActionResult ThongBao()
+    {
+        ViewData["Title"] = "Thông báo / gửi thông báo";
+        ViewData["Nav"] = "ThongBao";
+        return View();
+    }
+
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
-    
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult PageNotFound()
+    {
+        ViewData["Title"] = "404 Not Found";
+        Response.StatusCode = 404;
+        return View();
+    }
+
+    public IActionResult DangNhapThu()
+    {
+        HttpContext.Session.SetInt32("MaTaiKhoan", 3);
+        HttpContext.Session.SetString("HoTen", "Trần Sinh Viên");
+        HttpContext.Session.SetString("VaiTro", "Sinh viên");
+        HttpContext.Session.SetString("TenDangNhap", "23103100161");
+        return RedirectToAction("Index", "HocBongSinhVien");
+    }
 }

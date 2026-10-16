@@ -1,0 +1,80 @@
+@{
+    ViewData["Title"] = "Thông báo / gửi thông báo";
+    ViewData["Nav"] = "ThongBao";
+    var laSinhVien = Context.Session.GetString("VaiTro") == "Sinh viên";
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Thông báo / gửi thông báo</h2>
+        <p>@(laSinhVien ? "Thông báo gửi đến tài khoản sinh viên của bạn." : "Soạn và gửi thông báo đến sinh viên hoặc cán bộ trong hệ thống.")</p>
+    </div>
+</div>
+
+@if (laSinhVien)
+{
+    <div class="ui-card">
+        <div class="empty-state">Chưa có thông báo mới.</div>
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="ui-card">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title mb-3">Soạn thông báo</h3>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nhóm người nhận</label>
+                            <input class="form-control" value="Sinh viên theo chương trình học bổng" />
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Chương trình</label>
+                            <input class="form-control" value="Học bổng UNIS 2026" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Tiêu đề thông báo *</label>
+                            <input class="form-control" value="Lịch phỏng vấn Học bổng Doanh nghiệp Công nghệ UNIS" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Nội dung *</label>
+                            <textarea class="form-control" rows="5">Hội đồng trân trọng thông báo lịch phỏng vấn đã được cập nhật. Sinh viên vui lòng kiểm tra thời gian, địa điểm và xác nhận tham gia.</textarea>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="guiEmail" checked />
+                                <label class="form-check-label" for="guiEmail">Gửi kèm email</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="checkbox" id="quanTrong" checked />
+                                <label class="form-check-label" for="quanTrong">Đánh dấu quan trọng</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary">Lưu nháp</button>
+                        <button type="button" class="btn btn-primary"><i class="bi bi-send me-1"></i> Gửi thông báo</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="ui-card recipient-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title mb-2">Người nhận</h3>
+                    <div class="stat mb-1">32</div>
+                    <div class="text-muted small mb-3">Sinh viên đủ điều kiện nhận thông báo</div>
+                    <button type="button" class="btn btn-outline-secondary w-100">Xem danh sách</button>
+                </div>
+            </div>
+            <div class="ui-card">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title mb-3">Lịch sử gần đây</h3>
+                    <div class="small mb-2">Thông báo kết quả sơ tuyển · Đã gửi 48 người · 08/03/2026</div>
+                    <div class="small">Nhắc hạn bổ sung hồ sơ · Đã gửi 8 người · 05/03/2026</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

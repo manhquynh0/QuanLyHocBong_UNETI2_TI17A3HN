@@ -187,6 +187,12 @@ a {
     background: #f3f5f9;
 }
 
+a.notification-button:hover,
+a.notification-button:focus-visible {
+    color: #2160ad;
+    background: #e8eef6;
+}
+
     .notification-button .bi {
         font-size: 18px;
         line-height: 1;

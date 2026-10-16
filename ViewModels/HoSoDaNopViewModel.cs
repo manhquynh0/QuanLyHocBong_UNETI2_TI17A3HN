@@ -28,6 +28,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
     {
         public int MaHoSoHocBong { get; set; }
         public int MaHocBong { get; set; }
+        public int MaSinhVien { get; set; }
+        public string HoTenSinhVien { get; set; } = string.Empty;
+        public string Nganh { get; set; } = string.Empty;
+        public string BacDaoTao { get; set; } = string.Empty;
+        public decimal DiemTrungBinhTichLuy { get; set; }
         public string TenHocBong { get; set; } = string.Empty;
         public string TenDonViTaiTro { get; set; } = string.Empty;
         public DateTime NgayNop { get; set; }

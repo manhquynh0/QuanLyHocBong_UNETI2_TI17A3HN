@@ -1,0 +1,53 @@
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model List<HoSoDaNopViewModel>
+@{
+    ViewData["Title"] = "Lịch phỏng vấn";
+    ViewData["Nav"] = "LichPhongVan";
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Lịch phỏng vấn</h2>
+        <p>Các buổi phỏng vấn học bổng đã được xếp lịch cho hồ sơ của bạn.</p>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="ui-card">
+        <div class="empty-state">Chưa có lịch phỏng vấn.</div>
+    </div>
+}
+else
+{
+    <div class="ui-card">
+        <div class="table-responsive border-0">
+            <table class="ui-table">
+                <thead>
+                    <tr>
+                        <th>Học bổng</th>
+                        <th>Thời gian</th>
+                        <th>Hình thức</th>
+                        <th>Địa điểm</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var h in Model)
+                    {
+                        var l = h.LichPhongVan!;
+                        <tr>
+                            <td class="fw-semibold">@h.TenHocBong</td>
+                            <td>@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</td>
+                            <td>@(l.HinhThucPhongVan ?? "—")</td>
+                            <td>@(l.DiaDiemHoacLienKet ?? "—")</td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@h.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
