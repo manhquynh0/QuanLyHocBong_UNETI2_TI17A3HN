@@ -6,9 +6,43 @@
 @{
     ViewData["Title"] = "Chi tiết hồ sơ đã nộp";
     ViewData["Nav"] = "HoSoCuaToi";
-    var nopXong = true;
-    var daXuLy = Model.NgayXuLy.HasValue || Model.TrangThai != TrangThaiHoSo.ChoDuyet;
-    var dangXet = Model.TrangThai is TrangThaiHoSo.ChoDuyet or TrangThaiHoSo.DatSoBo or TrangThaiHoSo.ChoPhongVan or TrangThaiHoSo.DaPhongVan;
+    var ngayXuLy = Model.NgayXuLy.HasValue ? " · " + Model.NgayXuLy.Value.ToString("dd/MM") : "";
+
+    // Tiến trình hiển thị theo ĐÚNG trạng thái hiện tại (kể cả hồ sơ bị loại / đã hủy)
+    var buoc = new List<(string Text, string Css)> { ("Đã nộp hồ sơ · " + Model.NgayNop.ToString("dd/MM"), "done") };
+    switch (Model.TrangThai)
+    {
+        case TrangThaiHoSo.ChoDuyet:
+            buoc.Add(("Đang xét duyệt sơ bộ", "current"));
+            break;
+        case TrangThaiHoSo.KhongDatSoBo:
+            buoc.Add(("Không đạt xét duyệt sơ bộ" + ngayXuLy, "done"));
+            break;
+        case TrangThaiHoSo.DaHuy:
+            buoc.Add(("Hồ sơ đã bị hủy", ""));
+            break;
+        default:
+            buoc.Add(("Đạt xét duyệt sơ bộ" + ngayXuLy, "done"));
+            if (Model.TrangThai == TrangThaiHoSo.DatSoBo)
+            {
+                buoc.Add(("Chờ lập lịch phỏng vấn", "current"));
+            }
+            else if (Model.TrangThai == TrangThaiHoSo.ChoPhongVan)
+            {
+                buoc.Add(("Chờ phỏng vấn", "current"));
+            }
+            else if (Model.TrangThai == TrangThaiHoSo.DaPhongVan)
+            {
+                buoc.Add(("Đã phỏng vấn", "done"));
+                buoc.Add(("Chờ công bố kết quả", "current"));
+            }
+            else
+            {
+                buoc.Add(("Đã phỏng vấn", "done"));
+                buoc.Add(("Đã công bố kết quả", "done"));
+            }
+            break;
+    }
 }
 
 <div class="page-hero">
@@ -60,6 +94,42 @@
             </div>
         </div>
 
+        @if (!string.IsNullOrWhiteSpace(Model.NhanXetXetDuyet))
+        {
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Nhận xét xét duyệt sơ bộ</h3>
+                    @if (Model.NgayXuLy.HasValue)
+                    {
+                        <p class="ui-card-sub">Xử lý ngày @Model.NgayXuLy.Value.ToString("dd/MM/yyyy")</p>
+                    }
+                    <p class="mb-0" style="white-space:pre-line;">@Model.NhanXetXetDuyet</p>
+                </div>
+            </div>
+        }
+
+        @if (Model.DaCongBoKetQua)
+        {
+            var kq = Model.KetQua!;
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Kết quả xét học bổng</h3>
+                    <p class="ui-card-sub">Công bố ngày @kq.NgayCapNhat.ToString("dd/MM/yyyy")</p>
+                    <div class="mb-2">
+                        <span class="@(kq.KetQua == TrangThaiHoSo.DuocCap ? "st st-green" : "st st-red")">@kq.KetQua</span>
+                        @if (kq.DiemDanhGia.HasValue)
+                        {
+                            <span class="ms-2 text-muted">Điểm đánh giá: <strong>@kq.DiemDanhGia.Value.ToString("0.##")</strong></span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(kq.NhanXet))
+                    {
+                        <p class="mb-0" style="white-space:pre-line;">@kq.NhanXet</p>
+                    }
+                </div>
+            </div>
+        }
+
         @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
         {
             <div class="ui-card mb-3">
@@ -84,17 +154,10 @@
             <div class="ui-card-body">
                 <h3 class="ui-card-title mb-3">Tiến trình hồ sơ</h3>
                 <ul class="timeline">
-                    <li class="@(nopXong ? "done" : "")">Đã nộp hồ sơ · @Model.NgayNop.ToString("dd/MM")</li>
-                    <li class="@(daXuLy ? "done" : "current")">
-                        @(daXuLy ? "Kiểm tra điều kiện" : "Đang kiểm tra điều kiện")
-                        @if (Model.NgayXuLy.HasValue)
-                        {
-                            <text> · @Model.NgayXuLy.Value.ToString("dd/MM")</text>
-                        }
-                    </li>
-                    <li class="@(dangXet && daXuLy ? "current" : (Model.DaCongBoKetQua ? "done" : ""))">
-                        @(Model.DaCongBoKetQua ? "Đã có kết quả xét duyệt" : "Hội đồng đang xét duyệt")
-                    </li>
+                    @foreach (var b in buoc)
+                    {
+                        <li class="@b.Css">@b.Text</li>
+                    }
                 </ul>
             </div>
         </div>

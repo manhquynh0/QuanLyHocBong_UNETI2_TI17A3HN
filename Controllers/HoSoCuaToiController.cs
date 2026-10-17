@@ -89,6 +89,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         public async Task<IActionResult> Create(int maHocBong)
         {
             var sv = await LaySinhVienHienTaiAsync();
+            if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");   // chưa có hồ sơ sinh viên
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
                 .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong);
@@ -107,15 +108,27 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         public async Task<IActionResult> Create(NopHoSoViewModel model)
         {
             var sv = await LaySinhVienHienTaiAsync();
+            if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
                 .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong);
             if (hb == null) return NotFound();
 
+            if (!ModelState.IsValid)
+            {
+                await NapDuLieuHienThiAsync(model, sv, hb);
+                return View(model);
+            }
+
+            // Kiểm tra điều kiện + tạo hồ sơ trong CÙNG một transaction Serializable:
+            // bấm "Nộp" hai lần liên tiếp (hoặc mở 2 tab) cũng không tạo ra hai hồ sơ trùng.
+            await using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
             // Kiểm tra nghiệp vụ lại ở server (không tin giao diện)
             var loi = await NopHoSoRules.KiemTraAsync(_context, sv, hb, DateTime.Now);
-            if (loi.Any() || !ModelState.IsValid || sv == null)
+            if (loi.Any())
             {
+                await tx.RollbackAsync();
                 await NapDuLieuHienThiAsync(model, sv, hb);
                 return View(model);
             }
@@ -131,6 +144,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             };
             _context.HoSoHocBong.Add(hoSo);
             await _context.SaveChangesAsync();
+            await tx.CommitAsync();
 
             TempData["ThongBao"] = $"Đã nộp hồ sơ xin học bổng \"{hb.TenHocBong}\". Hồ sơ đang ở trạng thái Chờ duyệt.";
             return RedirectToAction(nameof(Index));
