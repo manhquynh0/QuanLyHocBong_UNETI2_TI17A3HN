@@ -22,6 +22,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
         public DbSet<HoSoHocBong> HoSoHocBong { get; set; } = default!;
         public DbSet<LichPhongVan> LichPhongVan { get; set; } = default!;
         public DbSet<KetQuaHocBong> KetQuaHocBong { get; set; } = default!;
+        public DbSet<TaiLieuHoSo> TaiLieuHoSo { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

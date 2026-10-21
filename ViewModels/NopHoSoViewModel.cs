@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - ViewModel form nộp hồ sơ xin học bổng.
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 
@@ -19,6 +20,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         [StringLength(1000, ErrorMessage = "Ghi chú tối đa 1000 ký tự")]
         [Display(Name = "Ghi chú")]
         public string? GhiChu { get; set; }
+
+        [Display(Name = "Loại tài liệu")]
+        public string LoaiTaiLieu { get; set; } = "Minh chứng";
+
+        // Tệp đính kèm (PDF/JPG/PNG). Định dạng, dung lượng, nội dung được kiểm tra ở TaiLieuHoSoStorage.
+        public List<IFormFile>? TaiLieus { get; set; }
 
         // ---- Chỉ để hiển thị, không nhận từ form ----
         [BindNever] public HocBong? HocBong { get; set; }

@@ -13,7 +13,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
     public class HoSoCuaToiController : SinhVienBaseController
     {
-        public HoSoCuaToiController(QuanLyHocBong_UNETI2_TI17A3HNContext context) : base(context) { }
+        private readonly IWebHostEnvironment _env;
+
+        public HoSoCuaToiController(QuanLyHocBong_UNETI2_TI17A3HNContext context, IWebHostEnvironment env) : base(context)
+        {
+            _env = env;
+        }
 
         // Truy vấn hồ sơ của MỘT sinh viên -> mọi action đọc dữ liệu đều đi qua đây nên không lộ hồ sơ người khác.
         private IQueryable<HoSoDaNopViewModel> HoSoCuaSinhVien(int maSinhVien)
@@ -82,6 +87,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var hoSo = await HoSoCuaSinhVien(sv.MaSinhVien)
                 .FirstOrDefaultAsync(h => h.MaHoSoHocBong == id);
             if (hoSo == null) return NotFound();   // hồ sơ của người khác cũng trả về NotFound
+
+            hoSo.TaiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, id);   // tệp đính kèm của chính hồ sơ này
             return View(hoSo);
         }
 
@@ -102,9 +109,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             return View(model);
         }
 
-        // POST: /HoSoHocBong/Create
+        // POST: /HoSoHocBong/Create  (multipart/form-data: có tệp đính kèm)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestSizeLimit(TaiLieuHoSoRules.GioiHanRequest)]
+        [RequestFormLimits(MultipartBodyLengthLimit = TaiLieuHoSoRules.GioiHanRequest)]
         public async Task<IActionResult> Create(NopHoSoViewModel model)
         {
             var sv = await LaySinhVienHienTaiAsync();
@@ -114,37 +123,75 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong);
             if (hb == null) return NotFound();
 
+            // Kiểm tra tệp đính kèm (số lượng, dung lượng, định dạng, nội dung thật) TRƯỚC khi làm gì khác.
+            var tep = TaiLieuHoSoStorage.LayTepDuocChon(model.TaiLieus);
+            foreach (var loiTep in await TaiLieuHoSoStorage.KiemTraAsync(tep, 0))
+                ModelState.AddModelError(nameof(model.TaiLieus), loiTep);
+            if (TaiLieuHoSoRules.BatBuocTaiLieu && tep.Count == 0)
+                ModelState.AddModelError(nameof(model.TaiLieus), "Vui lòng đính kèm ít nhất một tệp (bảng điểm hoặc minh chứng).");
+
             if (!ModelState.IsValid)
             {
                 await NapDuLieuHienThiAsync(model, sv, hb);
                 return View(model);
             }
 
-            // Kiểm tra điều kiện + tạo hồ sơ trong CÙNG một transaction Serializable:
-            // bấm "Nộp" hai lần liên tiếp (hoặc mở 2 tab) cũng không tạo ra hai hồ sơ trùng.
-            await using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
-
-            // Kiểm tra nghiệp vụ lại ở server (không tin giao diện)
-            var loi = await NopHoSoRules.KiemTraAsync(_context, sv, hb, DateTime.Now);
-            if (loi.Any())
+            // Ghi tệp ra đĩa trước (tên GUID, ngoài wwwroot) để giao dịch DB bên dưới ngắn gọn.
+            List<TepDaLuu> daLuu;
+            try
             {
-                await tx.RollbackAsync();
+                daLuu = await TaiLieuHoSoStorage.LuuAsync(_env.ContentRootPath, tep);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                ModelState.AddModelError(string.Empty, "Không thể lưu tệp đính kèm. Vui lòng thử lại.");
                 await NapDuLieuHienThiAsync(model, sv, hb);
                 return View(model);
             }
 
-            var hoSo = new HoSoHocBong
+            var daLuuVaoDb = false;
+            try
             {
-                MaSinhVien = sv.MaSinhVien,
-                MaHocBong = hb.MaHocBong,
-                NgayNop = DateTime.Now,                       // do hệ thống xác định
-                ThuXinHocBong = model.ThuXinHocBong.Trim(),
-                GhiChu = model.GhiChu?.Trim() ?? string.Empty, // cột DB là NOT NULL
-                TrangThai = TrangThaiHoSo.ChoDuyet            // hồ sơ mới luôn là Chờ duyệt
-            };
-            _context.HoSoHocBong.Add(hoSo);
-            await _context.SaveChangesAsync();
-            await tx.CommitAsync();
+                // Kiểm tra điều kiện + tạo hồ sơ + bản ghi tệp trong CÙNG một transaction Serializable:
+                // bấm "Nộp" hai lần liên tiếp (hoặc mở 2 tab) cũng không tạo ra hai hồ sơ trùng.
+                await using var tx = await _context.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+                // Kiểm tra nghiệp vụ lại ở server (không tin giao diện)
+                var loi = await NopHoSoRules.KiemTraAsync(_context, sv, hb, DateTime.Now);
+                if (loi.Any())
+                {
+                    await tx.RollbackAsync();
+                    await NapDuLieuHienThiAsync(model, sv, hb);
+                    return View(model);
+                }
+
+                var hoSo = new HoSoHocBong
+                {
+                    MaSinhVien = sv.MaSinhVien,
+                    MaHocBong = hb.MaHocBong,
+                    NgayNop = DateTime.Now,                       // do hệ thống xác định
+                    ThuXinHocBong = model.ThuXinHocBong.Trim(),
+                    GhiChu = model.GhiChu?.Trim() ?? string.Empty, // cột DB là NOT NULL
+                    TrangThai = TrangThaiHoSo.ChoDuyet            // hồ sơ mới luôn là Chờ duyệt
+                };
+                _context.HoSoHocBong.Add(hoSo);
+                await _context.SaveChangesAsync();
+
+                if (daLuu.Count > 0)
+                {
+                    _context.TaiLieuHoSo.AddRange(
+                        TaiLieuHoSoStorage.TaoBanGhi(hoSo.MaHoSoHocBong, daLuu, model.LoaiTaiLieu, MaTaiKhoanHienTai));
+                    await _context.SaveChangesAsync();
+                }
+
+                await tx.CommitAsync();
+                daLuuVaoDb = true;
+            }
+            finally
+            {
+                // Nộp không thành công (điều kiện sai hoặc lỗi) -> xóa tệp đã ghi để không để lại tệp mồ côi.
+                if (!daLuuVaoDb) TaiLieuHoSoStorage.Xoa(_env.ContentRootPath, daLuu);
+            }
 
             TempData["ThongBao"] = $"Đã nộp hồ sơ xin học bổng \"{hb.TenHocBong}\". Hồ sơ đang ở trạng thái Chờ duyệt.";
             return RedirectToAction(nameof(Index));

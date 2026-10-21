@@ -131,3 +131,18 @@ main a:not(.btn):not(.page-link):hover { color: var(--c-blue-dark); }
 .pagination .page-link { color: var(--c-purple); }
 .pagination .active > .page-link { color: #fff; background: var(--c-purple); border-color: var(--c-purple); }
 .pagination .disabled > .page-link { color: #94A3B8; }
+
+/* ---------- Tải tệp đính kèm hồ sơ ---------- */
+.upload-list { margin: 10px 0 0; padding: 0; }
+.upload-item {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 8px 12px;
+    border: 1px solid var(--c-line); border-radius: 10px; background: #fff;
+}
+.upload-item .upload-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.upload-item .upload-size { color: var(--c-muted); font-size: 12px; white-space: nowrap; }
+.upload-item .btn-remove { border: 0; background: transparent; color: var(--c-muted); }
+.upload-item .btn-remove:hover { color: var(--c-red); }
+.upload-error:empty { display: none; }
+.upload-error { margin-top: 6px; }
+.dropzone.dragover { border-color: var(--c-blue); background: var(--c-blue-soft); }
+.doc-icon-img { color: var(--c-blue); font-size: 20px; }

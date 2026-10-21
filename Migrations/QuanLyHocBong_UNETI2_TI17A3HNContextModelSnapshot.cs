@@ -470,6 +470,53 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiLieuHoSo", b =>
+                {
+                    b.Property<int>("MaTaiLieu")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaTaiLieu"));
+
+                    b.Property<long>("DungLuong")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("LoaiNoiDung")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("LoaiTaiLieu")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("MaHoSoHocBong")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("MaTaiKhoanTai")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayTai")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TenFileGoc")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("TenFileLuu")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("MaTaiLieu");
+
+                    b.HasIndex("MaHoSoHocBong");
+
+                    b.ToTable("TaiLieuHoSo");
+                });
+
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong", b =>
                 {
                     b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong", "HocBong")
@@ -531,6 +578,17 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .IsRequired();
 
                     b.Navigation("TaiKhoan");
+                });
+
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiLieuHoSo", b =>
+                {
+                    b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong", "HoSoHocBong")
+                        .WithMany()
+                        .HasForeignKey("MaHoSoHocBong")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HoSoHocBong");
                 });
 
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.DonViTaiTro", b =>

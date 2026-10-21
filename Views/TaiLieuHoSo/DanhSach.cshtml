@@ -1,0 +1,38 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - cán bộ/Admin xem và tải toàn bộ tệp đính kèm của một hồ sơ (phục vụ xét duyệt). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model TaiLieuHoSoNhanVienViewModel
+@{
+    ViewData["Title"] = "Tài liệu hồ sơ";
+    ViewData["Nav"] = "XetDuyetHoSo";
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Tài liệu hồ sơ</h2>
+        <p>@Model.TenHocBong</p>
+    </div>
+    <partial name="_TrangThaiBadge" model="@Model.TrangThai" />
+</div>
+
+<div class="ui-card mb-3">
+    <div class="ui-card-body">
+        <h3 class="ui-card-title mb-3">Thông tin hồ sơ</h3>
+        <div class="info-grid">
+            <div>
+                <span class="field-label">Họ và tên</span>
+                <div class="field-value">@Model.HoTenSinhVien</div>
+            </div>
+            <div>
+                <span class="field-label">Mã sinh viên</span>
+                <div class="field-value">@Model.MaSinhVien</div>
+            </div>
+            <div>
+                <span class="field-label">Ngày nộp</span>
+                <div class="field-value">@Model.NgayNop.ToString("dd/MM/yyyy · HH:mm")</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<partial name="_TaiLieuHoSo" model="@Model.TaiLieu" />

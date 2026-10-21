@@ -53,6 +53,21 @@
     <partial name="_TrangThaiBadge" model="@Model.TrangThai" />
 </div>
 
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["ThongBao"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" style="white-space:pre-line;">
+        @TempData["Loi"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <div class="row g-3">
     <div class="col-lg-8">
         <div class="ui-card mb-3">
@@ -140,13 +155,13 @@
             </div>
         }
 
-        <div class="ui-card">
-            <div class="ui-card-body">
-                <h3 class="ui-card-title">Tài liệu hồ sơ</h3>
-                <p class="ui-card-sub">Minh chứng đính kèm (nếu có)</p>
-                <div class="text-muted">Chưa có tệp minh chứng được lưu trên hệ thống.</div>
-            </div>
-        </div>
+        <partial name="_TaiLieuHoSo" model="@(new TaiLieuHoSoListViewModel
+        {
+            MaHoSoHocBong = Model.MaHoSoHocBong,
+            Items = Model.TaiLieus,
+            CoTheThem = Model.CoTheSuaTaiLieu,
+            CoTheXoa = Model.CoTheSuaTaiLieu
+        })" />
     </div>
 
     <div class="col-lg-4">
@@ -194,3 +209,7 @@
         }
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/tai-lieu-hoso.js" asp-append-version="true"></script>
+}

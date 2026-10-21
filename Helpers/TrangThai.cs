@@ -6,6 +6,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Helpers
     public static class VaiTro
     {
         public const string SinhVien = "Sinh viên";
+        public const string Admin = "Admin";
+        public const string CanBoHocBong = "Cán bộ học bổng";
     }
 
     public static class TrangThaiSinhVien

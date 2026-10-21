@@ -42,6 +42,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public string? ThuXinHocBong { get; set; }
         public string? GhiChu { get; set; }
 
+        public List<TaiLieuItem> TaiLieus { get; set; } = new();   // tệp đính kèm
+
+        // Sinh viên chỉ thêm/xóa tệp khi hồ sơ còn "Chờ duyệt" (chưa bị cán bộ xử lý).
+        public bool CoTheSuaTaiLieu => TrangThai == TrangThaiHoSo.ChoDuyet;
+
         public LichPhongVanItem? LichPhongVan { get; set; }   // lịch chưa hủy gần nhất
         public KetQuaItem? KetQua { get; set; }
 

@@ -1,5 +1,6 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
    Nội dung thực hiện: Module 3 - form nộp hồ sơ xin học bổng (hiện điều kiện, chặn nộp khi không hợp lệ). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.Services
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model NopHoSoViewModel
 @{
@@ -53,7 +54,7 @@
     </div>
 }
 
-<form asp-action="Create" method="post" novalidate data-loading>
+<form asp-action="Create" method="post" enctype="multipart/form-data" novalidate data-loading>
     <input type="hidden" asp-for="MaHocBong" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
@@ -88,12 +89,41 @@
                     <span asp-validation-for="ThuXinHocBong" class="text-danger"></span>
                 </div>
                 <div class="col-12">
+                    <label class="form-label">Tài liệu đính kèm <span class="text-muted fw-normal">(bảng điểm, minh chứng thành tích)</span></label>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <select asp-for="LoaiTaiLieu" class="form-select" disabled="@(!Model.DuDieuKien)" aria-label="Loại tài liệu">
+                                @foreach (var l in TaiLieuHoSoRules.LoaiTaiLieuHopLe)
+                                {
+                                    <option value="@l">@l</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
                     <label class="dropzone" for="taiLieuMinhChung">
                         <i class="bi bi-cloud-arrow-up"></i>
                         <div class="fw-semibold">Tải lên bảng điểm và minh chứng</div>
-                        <small>PDF, JPG hoặc PNG · Tối đa 10MB mỗi tệp (minh họa giao diện)</small>
+                        <small>PDF, JPG hoặc PNG · Tối đa @(TaiLieuHoSoRules.DungLuongToiDa / (1024 * 1024))MB mỗi tệp · Tối đa @TaiLieuHoSoRules.SoTepToiDa tệp</small>
                     </label>
-                    <input id="taiLieuMinhChung" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" class="d-none" />
+                    <input id="taiLieuMinhChung" name="TaiLieus" type="file" multiple class="d-none"
+                           accept="@TaiLieuHoSoRules.DuoiChapNhan"
+                           disabled="@(!Model.DuDieuKien)"
+                           data-uploader
+                           data-max-bytes="@TaiLieuHoSoRules.DungLuongToiDa"
+                           data-max-files="@TaiLieuHoSoRules.SoTepToiDa"
+                           data-list="dsTaiLieuChon"
+                           data-error="loiTaiLieu" />
+                    <ul id="dsTaiLieuChon" class="upload-list list-unstyled"></ul>
+                    <div id="loiTaiLieu" class="upload-error text-danger small" role="alert"></div>
+                    @if (ViewData.ModelState.TryGetValue(nameof(Model.TaiLieus), out var tlState) && tlState.Errors.Count > 0)
+                    {
+                        <ul class="text-danger small mb-0 ps-3 mt-2">
+                            @foreach (var e in tlState.Errors)
+                            {
+                                <li>@e.ErrorMessage</li>
+                            }
+                        </ul>
+                    }
                 </div>
             </div>
         </div>
@@ -109,4 +139,5 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/tai-lieu-hoso.js" asp-append-version="true"></script>
 }

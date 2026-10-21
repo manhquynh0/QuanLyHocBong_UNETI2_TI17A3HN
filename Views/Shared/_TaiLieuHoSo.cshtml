@@ -1,0 +1,102 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - khối "Tài liệu hồ sơ" dùng chung: danh sách tệp (Xem / Tải / Xóa) và ô tải thêm tệp.
+   Dùng cho sinh viên (chi tiết hồ sơ) và cán bộ (Module 4 có thể nhúng: <partial name="_TaiLieuHoSo" model="..." />). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.Services
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model TaiLieuHoSoListViewModel
+@{
+    var conCho = TaiLieuHoSoRules.SoTepToiDa - Model.Items.Count;
+    var gioiHanMb = TaiLieuHoSoRules.DungLuongToiDa / (1024 * 1024);
+}
+
+<div class="ui-card">
+    <div class="ui-card-body">
+        <h3 class="ui-card-title">Tài liệu hồ sơ</h3>
+        <p class="ui-card-sub">@(Model.Items.Count == 0 ? "Chưa có tệp đính kèm" : $"{Model.Items.Count:00} tệp minh chứng đã tải lên")</p>
+
+        @if (Model.Items.Any())
+        {
+            <div class="table-responsive">
+                <table class="table ui-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th style="width:44px;"></th>
+                            <th>Tên tệp</th>
+                            <th>Dung lượng</th>
+                            <th class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.Items)
+                        {
+                            <tr>
+                                <td><i class="bi @(t.LaPdf ? "bi-file-earmark-pdf doc-icon" : "bi-file-earmark-image doc-icon-img")"></i></td>
+                                <td>
+                                    <div class="fw-semibold" style="word-break:break-all;">@t.TenFileGoc</div>
+                                    <div class="small text-muted">@t.LoaiTaiLieu · @t.NgayTai.ToString("dd/MM/yyyy HH:mm")</div>
+                                </td>
+                                <td class="text-nowrap">@t.DungLuongHienThi</td>
+                                <td class="text-end text-nowrap">
+                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="TaiLieuHoSo" asp-action="Xem" asp-route-id="@t.MaTaiLieu" target="_blank" rel="noopener">Xem</a>
+                                    <a class="btn btn-sm btn-outline-secondary" asp-controller="TaiLieuHoSo" asp-action="Tai" asp-route-id="@t.MaTaiLieu">Tải</a>
+                                    @if (Model.CoTheXoa)
+                                    {
+                                        <form asp-controller="TaiLieuHoSo" asp-action="Xoa" asp-route-id="@t.MaTaiLieu" method="post" class="d-inline js-confirm"
+                                              data-confirm-title="Xóa tệp đính kèm?"
+                                              data-confirm-body="Tệp sẽ bị xóa khỏi hồ sơ. Hành động này không thể hoàn tác."
+                                              data-confirm-ok="Xóa tệp">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-muted">Hồ sơ này chưa có tệp minh chứng nào.</div>
+        }
+
+        @if (Model.CoTheThem)
+        {
+            if (conCho > 0)
+            {
+                <form asp-controller="TaiLieuHoSo" asp-action="Them" method="post" enctype="multipart/form-data" data-loading class="mt-3">
+                    <input type="hidden" name="maHoSo" value="@Model.MaHoSoHocBong" />
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-5">
+                            <select name="loai" class="form-select form-select-sm" aria-label="Loại tài liệu">
+                                @foreach (var l in TaiLieuHoSoRules.LoaiTaiLieuHopLe)
+                                {
+                                    <option value="@l" selected="@(l == TaiLieuHoSoRules.LoaiMacDinh)">@l</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <label class="dropzone" for="taiLieuThem" style="min-height:110px;">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <div class="fw-semibold">Thêm bảng điểm hoặc minh chứng</div>
+                        <small>PDF, JPG hoặc PNG · Tối đa @(gioiHanMb)MB mỗi tệp · Còn thêm được @conCho tệp</small>
+                    </label>
+                    <input id="taiLieuThem" name="taiLieus" type="file" multiple class="d-none"
+                           accept="@TaiLieuHoSoRules.DuoiChapNhan"
+                           data-uploader
+                           data-max-bytes="@TaiLieuHoSoRules.DungLuongToiDa"
+                           data-max-files="@conCho"
+                           data-list="dsTaiLieuThem"
+                           data-error="loiTaiLieuThem" />
+                    <ul id="dsTaiLieuThem" class="upload-list list-unstyled"></ul>
+                    <div id="loiTaiLieuThem" class="upload-error text-danger small" role="alert"></div>
+                    <button type="submit" class="btn btn-primary btn-sm mt-2"><i class="bi bi-upload me-1"></i> Tải lên</button>
+                </form>
+            }
+            else
+            {
+                <div class="small text-muted mt-3">Hồ sơ đã đạt tối đa @TaiLieuHoSoRules.SoTepToiDa tệp. Hãy xóa bớt nếu muốn thêm tệp khác.</div>
+            }
+        }
+    </div>
+</div>
