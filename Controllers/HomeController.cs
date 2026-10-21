@@ -36,12 +36,5 @@ public class HomeController : Controller
         Response.StatusCode = 404;
         return View();
     }
-    public IActionResult DangNhapThu()
-    {
-        HttpContext.Session.SetInt32("MaTaiKhoan", 3);
-        HttpContext.Session.SetString("HoTen", "Trần Sinh Viên");
-        HttpContext.Session.SetString("VaiTro", "Sinh viên");
-        HttpContext.Session.SetString("TenDangNhap", "23103100161");
-        return RedirectToAction("Index", "HocBongSinhVien");
-    }
+
 }
