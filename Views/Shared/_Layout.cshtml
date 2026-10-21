@@ -15,6 +15,7 @@
     @{
         var isDashboard = ViewContext.RouteData.Values["controller"]?.ToString() == "Home"
             && ViewContext.RouteData.Values["action"]?.ToString() == "Index";
+        var isScholarshipManagement = ViewContext.RouteData.Values["controller"]?.ToString() == "HocBong";
     }
 
     <div class="app-shell">
@@ -32,12 +33,13 @@
             <nav class="side-nav">
                 <a class="nav-item @(isDashboard ? "active" : "")"
                    asp-controller="Home"
-                   asp-action="Index"
-                   aria-current="@(isDashboard ? "page" : null)">
+                   asp-action="Index">
                     <i class="bi bi-house-door-fill"></i>
                     <span>Trang tổng quan</span>
                 </a>
-                <a class="nav-item" asp-controller="HocBong" asp-action="Index">
+                <a class="nav-item @(isScholarshipManagement ? "active" : "")"
+                   asp-controller="HocBong"
+                   asp-action="Index">
                     <i class="bi bi-award"></i>
                     <span>Quản lý học bổng</span>
                 </a>
