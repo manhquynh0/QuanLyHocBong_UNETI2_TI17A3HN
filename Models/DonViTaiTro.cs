@@ -16,16 +16,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(2000)]
         [Column(TypeName = "nvarchar(2000)")]
-        public string MoTa { get; set; }
+        public string? MoTa { get; set; }
 
         [EmailAddress(ErrorMessage = "Email liên hệ không đúng định dạng")]
         [StringLength(100)]
         [Column(TypeName = "varchar(100)")]
-        public string EmailLienHe { get; set; }
+        public string? EmailLienHe { get; set; }
 
         [Required]
         public bool TrangThai { get; set; }
 
-        public virtual ICollection<HocBong> HocBongs { get; set; }
+        public virtual ICollection<HocBong> HocBongs { get; set; } = new List<HocBong>();
     }
 }

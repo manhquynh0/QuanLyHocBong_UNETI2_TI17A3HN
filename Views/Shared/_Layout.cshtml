@@ -24,7 +24,7 @@
                 </span>
                 <span class="brand-copy">
                     <strong>Học bổng UNETI</strong>
-                    <small>Cổng quản trị admin</small>
+                    <small>Cổng quản lý học bổng</small>
                 </span>
             </a>
 
@@ -36,14 +36,23 @@
                     <i class="bi bi-house-door-fill"></i>
                     <span>Trang tổng quan</span>
                 </a>
+                @if (Context.Session.GetString("VaiTro") == "Admin")
+                {
+                <a class="nav-item" asp-controller="QuanLyTaiKhoan" asp-action="Index">
+                    <i class="bi bi-person-gear"></i><span>Quản lý tài khoản</span>
+                </a>
+                <a class="nav-item" asp-controller="DonViTaiTro" asp-action="Index">
+                    <i class="bi bi-building"></i><span>Đơn vị tài trợ</span>
+                </a>
+                }
                 <a class="nav-item" href="#">
                     <i class="bi bi-award"></i>
                     <span>Quản lý học bổng</span>
                 </a>
-                <a class="nav-item" href="#">
+                @if (Context.Session.GetString("VaiTro") == "Admin") { <a class="nav-item" href="#">
                     <i class="bi bi-people-fill"></i>
                     <span>Quản lý sinh viên</span>
-                </a>
+                </a> }
                 <a class="nav-item" href="#">
                     <i class="bi bi-file-earmark-check"></i>
                     <span>Xét duyệt hồ sơ</span>
@@ -57,19 +66,15 @@
                     <span>Thông báo</span>
                 </a>
                 <a class="nav-item" href="#">
-                    <i class="bi bi-shield-lock"></i>
-                    <span>Tài khoản cán bộ</span>
-                </a>
-                <a class="nav-item" href="#">
                     <i class="bi bi-gear"></i>
                     <span>Cài đặt hệ thống</span>
                 </a>
             </nav>
 
-            <a class="nav-item logout-link" asp-area="" asp-controller="Home" asp-action="Index">
+            @if (Context.Session.GetInt32("MaTaiKhoan") is not null) { <form asp-controller="TaiKhoan" asp-action="DangXuat" method="post" class="logout-link"><button class="nav-item border-0 bg-transparent w-100 text-start">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Đăng xuất</span>
-            </a>
+            </button></form> }
         </aside>
 
         <div class="workspace">
@@ -79,10 +84,10 @@
                         <i class="bi bi-bell"></i>
                     </button>
                     <div class="user-copy">
-                        <strong>Nguyễn Thị B</strong>
-                        <small>Phòng CTSV - Cán bộ xét duyệt</small>
+                        <strong>@(Context.Session.GetString("HoTen") ?? "Khách")</strong>
+                        <small>@(Context.Session.GetString("VaiTro") ?? "Chưa đăng nhập")</small>
                     </div>
-                    <div class="user-avatar" aria-label="Ảnh đại diện Nguyễn Thị B">B</div>
+                    <div class="user-avatar">@(Context.Session.GetString("HoTen")?.FirstOrDefault() ?? 'K')</div>
                 </div>
             </header>
 

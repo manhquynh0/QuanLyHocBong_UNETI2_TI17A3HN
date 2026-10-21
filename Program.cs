@@ -9,6 +9,8 @@ builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30); });
 
 builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
 
@@ -24,6 +26,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseSession();
 
 app.UseAuthorization();
 
@@ -31,7 +34,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=TaiKhoan}/{action=DangNhap}/{id?}")
     .WithStaticAssets();
 
 
