@@ -1,0 +1,161 @@
+@* Họ và tên: Phan Sỹ Tú
+   Mã sinh viên: 23103100145
+   Nội dung thực hiện: Module 4 - View form xét duyệt sơ bộ hồ sơ. *@
+
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.XetDuyetSoBoViewModel
+
+@{
+    ViewData["Title"] = "Xét duyệt sơ bộ hồ sơ #" + Model.MaHoSoHocBong;
+}
+
+<h2 class="mb-3">@ViewData["Title"]</h2>
+
+<div class="row">
+    @* Cột trái: Thông tin hiển thị (readonly) *@
+    <div class="col-md-7">
+        <div class="card mb-3">
+            <div class="card-header bg-info text-dark">
+                <strong>Thông tin hồ sơ</strong>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Sinh viên</dt>
+                    <dd class="col-sm-7">@Model.TenSinhVien</dd>
+
+                    <dt class="col-sm-5">Học bổng</dt>
+                    <dd class="col-sm-7">@Model.TenHocBong</dd>
+
+                    <dt class="col-sm-5">Đơn vị tài trợ</dt>
+                    <dd class="col-sm-7">@Model.TenDonViTaiTro</dd>
+
+                    <dt class="col-sm-5">Ngày nộp</dt>
+                    <dd class="col-sm-7">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        @* So sánh điều kiện *@
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>So sánh điều kiện</strong>
+            </div>
+            <div class="card-body">
+                <p>
+                    <strong>Điểm TB tích lũy:</strong>
+                    <span class="badge @(Model.DuDiem ? "bg-success" : "bg-danger")">
+                        @Model.DiemTrungBinh.ToString("0.00")
+                    </span>
+                    <span class="text-muted">/ Yêu cầu: @Model.DiemYeuCau.ToString("0.00")</span>
+                    @if (!Model.DuDiem)
+                    {
+                        <span class="badge bg-warning text-dark">Không đủ điểm</span>
+                    }
+                </p>
+                <p class="mb-0">
+                    <strong>Bậc đào tạo:</strong>
+                    <span class="badge @(Model.DungBacDaoTao ? "bg-success" : "bg-danger")">
+                        @Model.BacDaoTaoSinhVien
+                    </span>
+                    <span class="text-muted">/ HB: @Model.BacDaoTaoHocBong</span>
+                    @if (!Model.DungBacDaoTao)
+                    {
+                        <span class="badge bg-warning text-dark">Không khớp bậc</span>
+                    }
+                </p>
+            </div>
+        </div>
+
+        @* Thư xin học bổng + thành tích *@
+        <div class="card mb-3">
+            <div class="card-header">
+                <strong>Thư xin học bổng &amp; Thành tích</strong>
+            </div>
+            <div class="card-body">
+                <p><strong>Thư xin học bổng:</strong></p>
+                @if (!string.IsNullOrEmpty(Model.ThuXinHocBong))
+                {
+                    <div class="border p-2 bg-light mb-3">@Model.ThuXinHocBong</div>
+                }
+                else
+                {
+                    <p class="text-muted">Không có</p>
+                }
+
+                <p><strong>Thành tích học tập:</strong></p>
+                @if (!string.IsNullOrEmpty(Model.ThanhTichHocTap))
+                {
+                    <div class="border p-2 bg-light">@Model.ThanhTichHocTap</div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Không có</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    @* Cột phải: Form xét duyệt *@
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <strong>Kết quả xét duyệt sơ bộ</strong>
+            </div>
+            <div class="card-body">
+                <form asp-action="XetDuyetSoBo" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="MaHoSoHocBong" />
+
+                    @* Hiển thị lỗi chung *@
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+                    @* Chọn kết quả *@
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Kết quả xét duyệt</strong></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="KetQua" value="Dat" id="kqDat" />
+                            <label class="form-check-label text-success" for="kqDat">
+                                <strong>Đạt xét duyệt sơ bộ</strong>
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="KetQua" value="KhongDat"
+                                   id="kqKhongDat" />
+                            <label class="form-check-label text-danger" for="kqKhongDat">
+                                <strong>Không đạt xét duyệt sơ bộ</strong>
+                            </label>
+                        </div>
+                        <span asp-validation-for="KetQua" class="text-danger"></span>
+                    </div>
+
+                    @* Nhận xét *@
+                    <div class="mb-3">
+                        <label asp-for="NhanXetXetDuyet" class="form-label">
+                            <strong>Nhận xét xét duyệt</strong>
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea asp-for="NhanXetXetDuyet" class="form-control" rows="5"
+                                  placeholder="Nhập nhận xét về hồ sơ..."></textarea>
+                        <span asp-validation-for="NhanXetXetDuyet" class="text-danger"></span>
+                    </div>
+
+                    @* Nút *@
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary"
+                                onclick="return confirm('Xác nhận xét duyệt hồ sơ này?');">
+                            <i class="bi bi-check-circle"></i> Xác nhận xét duyệt
+                        </button>
+                        <a asp-action="Details" asp-route-id="@Model.MaHoSoHocBong" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại chi tiết
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
