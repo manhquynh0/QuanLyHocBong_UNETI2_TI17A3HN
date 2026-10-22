@@ -71,68 +71,55 @@
                 }
                 else
                 {
-                    @* Menu dành cho Cán bộ học bổng & Admin *@
+                    @* Menu chuẩn dành cho Cán bộ học bổng & Admin giống hệt nhánh Module_5 *@
                     <a class="nav-item @(isDashboard ? "active" : "")"
-                       asp-controller="Home"
-                       asp-action="Index"
-                       aria-current="@(isDashboard ? "page" : null)">
+                       asp-controller="Home" asp-action="Index">
                         <i class="bi bi-house-door-fill"></i>
                         <span>Trang tổng quan</span>
                     </a>
-                    @if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <a class="nav-item @(currentController == "QuanLyTaiKhoan" ? "active" : "")"
-                           asp-controller="QuanLyTaiKhoan"
-                           asp-action="Index">
-                            <i class="bi bi-person-gear"></i>
-                            <span>Quản lý tài khoản</span>
-                        </a>
-                        <a class="nav-item @(currentController == "DonViTaiTro" ? "active" : "")"
-                           asp-controller="DonViTaiTro"
-                           asp-action="Index">
-                            <i class="bi bi-building"></i>
-                            <span>Đơn vị tài trợ</span>
-                        </a>
-                    }
+                    <a class="nav-item @(currentController == "DonViTaiTro" ? "active" : "")"
+                       asp-controller="DonViTaiTro" asp-action="Index">
+                        <i class="bi bi-building"></i>
+                        <span>Đơn vị tài trợ</span>
+                    </a>
                     <a class="nav-item @(currentController == "HocBong" ? "active" : "")"
-                       asp-controller="HocBong"
-                       asp-action="Index">
+                       asp-controller="HocBong" asp-action="Index">
                         <i class="bi bi-award"></i>
                         <span>Quản lý học bổng</span>
                     </a>
-                    @if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
-                    {
-                        <a class="nav-item @(currentController == "SinhVien" ? "active" : "")"
-                           asp-controller="SinhVien"
-                           asp-action="Index">
-                            <i class="bi bi-people-fill"></i>
-                            <span>Quản lý sinh viên</span>
-                        </a>
-                    }
+                    <a class="nav-item @(currentController == "SinhVien" ? "active" : "")"
+                       asp-controller="SinhVien" asp-action="Index">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Quản lý sinh viên</span>
+                    </a>
                     <a class="nav-item @(currentController == "HoSoHocBong" ? "active" : "")"
-                       asp-controller="HoSoHocBong"
-                       asp-action="Index">
+                       asp-controller="HoSoHocBong" asp-action="Index">
                         <i class="bi bi-file-earmark-check"></i>
                         <span>Xét duyệt hồ sơ</span>
                     </a>
                     <a class="nav-item @(currentController == "LichPhongVan" ? "active" : "")"
-                       asp-controller="LichPhongVan"
-                       asp-action="Index">
+                       asp-controller="LichPhongVan" asp-action="Index">
                         <i class="bi bi-calendar-event"></i>
                         <span>Lịch phỏng vấn</span>
                     </a>
                     <a class="nav-item @(currentController == "KetQuaHocBong" ? "active" : "")"
-                       asp-controller="KetQuaHocBong"
-                       asp-action="Index">
+                       asp-controller="KetQuaHocBong" asp-action="Index">
                         <i class="bi bi-check2-circle"></i>
                         <span>Kết quả học bổng</span>
                     </a>
                     <a class="nav-item @(currentController == "ThongKe" ? "active" : "")"
-                       asp-controller="ThongKe"
-                       asp-action="Index">
+                       asp-controller="ThongKe" asp-action="Index">
                         <i class="bi bi-bar-chart-fill"></i>
                         <span>Thống kê báo cáo</span>
                     </a>
+                    @if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a class="nav-item @(currentController == "QuanLyTaiKhoan" || currentController == "TaiKhoan" ? "active" : "")"
+                           asp-controller="QuanLyTaiKhoan" asp-action="Index">
+                            <i class="bi bi-shield-lock"></i>
+                            <span>Tài khoản cán bộ</span>
+                        </a>
+                    }
                 }
             </nav>
 
