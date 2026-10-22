@@ -1,0 +1,223 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong.HocBongIndexViewModel
+
+@{
+    ViewData["Title"] = "Quản lý học bổng";
+}
+
+<section class="scholarship-list-page">
+    <header class="scholarship-list-heading">
+        <div>
+            <h1>Quản lý học bổng</h1>
+            <p>Danh sách các chương trình học bổng và thông tin tuyển chọn.</p>
+        </div>
+        <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            <span>Thêm học bổng</span>
+        </a>
+    </header>
+
+    @if (TempData["HocBongMessage"] is string message)
+    {
+        <div class="scholarship-feedback" role="status">@message</div>
+    }
+
+    <form asp-action="Search" method="get" class="scholarship-filter-form" id="scholarship-search-form">
+        <label class="scholarship-filter-search">
+            <span class="visually-hidden">Tìm theo tên học bổng hoặc đơn vị tài trợ</span>
+            <i class="bi bi-search" aria-hidden="true"></i>
+            <input asp-for="TuKhoa" type="search" placeholder="Tìm học bổng, đơn vị tài trợ..." />
+        </label>
+        <label class="scholarship-filter-field">
+            <span class="visually-hidden">Đơn vị tài trợ</span>
+            <select asp-for="MaDonViTaiTro" asp-items="Model.DonViTaiTroOptions">
+                <option value="">Tất cả đơn vị</option>
+            </select>
+        </label>
+        <label class="scholarship-filter-field">
+            <span class="visually-hidden">Bậc đào tạo</span>
+            <select asp-for="BacDaoTao" asp-items="Model.BacDaoTaoOptions">
+                <option value="">Tất cả bậc</option>
+            </select>
+        </label>
+        <label class="scholarship-filter-field">
+            <span class="visually-hidden">Trạng thái học bổng</span>
+            <select asp-for="TrangThai" asp-items="Model.TrangThaiOptions">
+                <option value="">Tất cả trạng thái</option>
+            </select>
+        </label>
+        <label class="scholarship-filter-field scholarship-filter-score">
+            <span class="visually-hidden">Điểm tối thiểu từ</span>
+            <input asp-for="DiemToiThieu" type="number" min="0" max="4" step="0.01" placeholder="Điểm từ" />
+        </label>
+        <label class="scholarship-filter-field">
+            <span class="visually-hidden">Tình trạng hạn nộp</span>
+            <select asp-for="HanNop">
+                <option value="">Mọi hạn nộp</option>
+                <option value="con-han">Còn hạn</option>
+                <option value="het-han">Hết hạn</option>
+            </select>
+        </label>
+        <label class="scholarship-filter-field scholarship-filter-sort">
+            <span class="visually-hidden">Sắp xếp danh sách</span>
+            <select asp-for="SapXep">
+                <option value="ma-tang">Mặc định</option>
+                <option value="ten-az">Tên A - Z</option>
+                <option value="ten-za">Tên Z - A</option>
+                <option value="han-tang">Hạn nộp tăng</option>
+                <option value="han-giam">Hạn nộp giảm</option>
+                <option value="suat-tang">Số suất tăng</option>
+                <option value="suat-giam">Số suất giảm</option>
+            </select>
+        </label>
+        <a asp-action="Index" class="scholarship-filter-reset" title="Xóa tất cả bộ lọc" aria-label="Xóa tất cả bộ lọc">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </a>
+        <noscript>
+            <button type="submit" class="scholarship-filter-submit">Áp dụng</button>
+        </noscript>
+    </form>
+
+    <div class="scholarship-list-toolbar">
+        <p class="scholarship-list-count">
+            <strong>@Model.SoKetQua</strong> học bổng
+        </p>
+    </div>
+
+    @if (Model.HocBongs.Any())
+    {
+        <form asp-action="BulkAction" method="post" class="scholarship-table-form" id="scholarship-bulk-form">
+            <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
+            <div class="scholarship-bulk-toolbar" id="scholarship-bulk-toolbar">
+                <label class="scholarship-select-all">
+                    <input type="checkbox" id="select-all-scholarships" />
+                    <span>Chọn tất cả</span>
+                </label>
+                <span class="scholarship-selected-count" id="selected-scholarship-count" aria-live="polite">Chưa chọn học bổng</span>
+                <div class="scholarship-bulk-actions" id="scholarship-bulk-actions">
+                    <label class="visually-hidden" for="bulk-scholarship-status">Trạng thái mới</label>
+                    <select id="bulk-scholarship-status" name="newStatus">
+                        <option value="">Đổi trạng thái...</option>
+                        <option value="Đang nhận hồ sơ">Đang nhận hồ sơ</option>
+                        <option value="Sắp mở">Sắp mở</option>
+                        <option value="Đã đóng">Đã đóng</option>
+                        <option value="Tạm dừng">Tạm dừng</option>
+                    </select>
+                    <button type="submit" name="bulkAction" value="status" class="scholarship-bulk-update" id="bulk-update-status">
+                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+                        Cập nhật
+                    </button>
+                    <button type="submit" name="bulkAction" value="delete" class="scholarship-icon-action is-danger scholarship-bulk-delete" title="Xóa học bổng đã chọn" aria-label="Xóa học bổng đã chọn" data-confirm="Xóa các học bổng đã chọn? Học bổng đã có hồ sơ đăng ký sẽ được giữ lại.">
+                        <i class="bi bi-trash3" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="scholarship-table-scroll">
+                <table class="scholarship-table">
+                    <thead>
+                        <tr>
+                            <th class="scholarship-table-checkbox" scope="col"><span class="visually-hidden">Chọn</span></th>
+                            <th scope="col">Mã</th>
+                            <th scope="col">Học bổng</th>
+                            <th scope="col">Đơn vị tài trợ</th>
+                            <th scope="col" class="is-numeric">Số suất</th>
+                            <th scope="col">Hạn nộp</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col"><span class="visually-hidden">Thao tác</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.HocBongs)
+                        {
+                            var trangThai = item.TrangThai?.Trim() ?? string.Empty;
+                            var statusClass = "is-unknown";
+
+                            if (trangThai.Contains("nhận hồ sơ", StringComparison.OrdinalIgnoreCase)
+                                || string.Equals(trangThai, "Đang mở", StringComparison.OrdinalIgnoreCase))
+                            {
+                                statusClass = "is-open";
+                            }
+                            else if (trangThai.Contains("sắp", StringComparison.OrdinalIgnoreCase)
+                                || trangThai.Contains("chờ", StringComparison.OrdinalIgnoreCase)
+                                || trangThai.Contains("chưa mở", StringComparison.OrdinalIgnoreCase))
+                            {
+                                statusClass = "is-upcoming";
+                            }
+                            else if (trangThai.Contains("đóng", StringComparison.OrdinalIgnoreCase)
+                                || trangThai.Contains("hết hạn", StringComparison.OrdinalIgnoreCase)
+                                || trangThai.Contains("kết thúc", StringComparison.OrdinalIgnoreCase))
+                            {
+                                statusClass = "is-closed";
+                            }
+                            else if (trangThai.Contains("tạm dừng", StringComparison.OrdinalIgnoreCase)
+                                || trangThai.Contains("ngừng", StringComparison.OrdinalIgnoreCase))
+                            {
+                                statusClass = "is-paused";
+                            }
+
+                            <tr>
+                                <td class="scholarship-table-checkbox">
+                                    <input type="checkbox" name="selectedIds" value="@item.MaHocBong" class="scholarship-row-checkbox" aria-label="Chọn @item.TenHocBong" />
+                                </td>
+                                <td class="scholarship-table-code">#@item.MaHocBong</td>
+                                <td class="scholarship-table-name">
+                                    <a asp-action="Details" asp-route-id="@item.MaHocBong">@item.TenHocBong</a>
+                                    <span>@item.BacDaoTao · Điểm tối thiểu @item.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.MoTaHocBong))
+                                    {
+                                        <small>@item.MoTaHocBong</small>
+                                    }
+                                </td>
+                                <td class="scholarship-table-sponsor">@(item.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có đơn vị tài trợ")</td>
+                                <td class="is-numeric">@item.SoSuat</td>
+                                <td class="scholarship-table-deadline">@item.HanNopHoSo.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <span class="scholarship-list-status @statusClass">@item.TrangThai</span>
+                                </td>
+                                <td>
+                                    <div class="scholarship-row-actions">
+                                        <a asp-action="Edit" asp-route-id="@item.MaHocBong" class="scholarship-icon-action" title="Chỉnh sửa" aria-label="Chỉnh sửa @item.TenHocBong">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i>
+                                        </a>
+                                        <a asp-action="Delete" asp-route-id="@item.MaHocBong" class="scholarship-icon-action is-danger" title="Xóa" aria-label="Xóa @item.TenHocBong">
+                                            <i class="bi bi-trash3" aria-hidden="true"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="scholarship-list-empty">
+            <i class="bi bi-award" aria-hidden="true"></i>
+            @if (Model.CoBoLoc)
+            {
+                <h2>Không tìm thấy học bổng phù hợp</h2>
+                <p>Thử thay đổi từ khóa hoặc điều kiện lọc.</p>
+                <a asp-action="Index" class="scholarship-filter-reset">Xóa bộ lọc</a>
+            }
+            else
+            {
+                <h2>Chưa có chương trình học bổng</h2>
+                <p>Thêm chương trình đầu tiên để bắt đầu quản lý học bổng.</p>
+                <a class="scholarship-list-create" asp-controller="HocBong" asp-action="Create">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i>
+                    <span>Thêm học bổng</span>
+                </a>
+            }
+        </div>
+    }
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/hocbong/index.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/views/hocbong/index.js" asp-append-version="true"></script>
+}

@@ -240,6 +240,7 @@ a {
   .workspace {
     margin-left: 210px;
   }
+
 }
 
 @media (max-width: 800px) {
@@ -323,6 +324,7 @@ a {
     min-height: calc(100vh - 64px);
     padding: 16px 13px;
   }
+
 }
 
 /* Sponsor directory */

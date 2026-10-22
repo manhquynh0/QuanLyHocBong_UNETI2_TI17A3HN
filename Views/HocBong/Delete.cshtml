@@ -1,0 +1,82 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong
+
+@{
+    ViewData["Title"] = "Xóa học bổng";
+}
+
+<section class="scholarship-form-page scholarship-delete-page">
+    <header class="scholarship-form-heading">
+        <div>
+            <a class="scholarship-form-back" asp-action="Index">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                <span>Danh sách học bổng</span>
+            </a>
+            <h1>Xóa chương trình học bổng</h1>
+            <p>Kiểm tra thông tin trước khi xác nhận thao tác.</p>
+        </div>
+    </header>
+
+    <section class="scholarship-delete-card" aria-labelledby="delete-scholarship-name">
+        <div class="scholarship-delete-warning">
+            <span class="scholarship-delete-warning-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
+            <div>
+                <h2>Bạn có chắc chắn muốn xóa?</h2>
+                <p>Thao tác này không thể hoàn tác. Hãy kiểm tra các hồ sơ liên quan trước khi tiếp tục.</p>
+            </div>
+        </div>
+
+        <div class="scholarship-delete-summary">
+            <div class="scholarship-delete-title">
+                <span class="scholarship-delete-award"><i class="bi bi-award" aria-hidden="true"></i></span>
+                <div>
+                    <span class="scholarship-delete-code">Mã học bổng #@Model.MaHocBong</span>
+                    <h2 id="delete-scholarship-name">@Model.TenHocBong</h2>
+                </div>
+            </div>
+
+            <dl class="scholarship-delete-details">
+                <div>
+                    <dt>Đơn vị tài trợ</dt>
+                    <dd>@(Model.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có thông tin")</dd>
+                </div>
+                <div>
+                    <dt>Trạng thái</dt>
+                    <dd>@Model.TrangThai</dd>
+                </div>
+                <div>
+                    <dt>Số suất</dt>
+                    <dd>@Model.SoSuat suất</dd>
+                </div>
+                <div>
+                    <dt>Bậc đào tạo</dt>
+                    <dd>@Model.BacDaoTao</dd>
+                </div>
+                <div>
+                    <dt>Điểm tối thiểu</dt>
+                    <dd>@Model.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</dd>
+                </div>
+                <div>
+                    <dt>Hạn nộp</dt>
+                    <dd>@Model.HanNopHoSo.ToString("dd/MM/yyyy")</dd>
+                </div>
+            </dl>
+        </div>
+
+        <footer class="scholarship-delete-actions">
+            <a asp-action="Details" asp-route-id="@Model.MaHocBong" class="scholarship-form-cancel">
+                Xem chi tiết
+            </a>
+            <form asp-action="Delete" method="post">
+                <input type="hidden" asp-for="MaHocBong" />
+                <button type="submit" class="scholarship-delete-submit">
+                    <i class="bi bi-trash3" aria-hidden="true"></i>
+                    Xác nhận xóa
+                </button>
+            </form>
+        </footer>
+    </section>
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/hocbong/forms.css" asp-append-version="true" />
+}
