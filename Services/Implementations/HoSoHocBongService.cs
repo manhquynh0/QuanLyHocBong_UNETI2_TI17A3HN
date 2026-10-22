@@ -6,6 +6,7 @@
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
@@ -244,6 +245,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             return await _context.HoSoHocBong
                 .CountAsync(h => h.MaHocBong == maHocBong
                               && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
+        }
+        public async Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
+        {
+            return await _context.DonViTaiTro
+                .Where(d => d.TrangThai == true)
+                .OrderBy(d => d.TenDonViTaiTro)
+                .ToListAsync();
         }
     }
 }

@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100145
 // Nội dung thực hiện: Module 4 - Interface service xử lý nghiệp vụ hồ sơ học bổng.
 
+using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface
@@ -32,5 +33,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface
         /// Đếm số hồ sơ đã được cấp học bổng theo học bổng.
         /// </summary>
         Task<int> DemSoDaCapAsync(int maHocBong);
+        Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync();
     }
 }

@@ -1,0 +1,58 @@
+@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.DonViTaiTro>
+@{ ViewData["Title"] = "Đơn vị tài trợ"; }
+
+<div class="sponsor-page">
+    <div class="sponsor-page-heading">
+        <div>
+            <span class="sponsor-eyebrow">DỮ LIỆU NỀN</span>
+            <h1>Đơn vị tài trợ</h1>
+            <p>Quản lý thông tin và trạng thái các đơn vị đồng hành.</p>
+        </div>
+        <a asp-action="Create" class="sponsor-add-button"><span aria-hidden="true">＋</span> Thêm đơn vị</a>
+    </div>
+
+    @if (TempData["Error"] is not null)
+    {
+        <div class="alert alert-danger sponsor-alert" role="alert">@TempData["Error"]</div>
+    }
+
+    <section class="sponsor-table-card">
+        <div class="sponsor-table-heading">
+            <div><h2>Danh sách đơn vị</h2><span>@Model.Count() đơn vị tài trợ</span></div>
+        </div>
+        <div class="table-responsive">
+            <table class="table sponsor-table align-middle mb-0">
+                <thead>
+                    <tr><th>Đơn vị tài trợ</th><th>Email liên hệ</th><th>Trạng thái</th><th class="text-center">Học bổng</th><th class="sponsor-actions-heading">Thao tác</th></tr>
+                </thead>
+                <tbody>
+                @foreach (var d in Model)
+                {
+                    <tr>
+                        <td><strong class="sponsor-name">@d.TenDonViTaiTro</strong></td>
+                        <td class="sponsor-email">@(string.IsNullOrWhiteSpace(d.EmailLienHe) ? "Chưa cập nhật" : d.EmailLienHe)</td>
+                        <td><span class="sponsor-status @(d.TrangThai ? "is-active" : "is-inactive")"><span></span>@(d.TrangThai ? "Hoạt động" : "Ngừng hoạt động")</span></td>
+                        <td class="text-center"><span class="sponsor-count">@d.HocBongs.Count</span></td>
+                        <td>
+                            <div class="sponsor-actions">
+                                <a asp-action="Details" asp-route-id="@d.MaDonViTaiTro" class="sponsor-action action-details">Chi tiết</a>
+                                <a asp-action="Edit" asp-route-id="@d.MaDonViTaiTro" class="sponsor-action action-edit">Sửa</a>
+                                <form asp-action="ToggleStatus" asp-route-id="@d.MaDonViTaiTro" method="post">
+                                    <button type="submit" class="sponsor-action @(d.TrangThai ? "action-pause" : "action-enable")">@(d.TrangThai ? "Ngừng" : "Mở lại")</button>
+                                </form>
+                                <form asp-action="Delete" asp-route-id="@d.MaDonViTaiTro" method="post" onsubmit="return confirm('Bạn có chắc muốn xóa đơn vị tài trợ này?')">
+                                    <button type="submit" class="sponsor-action action-delete">Xóa</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="sponsor-empty">Chưa có đơn vị tài trợ nào. Hãy thêm đơn vị đầu tiên.</td></tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

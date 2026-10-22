@@ -1,0 +1,70 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.DangNhapViewModel
+@{ ViewData["Title"] = "Đăng nhập"; Layout = null; }
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Đăng nhập - Học bổng UNETI</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+</head>
+<body class="login-page">
+    <main class="login-layout">
+        <section class="login-intro" aria-label="Giới thiệu hệ thống">
+            <a class="login-brand" asp-controller="Home" asp-action="Index">
+                <span class="brand-icon"><i class="bi bi-mortarboard-fill">◆</i></span>
+                <span>Học bổng UNETI</span>
+            </a>
+            <div class="intro-copy">
+                <h1>Hệ thống quản lý Học bổng &amp; Xét duyệt hồ sơ trực tuyến</h1>
+                <p>Giải pháp tối ưu hóa quy trình xét duyệt học bổng, kết nối sinh viên với các nhà tài trợ giáo dục uy tín.</p>
+            </div>
+            <small class="intro-footer">© 2026 Đại học Kinh tế - Kỹ thuật Công nghiệp</small>
+        </section>
+
+        <section class="login-panel" aria-label="Đăng nhập tài khoản">
+            <div class="login-card">
+                <div class="login-heading">
+                    <span class="heading-mark"><i class="bi bi-mortarboard-fill">◆</i></span>
+                    <h2>Đăng nhập</h2>
+                    <p>Vui lòng sử dụng tài khoản UNETI</p>
+                </div>
+                <form asp-action="DangNhap" method="post" class="login-form">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                    <div asp-validation-summary="ModelOnly" class="login-errors" role="alert"></div>
+                    <div class="field-group">
+                        <label asp-for="TenDangNhap">Email hoặc tên đăng nhập</label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">♙</span>
+                            <input asp-for="TenDangNhap" class="login-input" placeholder="Nhập email hoặc tên đăng nhập" autocomplete="username" autofocus />
+                        </div>
+                        <span asp-validation-for="TenDangNhap" class="field-error"></span>
+                    </div>
+                    <div class="field-group password-group">
+                        <label asp-for="MatKhau">Mật khẩu</label>
+                        <div class="input-wrap">
+                            <span class="input-icon" aria-hidden="true">▣</span>
+                            <input asp-for="MatKhau" class="login-input" placeholder="Nhập mật khẩu" autocomplete="current-password" />
+                            <button class="password-toggle" type="button" aria-label="Hiện mật khẩu" onclick="togglePassword(this)">Hiện</button>
+                        </div>
+                        <span asp-validation-for="MatKhau" class="field-error"></span>
+                    </div>
+                    <button class="login-submit" type="submit">Đăng nhập hệ thống <span aria-hidden="true">→</span></button>
+                    <p class="login-help">Quên mật khẩu? Vui lòng liên hệ quản trị viên.</p>
+                </form>
+            </div>
+        </section>
+    </main>
+    <script>
+        function togglePassword(button) {
+            const input = document.getElementById('MatKhau');
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            button.textContent = show ? 'Ẩn' : 'Hiện';
+            button.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+        }
+    </script>
+</body>
+</html>
