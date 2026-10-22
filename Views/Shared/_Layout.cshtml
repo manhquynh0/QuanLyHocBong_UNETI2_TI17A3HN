@@ -13,9 +13,13 @@
 </head>
 <body>
     @{
-        var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
-        var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+        var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+        var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         var isDashboard = currentController == "Home" && currentAction == "Index";
+
+        var userRole = Context.Session.GetString("VaiTro") ?? "";
+        var isStudent = userRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
+            || userRole.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
     }
 
     <div class="app-shell">
@@ -26,64 +30,110 @@
                 </span>
                 <span class="brand-copy">
                     <strong>Học bổng UNETI</strong>
-                    <small>Cổng quản lý học bổng</small>
+                    <small>@(isStudent ? "Cổng thông tin sinh viên" : "Cổng quản trị xét duyệt")</small>
                 </span>
             </a>
 
             <nav class="side-nav">
-                <a class="nav-item @(isDashboard ? "active" : "")"
-                   asp-controller="Home"
-                   asp-action="Index"
-                   aria-current="@(isDashboard ? "page" : null)">
-                    <i class="bi bi-house-door-fill"></i>
-                    <span>Trang tổng quan</span>
-                </a>
-                @if (Context.Session.GetString("VaiTro") == "Admin")
+                @if (isStudent)
                 {
-                    <a class="nav-item @(currentController == "QuanLyTaiKhoan" ? "active" : "")"
-                       asp-controller="QuanLyTaiKhoan"
-                       asp-action="Index">
-                        <i class="bi bi-person-gear"></i>
-                        <span>Quản lý tài khoản</span>
+                    @* Menu dành cho Sinh viên giống hệt nhánh Module_5 *@
+                    <a class="nav-item @(isDashboard ? "active" : "")"
+                       asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Trang chủ</span>
                     </a>
-                    <a class="nav-item @(currentController == "DonViTaiTro" ? "active" : "")"
-                       asp-controller="DonViTaiTro"
-                       asp-action="Index">
-                        <i class="bi bi-building"></i>
-                        <span>Đơn vị tài trợ</span>
+                    <a class="nav-item @(currentController == "HocBong" ? "active" : "")"
+                       asp-controller="HocBong" asp-action="Index">
+                        <i class="bi bi-award-fill"></i>
+                        <span>Danh sách học bổng</span>
+                    </a>
+                    <a class="nav-item @(currentController == "HoSoHocBong" ? "active" : "")"
+                       asp-controller="HoSoHocBong" asp-action="HoSoCuaToi">
+                        <i class="bi bi-folder2-open"></i>
+                        <span>Hồ sơ của tôi</span>
+                    </a>
+                    <a class="nav-item @(currentController == "LichPhongVan" ? "active" : "")"
+                       asp-controller="LichPhongVan" asp-action="Index">
+                        <i class="bi bi-calendar-check"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a class="nav-item @(currentController == "KetQuaHocBong" ? "active" : "")"
+                       asp-controller="KetQuaHocBong" asp-action="Index">
+                        <i class="bi bi-patch-check-fill"></i>
+                        <span>Kết quả học bổng</span>
+                    </a>
+                    <a class="nav-item @(currentController == "SinhVien" ? "active" : "")"
+                       asp-controller="SinhVien" asp-action="ThongTinCaNhan">
+                        <i class="bi bi-person-circle"></i>
+                        <span>Thông tin cá nhân</span>
                     </a>
                 }
-                <a class="nav-item @(currentController == "HocBong" ? "active" : "")"
-                   asp-controller="HocBong"
-                   asp-action="Index">
-                    <i class="bi bi-award"></i>
-                    <span>Quản lý học bổng</span>
-                </a>
-                @if (Context.Session.GetString("VaiTro") == "Admin")
+                else
                 {
-                    <a class="nav-item" href="#">
-                        <i class="bi bi-people-fill"></i>
-                        <span>Quản lý sinh viên</span>
+                    @* Menu dành cho Cán bộ học bổng & Admin *@
+                    <a class="nav-item @(isDashboard ? "active" : "")"
+                       asp-controller="Home"
+                       asp-action="Index"
+                       aria-current="@(isDashboard ? "page" : null)">
+                        <i class="bi bi-house-door-fill"></i>
+                        <span>Trang tổng quan</span>
+                    </a>
+                    @if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a class="nav-item @(currentController == "QuanLyTaiKhoan" ? "active" : "")"
+                           asp-controller="QuanLyTaiKhoan"
+                           asp-action="Index">
+                            <i class="bi bi-person-gear"></i>
+                            <span>Quản lý tài khoản</span>
+                        </a>
+                        <a class="nav-item @(currentController == "DonViTaiTro" ? "active" : "")"
+                           asp-controller="DonViTaiTro"
+                           asp-action="Index">
+                            <i class="bi bi-building"></i>
+                            <span>Đơn vị tài trợ</span>
+                        </a>
+                    }
+                    <a class="nav-item @(currentController == "HocBong" ? "active" : "")"
+                       asp-controller="HocBong"
+                       asp-action="Index">
+                        <i class="bi bi-award"></i>
+                        <span>Quản lý học bổng</span>
+                    </a>
+                    @if (userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <a class="nav-item @(currentController == "SinhVien" ? "active" : "")"
+                           asp-controller="SinhVien"
+                           asp-action="Index">
+                            <i class="bi bi-people-fill"></i>
+                            <span>Quản lý sinh viên</span>
+                        </a>
+                    }
+                    <a class="nav-item @(currentController == "HoSoHocBong" ? "active" : "")"
+                       asp-controller="HoSoHocBong"
+                       asp-action="Index">
+                        <i class="bi bi-file-earmark-check"></i>
+                        <span>Xét duyệt hồ sơ</span>
+                    </a>
+                    <a class="nav-item @(currentController == "LichPhongVan" ? "active" : "")"
+                       asp-controller="LichPhongVan"
+                       asp-action="Index">
+                        <i class="bi bi-calendar-event"></i>
+                        <span>Lịch phỏng vấn</span>
+                    </a>
+                    <a class="nav-item @(currentController == "KetQuaHocBong" ? "active" : "")"
+                       asp-controller="KetQuaHocBong"
+                       asp-action="Index">
+                        <i class="bi bi-check2-circle"></i>
+                        <span>Kết quả học bổng</span>
+                    </a>
+                    <a class="nav-item @(currentController == "ThongKe" ? "active" : "")"
+                       asp-controller="ThongKe"
+                       asp-action="Index">
+                        <i class="bi bi-bar-chart-fill"></i>
+                        <span>Thống kê báo cáo</span>
                     </a>
                 }
-                <a class="nav-item @(currentController == "HoSoHocBong" ? "active" : "")"
-                   asp-controller="HoSoHocBong"
-                   asp-action="Index">
-                    <i class="bi bi-file-earmark-check"></i>
-                    <span>Xét duyệt hồ sơ</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-calendar-event"></i>
-                    <span>Lịch phỏng vấn</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-bell"></i>
-                    <span>Thông báo</span>
-                </a>
-                <a class="nav-item" href="#">
-                    <i class="bi bi-gear"></i>
-                    <span>Cài đặt hệ thống</span>
-                </a>
             </nav>
 
             @if (Context.Session.GetInt32("MaTaiKhoan") is not null)
@@ -105,7 +155,7 @@
                     </button>
                     <div class="user-copy">
                         <strong>@(Context.Session.GetString("HoTen") ?? "Khách")</strong>
-                        <small>@(Context.Session.GetString("VaiTro") ?? "Chưa đăng nhập")</small>
+                        <small>@(isStudent ? "Sinh viên" : (string.IsNullOrEmpty(userRole) ? "Chưa đăng nhập" : userRole))</small>
                     </div>
                     <div class="user-avatar">@(Context.Session.GetString("HoTen")?.FirstOrDefault() ?? 'K')</div>
                 </div>
