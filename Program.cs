@@ -1,12 +1,18 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30); });
+
+builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
 
 var app = builder.Build();
 
@@ -20,6 +26,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseSession();
 
 app.UseAuthorization();
 
@@ -27,7 +34,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=TaiKhoan}/{action=DangNhap}/{id?}")
     .WithStaticAssets();
 
 

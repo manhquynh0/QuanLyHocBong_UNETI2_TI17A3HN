@@ -31,12 +31,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaDonViTaiTro"));
 
                     b.Property<string>("EmailLienHe")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("MoTa")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
