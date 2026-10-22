@@ -1,0 +1,112 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.LichPhongVan
+@{
+    ViewData["Title"] = "Thiết lập lịch phỏng vấn mới";
+    bool hasEligible = ViewBag.HasEligibleApplications ?? false;
+}
+
+<div class="container py-3" style="max-width: 780px;">
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-calendar-plus-fill text-primary me-2"></i>Tạo lịch phỏng vấn sinh viên</h5>
+            <small class="text-muted">Hệ thống tự động chạy thuật toán LINQ kiểm tra chống trùng lịch sinh viên và hội đồng</small>
+        </div>
+        <div class="card-body p-4">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show small mb-3" role="alert">
+                    <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger small mb-3">
+                    <strong class="d-block mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i> Không thể lưu lịch phỏng vấn do các lỗi sau:</strong>
+                    <ul class="mb-0 ps-3">
+                        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    </ul>
+                </div>
+            }
+
+            @if (!hasEligible && Model.MaHoSoHocBong == 0)
+            {
+                <div class="alert alert-warning py-3 px-4 rounded-3 mb-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="bi bi-info-circle-fill fs-5 text-warning"></i>
+                        <strong class="text-dark">Chưa có hồ sơ nào ở trạng thái "Đạt xét duyệt sơ bộ"</strong>
+                    </div>
+                    <p class="mb-2 small text-secondary">
+                        Theo quy định nghiệp vụ, chỉ những hồ sơ đã được Cán bộ xét duyệt sơ bộ và đánh giá <strong>"Đạt xét duyệt sơ bộ"</strong> mới có thể tiến hành xếp lịch phỏng vấn.
+                    </p>
+                    <a asp-controller="HoSoHocBong" asp-action="Index" class="btn btn-sm btn-primary">
+                        <i class="bi bi-folder-check me-1"></i> Đến danh sách hồ sơ để xét duyệt sơ bộ
+                    </a>
+                </div>
+            }
+
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label asp-for="MaHoSoHocBong" class="form-label fw-semibold small text-secondary">Hồ sơ ứng tuyển đã đạt sơ duyệt *</label>
+                    <select asp-for="MaHoSoHocBong" class="form-select" asp-items="ViewBag.MaHoSoHocBong">
+                        <option value="">-- Chọn hồ sơ ứng tuyển --</option>
+                    </select>
+                    <span asp-validation-for="MaHoSoHocBong" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="ThoiGianBatDau" class="form-label fw-semibold small text-secondary">Thời gian bắt đầu *</label>
+                        <input asp-for="ThoiGianBatDau" type="datetime-local" class="form-control" value="@Model.ThoiGianBatDau.ToString("yyyy-MM-ddTHH:mm")" />
+                        <span asp-validation-for="ThoiGianBatDau" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="ThoiGianKetThuc" class="form-label fw-semibold small text-secondary">Thời gian kết thúc *</label>
+                        <input asp-for="ThoiGianKetThuc" type="datetime-local" class="form-control" value="@Model.ThoiGianKetThuc.ToString("yyyy-MM-ddTHH:mm")" />
+                        <span asp-validation-for="ThoiGianKetThuc" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="HinhThucPhongVan" class="form-label fw-semibold small text-secondary">Hình thức phỏng vấn *</label>
+                        <select asp-for="HinhThucPhongVan" class="form-select">
+                            <option value="Trực tiếp" selected="@(Model.HinhThucPhongVan == "Trực tiếp")">Trực tiếp (Tại phòng họp trường)</option>
+                            <option value="Trực tuyến" selected="@(Model.HinhThucPhongVan == "Trực tuyến")">Trực tuyến (Google Meet / Zoom / Teams)</option>
+                        </select>
+                        <span asp-validation-for="HinhThucPhongVan" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="NguoiPhongVan" class="form-label fw-semibold small text-secondary">Người / Hội đồng phỏng vấn *</label>
+                        <input asp-for="NguoiPhongVan" class="form-control" placeholder="vd: TS. Nguyễn Văn A hoặc Hội đồng CTSV" />
+                        <span asp-validation-for="NguoiPhongVan" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DiaDiemHoacLienKet" class="form-label fw-semibold small text-secondary">Địa điểm hoặc Đường link họp trực tuyến *</label>
+                    <input asp-for="DiaDiemHoacLienKet" class="form-control" placeholder="vd: Phòng A1 cơ sở Minh Khai hoặc https://meet.google.com/..." />
+                    <span asp-validation-for="DiaDiemHoacLienKet" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="GhiChu" class="form-label fw-semibold small text-secondary">Ghi chú & Hướng dẫn cho sinh viên (Tùy chọn)</label>
+                    <textarea asp-for="GhiChu" class="form-control" rows="2" placeholder="vd: Sinh viên mang theo thẻ sinh viên, chứng chỉ gốc và trang phục lịch sự..."></textarea>
+                    <span asp-validation-for="GhiChu" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                        <i class="bi bi-calendar-check me-1"></i> Lưu & Lên lịch
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

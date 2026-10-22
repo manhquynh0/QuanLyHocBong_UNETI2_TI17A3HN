@@ -1,4 +1,4 @@
-@* Họ và tên: Phan Sỹ Tú
+﻿@* Họ và tên: Phan Sỹ Tú
    Mã sinh viên: 23103100145
    Nội dung thực hiện: Module 4 - View chi tiết hồ sơ,
    so sánh điều kiện và hiển thị số suất. *@
@@ -234,8 +234,7 @@
                         <i class="bi bi-check-circle"></i> Xét duyệt sơ bộ
                     </a>
                 }
-                else
-                {
+                else if (Model.TrangThai == "Đạt xét duyệt sơ bộ") { <a asp-controller="LichPhongVan" asp-action="Create" asp-route-maHoSo="@Model.MaHoSoHocBong" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Lập lịch phỏng vấn</a> } else if (Model.TrangThai == "Đã phỏng vấn") { <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@Model.MaHoSoHocBong" class="btn btn-warning"><i class="bi bi-award"></i> Nhập kết quả cuối cùng</a> } else {
                     <button class="btn btn-secondary" disabled>
                         Không thể xét duyệt (trạng thái: @Model.TrangThai)
                     </button>

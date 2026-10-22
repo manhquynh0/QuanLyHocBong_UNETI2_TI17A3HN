@@ -1,0 +1,93 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.KetQuaHocBong
+@{
+    ViewData["Title"] = "Nhập kết quả xét học bổng";
+    var hoSo = ViewBag.HoSo as QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong;
+    bool canhBaoHetSuat = ViewBag.CanhBaoHetSuat ?? false;
+    int soDaCap = ViewBag.SoDaCap ?? 0;
+    int tongSoSuat = ViewBag.TongSoSuat ?? 0;
+}
+
+<div class="container py-2" style="max-width: 800px;">
+    @if (canhBaoHetSuat)
+    {
+        <div class="alert alert-warning mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-triangle-fill fs-4 text-warning"></i>
+            <div>
+                <strong>Cảnh báo số suất học bổng:</strong> Chương trình học bổng này đã cấp <strong>@soDaCap/@tongSoSuat</strong> suất. Nếu tiếp tục cấp học bổng, số lượng sẽ vượt quá chỉ tiêu ban đầu.
+            </div>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-trophy-fill text-primary me-2"></i>Nhập kết quả xét duyệt cuối cùng</h5>
+            <small class="text-muted">Áp dụng cho hồ sơ đã hoàn thành phỏng vấn</small>
+        </div>
+        <div class="card-body p-4">
+            <!-- Thông tin tóm tắt hồ sơ & sinh viên -->
+            <div class="bg-light p-3 rounded-3 mb-4">
+                <div class="row g-2 small">
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block">Sinh viên ứng tuyển:</span>
+                        <strong class="text-dark fs-6">@(hoSo?.SinhVien?.HoTen)</strong> (GPA: @(hoSo?.SinhVien?.DiemTrungBinhTichLuy))
+                    </div>
+                    <div class="col-sm-6">
+                        <span class="text-muted d-block">Chương trình học bổng:</span>
+                        <strong class="text-primary fs-6">@(hoSo?.HocBong?.TenHocBong)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <form asp-action="NhapKetQua" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="MaHoSoHocBong" value="@Model.MaHoSoHocBong" />
+
+                <div class="alert alert-info py-2 px-3 small mb-3 rounded-3 d-flex align-items-center gap-2">
+                    <i class="bi bi-envelope-at-fill text-primary fs-5"></i>
+                    <div>
+                        <strong>Gửi email tự động:</strong> Khi bạn lưu kết quả (Được cấp hoặc Không được cấp), hệ thống Brevo sẽ tự động gửi email thông báo chính thức tới: <span class="badge bg-white text-primary border fw-bold">@(hoSo?.SinhVien?.Email ?? "Chưa có email")</span>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Quyết định kết quả xét duyệt *</label>
+                    <div class="d-flex gap-4 p-3 bg-light rounded-3 border">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="KetQua" id="grantYes" value="Được cấp học bổng" checked="@(Model.KetQua == "Được cấp học bổng")" />
+                            <label class="form-check-label fw-bold text-success" for="grantYes">
+                                <i class="bi bi-trophy-fill me-1"></i> Được cấp học bổng (Trúng tuyển)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="KetQua" id="grantNo" value="Không được cấp học bổng" checked="@(Model.KetQua == "Không được cấp học bổng")" />
+                            <label class="form-check-label fw-bold text-danger" for="grantNo">
+                                <i class="bi bi-x-circle-fill me-1"></i> Không được cấp học bổng (Không trúng tuyển)
+                            </label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="KetQua" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DiemDanhGia" class="form-label fw-semibold small text-secondary">Điểm đánh giá hội đồng (Thang điểm 100) *</label>
+                    <input asp-for="DiemDanhGia" type="number" step="0.5" min="0" max="100" class="form-control fw-bold text-primary" placeholder="vd: 88.5" required />
+                    <span asp-validation-for="DiemDanhGia" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="NhanXet" class="form-label fw-semibold small text-secondary">Nhận xét chi tiết của Hội đồng xét duyệt *</label>
+                    <textarea asp-for="NhanXet" class="form-control" rows="4" placeholder="Nhập đánh giá về năng lực học tập, thái độ phỏng vấn và lý do trao học bổng..." required></textarea>
+                    <span asp-validation-for="NhanXet" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-action="Index" class="btn btn-light px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                        <i class="bi bi-check2-circle me-1"></i> Lưu & Công bố kết quả
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

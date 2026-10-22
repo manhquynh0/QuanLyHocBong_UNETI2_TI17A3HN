@@ -27,14 +27,23 @@ public class TaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Contr
         if (verification == PasswordVerificationResult.Failed) { ModelState.AddModelError("", "Mật khẩu không chính xác."); return View(model); }
         if (verification == PasswordVerificationResult.SuccessRehashNeeded || !account.MatKhau.StartsWith("AQAAAA", StringComparison.Ordinal))
         { account.MatKhau = hasher.HashPassword(account, model.MatKhau); await db.SaveChangesAsync(); }
+
+        var role = account.VaiTro ?? "Sinh viên";
+        if (role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase)) role = "Sinh viên";
+        else if (role.StartsWith("C", StringComparison.OrdinalIgnoreCase)) role = "Cán bộ học bổng";
+        else if (role.StartsWith("Admin", StringComparison.OrdinalIgnoreCase)) role = "Admin";
+
         HttpContext.Session.Clear();
         HttpContext.Session.SetInt32("MaTaiKhoan", account.MaTaiKhoan);
         HttpContext.Session.SetString("HoTen", account.HoTen);
-        HttpContext.Session.SetString("VaiTro", account.VaiTro);
+        HttpContext.Session.SetString("VaiTro", role);
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
         return RedirectToAction("Index", "Home");
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public IActionResult DangXuat() { HttpContext.Session.Clear(); return RedirectToAction(nameof(DangNhap)); }
+
+    [HttpGet]
+    public IActionResult AccessDenied() => View();
 }
