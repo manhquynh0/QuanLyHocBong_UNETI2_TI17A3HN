@@ -50,3 +50,5 @@ yarn-error.log*
 *.dmp
 doc_content.txt
 *.tmp
+
+document.docx
