@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
@@ -55,7 +55,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         public virtual DonViTaiTro DonViTaiTro { get; set; }
 
-        public virtual ICollection<HoSoHocBong> HoSoHocBongs { get; set; } = new List<HoSoHocBong>();
+        public virtual ICollection<HoSoHocBong> HoSoHocBongs { get; set; }
 
     }
 }
