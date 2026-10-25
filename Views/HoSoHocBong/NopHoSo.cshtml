@@ -1,0 +1,78 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong
+@{
+    ViewData["Title"] = "Nộp hồ sơ xin học bổng";
+    var hocBong = ViewBag.HocBong as QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong;
+    var sinhVien = ViewBag.SinhVien as QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien;
+}
+
+<div class="container-fluid py-2" style="max-width: 860px;">
+    <div class="mb-3">
+        <a asp-controller="HocBong" asp-action="Index" class="text-decoration-none small text-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách học bổng
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-award-fill me-2"></i>Đăng ký xét học bổng: @hocBong?.TenHocBong</h5>
+            <small class="opacity-75">Đơn vị tài trợ: @hocBong?.DonViTaiTro?.TenDonViTaiTro | Hạn nộp: @hocBong?.HanNopHoSo.ToString("dd/MM/yyyy")</small>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3 small bg-light p-3 rounded-2 border">
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Họ và tên sinh viên:</span>
+                    <strong class="text-dark fs-6">@(sinhVien?.HoTen ?? Context.Session.GetString("HoTen"))</strong>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Chuyên ngành:</span>
+                    <strong class="text-dark">@(sinhVien?.Nganh) (@(sinhVien?.BacDaoTao))</strong>
+                </div>
+                <div class="col-md-4">
+                    <span class="text-muted d-block">Điểm GPA tích lũy:</span>
+                    <span class="badge bg-success fw-bold fs-6">@(sinhVien?.DiemTrungBinhTichLuy) / 4.0</span>
+                    <small class="text-muted ms-1">(Yêu cầu: @(hocBong?.DiemTrungBinhToiThieu))</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-text text-primary me-2"></i>Nội dung hồ sơ ứng tuyển</h5>
+        </div>
+        <div class="card-body p-4">
+            <form asp-action="NopHoSo" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="MaHocBong" value="@Model.MaHocBong" />
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-secondary">
+                        Thư xin học bổng / Nguyện vọng & Cam kết học tập *
+                    </label>
+                    <textarea name="ThuXinHocBong" class="form-control" rows="6" placeholder="Trình bày lý do bạn xứng đáng nhận học bổng này, mục tiêu nghề nghiệp, hoàn cảnh khó khăn hoặc các dự án học tập đang thực hiện..." required>@Model.ThuXinHocBong</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-secondary">Ghi chú bổ sung</label>
+                    <input name="GhiChu" value="@Model.GhiChu" class="form-control" placeholder="vd: Đã nộp kèm chứng nhận ngoại khóa..." />
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a asp-controller="HocBong" asp-action="Details" asp-route-id="@Model.MaHocBong" class="btn btn-light px-4">Hủy bỏ</a>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                        <i class="bi bi-send-fill me-1"></i> Xác nhận gửi hồ sơ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+

@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
@@ -14,6 +14,8 @@ builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options
 
 builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
 builder.Services.AddScoped<IHocBongService, HocBongService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<QuanLyHocBong_UNETI2_TI17A3HN.Services.IEmailService, QuanLyHocBong_UNETI2_TI17A3HN.Services.EmailService>();
 
 var app = builder.Build();
 
