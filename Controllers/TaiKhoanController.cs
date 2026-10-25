@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,9 +23,12 @@ public class TaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Contr
         if (account is null) { ModelState.AddModelError("", "Tên đăng nhập không tồn tại."); return View(model); }
         if (!account.TrangThai) { ModelState.AddModelError("", "Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên."); return View(model); }
         var hasher = new PasswordHasher<TaiKhoan>();
+        var sha256Hex = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(model.MatKhau)));
         var verification = account.MatKhau.StartsWith("AQAAAA", StringComparison.Ordinal)
             ? hasher.VerifyHashedPassword(account, account.MatKhau, model.MatKhau)
-            : (account.MatKhau == model.MatKhau ? PasswordVerificationResult.Success : PasswordVerificationResult.Failed);
+            : ((account.MatKhau == model.MatKhau || string.Equals(account.MatKhau, sha256Hex, StringComparison.OrdinalIgnoreCase))
+                ? PasswordVerificationResult.Success
+                : PasswordVerificationResult.Failed);
         if (verification == PasswordVerificationResult.Failed) { ModelState.AddModelError("", "Mật khẩu không chính xác."); return View(model); }
         if (verification == PasswordVerificationResult.SuccessRehashNeeded || !account.MatKhau.StartsWith("AQAAAA", StringComparison.Ordinal))
         { account.MatKhau = hasher.HashPassword(account, model.MatKhau); await db.SaveChangesAsync(); }
@@ -32,6 +37,12 @@ public class TaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Contr
         if (role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase)) role = "Sinh viên";
         else if (role.StartsWith("C", StringComparison.OrdinalIgnoreCase)) role = "Cán bộ học bổng";
         else if (role.StartsWith("Admin", StringComparison.OrdinalIgnoreCase)) role = "Admin";
+
+        if (account.VaiTro != role)
+        {
+            account.VaiTro = role;
+            await db.SaveChangesAsync();
+        }
 
         HttpContext.Session.Clear();
         HttpContext.Session.SetInt32("MaTaiKhoan", account.MaTaiKhoan);

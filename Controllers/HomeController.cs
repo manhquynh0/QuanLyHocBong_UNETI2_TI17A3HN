@@ -25,9 +25,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var role = HttpContext.Session.GetString("VaiTro") ?? "Admin";
+            var maTaiKhoanSession = HttpContext.Session.GetInt32("MaTaiKhoan");
+            if (!maTaiKhoanSession.HasValue)
+            {
+                return RedirectToAction("DangNhap", "TaiKhoan");
+            }
+
+            var role = HttpContext.Session.GetString("VaiTro") ?? "Sinh viên";
             ViewBag.UserRole = role;
-            ViewBag.UserName = HttpContext.Session.GetString("HoTen") ?? "Admin";
+            ViewBag.UserName = HttpContext.Session.GetString("HoTen") ?? "Người dùng";
 
             bool isStudent = role.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
                 || role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
@@ -35,11 +41,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Nếu là Sinh viên, chuyển đến Dashboard sinh viên với thông tin cá nhân và hồ sơ riêng
             if (isStudent)
             {
-                var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
-                if (!maTaiKhoan.HasValue)
-                {
-                    return RedirectToAction("DangNhap", "TaiKhoan");
-                }
+                var maTaiKhoan = maTaiKhoanSession;
 
                 var sinhVien = await _context.SinhVien
                     .Include(s => s.TaiKhoan)
@@ -74,6 +76,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     (hs.TrangThai == "Chờ duyệt" || hs.TrangThai == "Đang xét duyệt" || hs.TrangThai == "Đạt xét duyệt sơ bộ" || hs.TrangThai == "Chờ phỏng vấn"));
                 var hocBongDuocCap = await _context.HoSoHocBong.CountAsync(hs => hs.MaSinhVien == sinhVien.MaSinhVien && hs.TrangThai == "Được cấp học bổng");
                 var svLichPVSapToi = await _context.LichPhongVan.CountAsync(l =>
+                    l.HoSoHocBong != null &&
                     l.HoSoHocBong.MaSinhVien == sinhVien.MaSinhVien &&
                     l.TrangThai == "Đã lên lịch" &&
                     l.ThoiGianBatDau >= DateTime.Now);
@@ -90,8 +93,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 var lichPhongVanList = await _context.LichPhongVan
                     .Include(l => l.HoSoHocBong)
-                        .ThenInclude(hs => hs.HocBong)
-                    .Where(l => l.HoSoHocBong.MaSinhVien == sinhVien.MaSinhVien && l.TrangThai != "Đã hủy")
+                        .ThenInclude(hs => hs!.HocBong)
+                    .Where(l => l.HoSoHocBong != null && l.HoSoHocBong.MaSinhVien == sinhVien.MaSinhVien && l.TrangThai != "Đã hủy")
                     .OrderBy(l => l.ThoiGianBatDau)
                     .Take(3)
                     .ToListAsync();
