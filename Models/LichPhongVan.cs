@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+// Họ và tên: Sinh viên phụ trách Module 5
+// Nội dung thực hiện: Module 5 - Entity Lịch phỏng vấn
+
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
@@ -23,27 +26,26 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(500)]
         [Column(TypeName = "nvarchar(500)")]
-        public string DiaDiemHoacLienKet { get; set; }
+        public string DiaDiemHoacLienKet { get; set; } = string.Empty;
 
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string HinhThucPhongVan { get; set; }
+        public string HinhThucPhongVan { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Người phỏng vấn là bắt buộc")]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string NguoiPhongVan { get; set; }
+        public string NguoiPhongVan { get; set; } = string.Empty;
 
         [StringLength(1000)]
         [Column(TypeName = "nvarchar(1000)")]
-        public string GhiChu { get; set; }
-
+        public string? GhiChu { get; set; }
 
         [Required(ErrorMessage = "Trạng thái là bắt buộc")]
         [StringLength(50)]
         [Column(TypeName = "nvarchar(50)")]
-        public string TrangThai { get; set; }
+        public string TrangThai { get; set; } = "Đã lên lịch";
 
-        public virtual HoSoHocBong HoSoHocBong { get; set; }
+        public virtual HoSoHocBong? HoSoHocBong { get; set; }
     }
 }

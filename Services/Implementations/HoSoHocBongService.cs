@@ -206,8 +206,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             if (hoSo.HocBong == null)
                 return (false, "Học bổng liên quan không tồn tại.");
 
-            // Sinh viên còn hoạt động?
-            if (hoSo.SinhVien == null || hoSo.SinhVien.TrangThai != "Hoạt động")
+            // Sinh viên còn hoạt động / đang học?
+            if (hoSo.SinhVien == null ||
+                (!string.Equals(hoSo.SinhVien.TrangThai, "Đang học", StringComparison.OrdinalIgnoreCase) &&
+                 !string.Equals(hoSo.SinhVien.TrangThai, "Hoạt động", StringComparison.OrdinalIgnoreCase)))
                 return (false, "Sinh viên không còn hoạt động.");
 
             // Nhận xét bắt buộc
@@ -246,6 +248,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 .CountAsync(h => h.MaHocBong == maHocBong
                               && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
         }
+
         public async Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
         {
             return await _context.DonViTaiTro

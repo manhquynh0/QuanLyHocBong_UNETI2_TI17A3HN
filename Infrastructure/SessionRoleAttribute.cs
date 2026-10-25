@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Infrastructure;
 
@@ -15,7 +16,9 @@ public sealed class SessionRoleAttribute(params string[] roles) : Attribute, IAu
             return;
         }
         var role = session.GetString("VaiTro");
-        if (roles.Length > 0 && !roles.Contains(role, StringComparer.OrdinalIgnoreCase))
-            context.Result = new ForbidResult();
+        if (roles.Length > 0 && !roles.Any(r => RoleAuthorizeAttribute.IsRoleMatch(r, role)))
+        {
+            context.Result = new RedirectToActionResult("AccessDenied", "TaiKhoan", null);
+        }
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+// Họ và tên: Sinh viên phụ trách Module 5
+// Nội dung thực hiện: Module 5 - Entity Kết quả xét học bổng
+
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
@@ -16,7 +19,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Required(ErrorMessage = "Kết quả là bắt buộc")]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string KetQua { get; set; }
+        public string KetQua { get; set; } = string.Empty;
 
         [Range(0, 100, ErrorMessage = "Điểm đánh giá phải nằm trong khoảng từ 0 đến 100")]
         [Column(TypeName = "decimal(5,2)")]
@@ -28,8 +31,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(1000)]
         [Column(TypeName = "nvarchar(1000)")]
-        public string NhanXet { get; set; }
+        public string? NhanXet { get; set; }
 
-        public virtual HoSoHocBong HoSoHocBong { get; set; }
+        public virtual HoSoHocBong? HoSoHocBong { get; set; }
     }
 }

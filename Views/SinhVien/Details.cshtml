@@ -1,0 +1,35 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien
+@{
+    ViewData["Title"] = "Chi tiết sinh viên";
+}
+
+<div class="container-fluid py-2" style="max-width: 820px;">
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <a asp-action="Index" class="text-decoration-none small text-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Quay lại danh sách
+        </a>
+        <a asp-action="Edit" asp-route-id="@Model.MaSinhVien" class="btn btn-sm btn-primary">
+            <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-bold text-dark">@Model.HoTen (#@Model.MaSinhVien)</h5>
+            <small class="text-muted">Tài khoản: @(Model.TaiKhoan?.TenDangNhap) | Trạng thái: @Model.TrangThai</small>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3 small">
+                <div class="col-md-6"><strong>Ngày sinh:</strong> @Model.NgaySinh.ToString("dd/MM/yyyy")</div>
+                <div class="col-md-6"><strong>Giới tính:</strong> @Model.GioiTinh</div>
+                <div class="col-md-6"><strong>Email:</strong> @Model.Email</div>
+                <div class="col-md-6"><strong>Số điện thoại:</strong> @Model.SoDienThoai</div>
+                <div class="col-md-6"><strong>Ngành học:</strong> @Model.Nganh (@Model.BacDaoTao)</div>
+                <div class="col-md-6"><strong>Điểm GPA tích lũy:</strong> <span class="badge bg-success">@Model.DiemTrungBinhTichLuy / 4.0</span></div>
+                <div class="col-md-12"><strong>Địa chỉ:</strong> @Model.DiaChi</div>
+                <div class="col-md-12"><strong>Thành tích học tập:</strong> @Model.ThanhTichHocTap</div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,116 @@
+@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong>
+@{
+    ViewData["Title"] = "Hồ sơ xét học bổng của tôi";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-1 text-dark">Hồ sơ học bổng đã nộp</h4>
+        <small class="text-muted">Theo dõi tiến độ xét duyệt sơ bộ, lịch phỏng vấn và kết quả học bổng</small>
+    </div>
+    <a asp-controller="HocBong" asp-action="Index" class="btn btn-primary fw-semibold">
+        <i class="bi bi-search me-1"></i> Tìm thêm học bổng
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show small" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light small text-secondary">
+                    <tr>
+                        <th class="ps-4">Mã HS</th>
+                        <th>Chương trình học bổng</th>
+                        <th>Ngày nộp</th>
+                        <th>Trạng thái hiện tại</th>
+                        <th>Lịch phỏng vấn</th>
+                        <th>Kết quả</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-folder-x fs-1 d-block mb-2 text-secondary"></i>
+                                Bạn chưa nộp hồ sơ học bổng nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            var pv = item.LichPhongVans?.OrderByDescending(l => l.ThoiGianBatDau).FirstOrDefault();
+                            <tr>
+                                <td class="ps-4 fw-bold text-primary">#@item.MaHoSoHocBong</td>
+                                <td>
+                                    <div class="fw-semibold text-dark">@item.HocBong?.TenHocBong</div>
+                                    <small class="text-muted">@item.HocBong?.DonViTaiTro?.TenDonViTaiTro</small>
+                                </td>
+                                <td class="small">@item.NgayNop.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">@item.TrangThai</span>
+                                </td>
+                                <td class="small">
+                                    @if (pv != null)
+                                    {
+                                        <div><strong>@pv.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm")</strong></div>
+                                        <span class="text-muted">@pv.DiaDiemHoacLienKet</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Chưa xếp lịch</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (item.KetQuaHocBong != null)
+                                    {
+                                        <span class="fw-semibold @(item.KetQuaHocBong.KetQua == "Được cấp học bổng" ? "text-success" : "text-danger")">
+                                            @item.KetQuaHocBong.KetQua (@item.KetQuaHocBong.DiemDanhGia đ)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">Chưa công bố</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="d-flex justify-content-end gap-2">
+                                        <a asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-primary">
+                                            Chi tiết
+                                        </a>
+                                        @if (item.TrangThai == "Chờ duyệt")
+                                        {
+                                            <form asp-action="HuyHoSo" asp-route-id="@item.MaHoSoHocBong" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy hồ sơ này?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
