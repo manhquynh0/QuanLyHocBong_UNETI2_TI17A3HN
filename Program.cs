@@ -13,6 +13,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30); });
 
 builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+builder.Services.AddScoped<IHocBongService, HocBongService>();
 
 var app = builder.Build();
 

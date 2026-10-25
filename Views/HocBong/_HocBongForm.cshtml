@@ -1,12 +1,11 @@
-@model QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong.HocBongFormViewModel
 
 @{
     var action = ViewData["FormAction"] as string ?? ViewContext.RouteData.Values["action"]?.ToString();
     var isEdit = string.Equals(action, "Edit", StringComparison.OrdinalIgnoreCase);
-    var standardStatuses = new[] { "Sắp mở", "Đang nhận hồ sơ", "Tạm dừng", "Đã đóng" };
 }
 
-<form asp-action="@action" method="post" class="scholarship-form-card">
+<form asp-action="@action" asp-route-id="@(isEdit ? Model.MaHocBong : (int?)null)" method="post" class="scholarship-form-card">
     <div asp-validation-summary="ModelOnly" class="scholarship-form-validation" role="alert"></div>
     @if (isEdit)
     {
@@ -58,21 +57,6 @@
                 <span asp-validation-for="DiemTrungBinhToiThieu" class="scholarship-field-error"></span>
             </div>
 
-            <div class="scholarship-form-field">
-                <label asp-for="TrangThai">Trạng thái <span aria-hidden="true">*</span></label>
-                <select asp-for="TrangThai" class="form-select">
-                    <option value="">-- Chọn trạng thái --</option>
-                    @if (!string.IsNullOrWhiteSpace(Model.TrangThai) && !standardStatuses.Contains(Model.TrangThai, StringComparer.Ordinal))
-                    {
-                        <option value="@Model.TrangThai">@Model.TrangThai</option>
-                    }
-                    @foreach (var status in standardStatuses)
-                    {
-                        <option value="@status">@status</option>
-                    }
-                </select>
-                <span asp-validation-for="TrangThai" class="scholarship-field-error"></span>
-            </div>
         </div>
     </section>
 
@@ -81,7 +65,7 @@
             <span class="scholarship-form-section-icon"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
             <div>
                 <h2 id="scholarship-schedule">Thời gian nhận hồ sơ</h2>
-                <p>Thiết lập thời gian bắt đầu và hạn cuối đăng ký.</p>
+                <p>Trạng thái học bổng được tự động xác định từ hai mốc thời gian này.</p>
             </div>
         </div>
 

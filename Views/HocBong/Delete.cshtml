@@ -20,8 +20,8 @@
         <div class="scholarship-delete-warning">
             <span class="scholarship-delete-warning-icon"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i></span>
             <div>
-                <h2>Bạn có chắc chắn muốn xóa?</h2>
-                <p>Thao tác này không thể hoàn tác. Hãy kiểm tra các hồ sơ liên quan trước khi tiếp tục.</p>
+                <h2>Xóa học bổng này?</h2>
+                <p>Thao tác này sẽ xóa học bổng vĩnh viễn. Không thể xóa học bổng đã có hồ sơ đăng ký.</p>
             </div>
         </div>
 
@@ -67,10 +67,10 @@
                 Xem chi tiết
             </a>
             <form asp-action="Delete" method="post">
-                <input type="hidden" asp-for="MaHocBong" />
+                <input type="hidden" name="id" value="@Model.MaHocBong" />
                 <button type="submit" class="scholarship-delete-submit">
                     <i class="bi bi-trash3" aria-hidden="true"></i>
-                    Xác nhận xóa
+                    Xác nhận xóa học bổng
                 </button>
             </form>
         </footer>

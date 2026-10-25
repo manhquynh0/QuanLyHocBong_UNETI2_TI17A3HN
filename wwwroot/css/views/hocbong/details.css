@@ -79,17 +79,47 @@
 .scholarship-status {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid transparent;
   border-radius: 999px;
-  color: #344054;
-  background: #e8edf4;
+  color: #475467;
+  background: #f2f4f7;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 700;
 }
 
-.scholarship-status-open {
-  color: #087c5a;
-  background: #c9f7e7;
+.scholarship-status::before {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
+}
+
+.scholarship-status.is-open {
+  border-color: #abefc6;
+  color: #067647;
+  background: #ecfdf3;
+}
+
+.scholarship-status.is-upcoming {
+  border-color: #b2ddff;
+  color: #175cd3;
+  background: #eff8ff;
+}
+
+.scholarship-status.is-closed {
+  border-color: #fecdca;
+  color: #b42318;
+  background: #fef3f2;
+}
+
+.scholarship-status.is-paused {
+  border-color: #fedf89;
+  color: #b54708;
+  background: #fffaeb;
 }
 
 .scholarship-hero h2 {
@@ -118,8 +148,8 @@
   display: flex;
   min-height: 84px;
   flex-direction: column;
-  justify-content: center;
-  gap: 3px;
+  justify-content: flex-start;
+  gap: 5px;
   padding: 14px 17px;
   border: 1px solid var(--border-color);
   border-radius: 12px;
@@ -127,6 +157,7 @@
 }
 
 .scholarship-stat strong {
+  order: 1;
   color: #202b3d;
   font-size: 23px;
   font-weight: 750;
@@ -134,9 +165,17 @@
 }
 
 .scholarship-stat span {
+  order: 0;
   color: #1d3557;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 750;
+}
+
+.scholarship-stat small {
+  order: 2;
+  color: var(--muted-color);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .scholarship-info-card {
@@ -144,6 +183,10 @@
   border: 1px solid var(--border-color);
   border-radius: 12px;
   background: #fff;
+}
+
+.scholarship-info-card + .scholarship-info-card {
+  margin-top: 16px;
 }
 
 .scholarship-info-title {
@@ -194,9 +237,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
-  margin: 20px 0 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-color);
+  margin: 0;
 }
 
 .scholarship-meta dt {
