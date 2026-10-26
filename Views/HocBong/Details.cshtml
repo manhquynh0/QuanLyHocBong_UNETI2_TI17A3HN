@@ -99,16 +99,22 @@
     </section>
 
     <section class="scholarship-info-card">
-        <h2 class="scholarship-info-title">Mô tả học bổng</h2>
+        <h2 class="scholarship-info-title">Thông tin chương trình</h2>
         <div class="scholarship-info-content">
-            @if (!string.IsNullOrWhiteSpace(Model.MoTaHocBong))
-            {
-                <p class="scholarship-description">@Model.MoTaHocBong</p>
-            }
-            else
-            {
-                <p class="scholarship-empty">Chưa có mô tả học bổng.</p>
-            }
+            <dl class="scholarship-meta">
+                <div>
+                    <dt>Bậc đào tạo</dt>
+                    <dd>@Model.BacDaoTao</dd>
+                </div>
+                <div>
+                    <dt>Bắt đầu nhận hồ sơ</dt>
+                    <dd>@Model.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy")</dd>
+                </div>
+                <div>
+                    <dt>Đơn vị tài trợ</dt>
+                    <dd>@(Model.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có thông tin")</dd>
+                </div>
+            </dl>
         </div>
     </section>
 
@@ -138,22 +144,16 @@
     </section>
 
     <section class="scholarship-info-card">
-        <h2 class="scholarship-info-title">Thông tin chương trình</h2>
+        <h2 class="scholarship-info-title">Mô tả học bổng</h2>
         <div class="scholarship-info-content">
-            <dl class="scholarship-meta">
-                <div>
-                    <dt>Bậc đào tạo</dt>
-                    <dd>@Model.BacDaoTao</dd>
-                </div>
-                <div>
-                    <dt>Bắt đầu nhận hồ sơ</dt>
-                    <dd>@Model.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy")</dd>
-                </div>
-                <div>
-                    <dt>Đơn vị tài trợ</dt>
-                    <dd>@(Model.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có thông tin")</dd>
-                </div>
-            </dl>
+            @if (!string.IsNullOrWhiteSpace(Model.MoTaHocBong))
+            {
+                <p class="scholarship-description">@Model.MoTaHocBong</p>
+            }
+            else
+            {
+                <p class="scholarship-empty">Chưa có mô tả học bổng.</p>
+            }
         </div>
     </section>
 </section>

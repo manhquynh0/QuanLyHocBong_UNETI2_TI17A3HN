@@ -97,6 +97,15 @@
     {
         <div class="scholarship-table-scroll">
                 <table class="scholarship-table">
+                    <colgroup>
+                        <col class="scholarship-column-code" />
+                        <col class="scholarship-column-name" />
+                        <col class="scholarship-column-sponsor" />
+                        <col class="scholarship-column-slots" />
+                        <col class="scholarship-column-deadline" />
+                        <col class="scholarship-column-status" />
+                        <col class="scholarship-column-actions" />
+                    </colgroup>
                     <thead>
                         <tr>
                             <th scope="col">Mã</th>
@@ -175,7 +184,7 @@
             {
                 <h2>Không tìm thấy học bổng phù hợp</h2>
                 <p>Thử thay đổi từ khóa hoặc điều kiện lọc.</p>
-                <a asp-action="Index" class="scholarship-filter-reset">Xóa bộ lọc</a>
+                <a asp-action="Index" class="scholarship-empty-reset">Xóa bộ lọc</a>
             }
             else
             {
