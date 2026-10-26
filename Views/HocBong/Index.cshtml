@@ -18,7 +18,17 @@
 
     @if (TempData["HocBongMessage"] is string message)
     {
-        <div class="scholarship-feedback" role="status">@message</div>
+        var messageType = TempData["HocBongMessageType"]?.ToString() ?? "info";
+        <div class="scholarship-toast is-@messageType" role="status" aria-live="polite" data-scholarship-toast>
+            <span class="scholarship-toast-icon" aria-hidden="true">
+                <i class="bi @(messageType == "success" ? "bi-check-circle-fill" : messageType == "error" ? "bi-x-circle-fill" : "bi-info-circle-fill")"></i>
+            </span>
+            <span class="scholarship-toast-message">@message</span>
+            <button type="button" class="scholarship-toast-close" aria-label="Đóng thông báo">
+                <i class="bi bi-x-lg" aria-hidden="true"></i>
+            </button>
+            <span class="scholarship-toast-progress" aria-hidden="true"></span>
+        </div>
     }
 
     <form asp-action="Search" method="get" class="scholarship-filter-form" id="scholarship-search-form">
@@ -85,38 +95,10 @@
 
     @if (Model.HocBongs.Any())
     {
-        <form asp-action="BulkAction" method="post" class="scholarship-table-form" id="scholarship-bulk-form">
-            <input type="hidden" name="returnUrl" value="@($"{Context.Request.Path}{Context.Request.QueryString}")" />
-            <div class="scholarship-bulk-toolbar" id="scholarship-bulk-toolbar">
-                <label class="scholarship-select-all">
-                    <input type="checkbox" id="select-all-scholarships" />
-                    <span>Chọn tất cả</span>
-                </label>
-                <span class="scholarship-selected-count" id="selected-scholarship-count" aria-live="polite">Chưa chọn học bổng</span>
-                <div class="scholarship-bulk-actions" id="scholarship-bulk-actions">
-                    <label class="visually-hidden" for="bulk-scholarship-status">Trạng thái mới</label>
-                    <select id="bulk-scholarship-status" name="newStatus">
-                        <option value="">Đổi trạng thái...</option>
-                        <option value="Đang nhận hồ sơ">Đang nhận hồ sơ</option>
-                        <option value="Sắp mở">Sắp mở</option>
-                        <option value="Đã đóng">Đã đóng</option>
-                        <option value="Tạm dừng">Tạm dừng</option>
-                    </select>
-                    <button type="submit" name="bulkAction" value="status" class="scholarship-bulk-update" id="bulk-update-status">
-                        <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-                        Cập nhật
-                    </button>
-                    <button type="submit" name="bulkAction" value="delete" class="scholarship-icon-action is-danger scholarship-bulk-delete" title="Xóa học bổng đã chọn" aria-label="Xóa học bổng đã chọn" data-confirm="Xóa các học bổng đã chọn? Học bổng đã có hồ sơ đăng ký sẽ được giữ lại.">
-                        <i class="bi bi-trash3" aria-hidden="true"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="scholarship-table-scroll">
+        <div class="scholarship-table-scroll">
                 <table class="scholarship-table">
                     <thead>
                         <tr>
-                            <th class="scholarship-table-checkbox" scope="col"><span class="visually-hidden">Chọn</span></th>
                             <th scope="col">Mã</th>
                             <th scope="col">Học bổng</th>
                             <th scope="col">Đơn vị tài trợ</th>
@@ -156,9 +138,6 @@
                             }
 
                             <tr>
-                                <td class="scholarship-table-checkbox">
-                                    <input type="checkbox" name="selectedIds" value="@item.MaHocBong" class="scholarship-row-checkbox" aria-label="Chọn @item.TenHocBong" />
-                                </td>
                                 <td class="scholarship-table-code">#@item.MaHocBong</td>
                                 <td class="scholarship-table-name">
                                     <a asp-action="Details" asp-route-id="@item.MaHocBong">@item.TenHocBong</a>
@@ -171,15 +150,13 @@
                                 <td class="scholarship-table-sponsor">@(item.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có đơn vị tài trợ")</td>
                                 <td class="is-numeric">@item.SoSuat</td>
                                 <td class="scholarship-table-deadline">@item.HanNopHoSo.ToString("dd/MM/yyyy")</td>
-                                <td>
-                                    <span class="scholarship-list-status @statusClass">@item.TrangThai</span>
-                                </td>
+                                <td><span class="scholarship-list-status @statusClass">@item.TrangThai</span></td>
                                 <td>
                                     <div class="scholarship-row-actions">
                                         <a asp-action="Edit" asp-route-id="@item.MaHocBong" class="scholarship-icon-action" title="Chỉnh sửa" aria-label="Chỉnh sửa @item.TenHocBong">
                                             <i class="bi bi-pencil" aria-hidden="true"></i>
                                         </a>
-                                        <a asp-action="Delete" asp-route-id="@item.MaHocBong" class="scholarship-icon-action is-danger" title="Xóa" aria-label="Xóa @item.TenHocBong">
+                                        <a asp-action="Delete" asp-route-id="@item.MaHocBong" class="scholarship-icon-action is-danger" title="Xóa học bổng" aria-label="Xóa @item.TenHocBong">
                                             <i class="bi bi-trash3" aria-hidden="true"></i>
                                         </a>
                                     </div>
@@ -188,8 +165,7 @@
                         }
                     </tbody>
                 </table>
-            </div>
-        </form>
+        </div>
     }
     else
     {
@@ -212,6 +188,42 @@
             }
         </div>
     }
+
+    @if (Model.TongSoTrang > 1)
+    {
+        <nav class="mt-3" aria-label="Phân trang danh sách học bổng">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.CoTrangTruoc ? "" : "disabled")">
+                    <a class="page-link" asp-action="Search" asp-route-Trang="@(Model.Trang - 1)"
+                       asp-route-TuKhoa="@Model.TuKhoa" asp-route-MaDonViTaiTro="@Model.MaDonViTaiTro"
+                       asp-route-BacDaoTao="@Model.BacDaoTao" asp-route-TrangThai="@Model.TrangThai"
+                       asp-route-DiemToiThieu="@Model.DiemToiThieu" asp-route-HanNop="@Model.HanNop"
+                       asp-route-SapXep="@Model.SapXep" aria-label="Trang trước">« Trước</a>
+                </li>
+
+                @for (var pageNumber = 1; pageNumber <= Model.TongSoTrang; pageNumber++)
+                {
+                    <li class="page-item @(pageNumber == Model.Trang ? "active" : "")">
+                        <a class="page-link" asp-action="Search" asp-route-Trang="@pageNumber"
+                           asp-route-TuKhoa="@Model.TuKhoa" asp-route-MaDonViTaiTro="@Model.MaDonViTaiTro"
+                           asp-route-BacDaoTao="@Model.BacDaoTao" asp-route-TrangThai="@Model.TrangThai"
+                           asp-route-DiemToiThieu="@Model.DiemToiThieu" asp-route-HanNop="@Model.HanNop"
+                           asp-route-SapXep="@Model.SapXep"
+                           aria-current="@(pageNumber == Model.Trang ? "page" : null)">@pageNumber</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.CoTrangSau ? "" : "disabled")">
+                    <a class="page-link" asp-action="Search" asp-route-Trang="@(Model.Trang + 1)"
+                       asp-route-TuKhoa="@Model.TuKhoa" asp-route-MaDonViTaiTro="@Model.MaDonViTaiTro"
+                       asp-route-BacDaoTao="@Model.BacDaoTao" asp-route-TrangThai="@Model.TrangThai"
+                       asp-route-DiemToiThieu="@Model.DiemToiThieu" asp-route-HanNop="@Model.HanNop"
+                       asp-route-SapXep="@Model.SapXep" aria-label="Trang sau">Sau »</a>
+                </li>
+            </ul>
+            <p class="text-center text-muted">Trang @Model.Trang / @Model.TongSoTrang</p>
+        </nav>
+    }
 </section>
 
 @section Styles {
@@ -220,4 +232,5 @@
 
 @section Scripts {
     <script src="~/js/views/hocbong/index.js" asp-append-version="true"></script>
+    <script src="~/js/views/hocbong/notifications.js" asp-append-version="true"></script>
 }

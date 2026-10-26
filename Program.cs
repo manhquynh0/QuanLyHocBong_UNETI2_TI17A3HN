@@ -13,6 +13,7 @@ builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30); });
 
 builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+builder.Services.AddScoped<IHocBongService, HocBongService>();
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<QuanLyHocBong_UNETI2_TI17A3HN.Services.IEmailService, QuanLyHocBong_UNETI2_TI17A3HN.Services.EmailService>();
 

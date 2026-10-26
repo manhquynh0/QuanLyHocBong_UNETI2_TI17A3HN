@@ -31,6 +31,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong
 
         public int SoKetQua { get; set; }
 
+        public int Trang { get; set; } = 1;
+
+        public int KichThuocTrang { get; set; } = 10;
+
+        public int TongSoTrang { get; set; } = 1;
+
+        public bool CoTrangTruoc => Trang > 1;
+
+        public bool CoTrangSau => Trang < TongSoTrang;
+
         public bool CoBoLoc =>
             !string.IsNullOrWhiteSpace(TuKhoa)
             || MaDonViTaiTro.HasValue
