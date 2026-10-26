@@ -295,9 +295,37 @@
 
 .scholarship-table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1000px;
   border-collapse: collapse;
-  table-layout: auto;
+  table-layout: fixed;
+}
+
+.scholarship-column-code {
+  width: 7%;
+}
+
+.scholarship-column-name {
+  width: 30%;
+}
+
+.scholarship-column-sponsor {
+  width: 20%;
+}
+
+.scholarship-column-slots {
+  width: 8%;
+}
+
+.scholarship-column-deadline {
+  width: 12%;
+}
+
+.scholarship-column-status {
+  width: 14%;
+}
+
+.scholarship-column-actions {
+  width: 9%;
 }
 
 .scholarship-table th {
@@ -314,6 +342,7 @@
 .scholarship-table td {
   height: 40px;
   padding: 5px 10px;
+  overflow: hidden;
   border-top: 1px solid #eaecf0;
   color: #344054;
   font-size: 12px;
@@ -331,8 +360,7 @@
 }
 
 .scholarship-table-name {
-  width: 34%;
-  min-width: 240px;
+  overflow: hidden;
 }
 
 .scholarship-table-name a {
@@ -474,6 +502,25 @@
   margin: 5px 0 12px;
   color: #475467;
   font-size: 13px;
+}
+
+.scholarship-empty-reset {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid #d0d5dd;
+  border-radius: 6px;
+  color: #475467;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.scholarship-empty-reset:hover {
+  border-color: #b2ddff;
+  color: var(--primary-blue);
+  background: #eff8ff;
 }
 
 @media (max-width: 1100px) {
