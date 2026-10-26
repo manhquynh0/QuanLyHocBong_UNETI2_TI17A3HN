@@ -1,0 +1,159 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong
+
+@{
+    ViewData["Title"] = "Chi tiết học bổng";
+
+    var soHoSo = (int)(ViewData["SoHoSo"] ?? 0);
+    var soNgayConLai = (Model.HanNopHoSo.Date - DateTime.Today).Days;
+    var dieuKien = (Model.DieuKienXetHocBong ?? string.Empty)
+        .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+    var trangThai = Model.TrangThai?.Trim() ?? string.Empty;
+    var statusClass = "is-unknown";
+
+    if (trangThai.Contains("nhận hồ sơ", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(trangThai, "Đang mở", StringComparison.OrdinalIgnoreCase))
+    {
+        statusClass = "is-open";
+    }
+    else if (trangThai.Contains("sắp", StringComparison.OrdinalIgnoreCase)
+        || trangThai.Contains("chờ", StringComparison.OrdinalIgnoreCase)
+        || trangThai.Contains("chưa mở", StringComparison.OrdinalIgnoreCase))
+    {
+        statusClass = "is-upcoming";
+    }
+    else if (trangThai.Contains("đóng", StringComparison.OrdinalIgnoreCase)
+        || trangThai.Contains("hết hạn", StringComparison.OrdinalIgnoreCase)
+        || trangThai.Contains("kết thúc", StringComparison.OrdinalIgnoreCase))
+    {
+        statusClass = "is-closed";
+    }
+    else if (trangThai.Contains("tạm dừng", StringComparison.OrdinalIgnoreCase)
+        || trangThai.Contains("ngừng", StringComparison.OrdinalIgnoreCase))
+    {
+        statusClass = "is-paused";
+    }
+}
+
+<section class="scholarship-details">
+    <header class="details-heading">
+        <div>
+            <h1>Chi tiết chương trình học bổng</h1>
+            <p>Mã học bổng #@Model.MaHocBong</p>
+        </div>
+        <div class="details-actions">
+            <a class="details-button details-button-light"
+               asp-action="Edit"
+               asp-route-id="@Model.MaHocBong">
+                <i class="bi bi-pencil" aria-hidden="true"></i>
+                <span>Chỉnh sửa</span>
+            </a>
+            <a class="details-button details-button-primary" asp-action="Index">
+                <i class="bi bi-list-ul" aria-hidden="true"></i>
+                <span>Danh sách học bổng</span>
+            </a>
+        </div>
+    </header>
+
+    <section class="scholarship-hero" aria-label="Thông tin học bổng">
+        <div class="scholarship-hero-content">
+            <span class="scholarship-status @statusClass">
+                @Model.TrangThai
+            </span>
+            <h2>@Model.TenHocBong</h2>
+        </div>
+    </section>
+
+    @section Styles {
+        <link rel="stylesheet" href="~/css/views/hocbong/details.css" asp-append-version="true" />
+    }
+
+    <section class="scholarship-stat-grid" aria-label="Tổng quan học bổng">
+        <article class="scholarship-stat">
+            <span>Hồ sơ đã nộp</span>
+            <strong>@soHoSo</strong>
+        </article>
+        <article class="scholarship-stat">
+            <span>Số suất</span>
+            <strong>@Model.SoSuat</strong>
+        </article>
+        <article class="scholarship-stat">
+            <span>Điểm trung bình tối thiểu</span>
+            <strong>@Model.DiemTrungBinhToiThieu.ToString("0.##") / 4.0</strong>
+        </article>
+        <article class="scholarship-stat">
+            <span>Hạn nộp hồ sơ</span>
+            <strong>@Model.HanNopHoSo.ToString("dd/MM/yyyy")</strong>
+            @if (soNgayConLai > 0)
+            {
+                <small>Còn @soNgayConLai ngày đến hạn nộp</small>
+            }
+            else if (soNgayConLai == 0)
+            {
+                <small>Hạn nộp hôm nay</small>
+            }
+            else
+            {
+                <small>Đã quá hạn @Math.Abs(soNgayConLai) ngày</small>
+            }
+        </article>
+    </section>
+
+    <section class="scholarship-info-card">
+        <h2 class="scholarship-info-title">Mô tả học bổng</h2>
+        <div class="scholarship-info-content">
+            @if (!string.IsNullOrWhiteSpace(Model.MoTaHocBong))
+            {
+                <p class="scholarship-description">@Model.MoTaHocBong</p>
+            }
+            else
+            {
+                <p class="scholarship-empty">Chưa có mô tả học bổng.</p>
+            }
+        </div>
+    </section>
+
+    <section class="scholarship-info-card">
+        <h2 class="scholarship-info-title">Điều kiện xét học bổng</h2>
+        <div class="scholarship-info-content">
+            @if (dieuKien.Any(condition => !string.IsNullOrWhiteSpace(condition)))
+            {
+                <ul class="scholarship-conditions">
+                    @foreach (var condition in dieuKien)
+                    {
+                        if (!string.IsNullOrWhiteSpace(condition))
+                        {
+                            <li>
+                                <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                <span>@condition.Trim()</span>
+                            </li>
+                        }
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="scholarship-empty">Chưa có điều kiện xét học bổng.</p>
+            }
+        </div>
+    </section>
+
+    <section class="scholarship-info-card">
+        <h2 class="scholarship-info-title">Thông tin chương trình</h2>
+        <div class="scholarship-info-content">
+            <dl class="scholarship-meta">
+                <div>
+                    <dt>Bậc đào tạo</dt>
+                    <dd>@Model.BacDaoTao</dd>
+                </div>
+                <div>
+                    <dt>Bắt đầu nhận hồ sơ</dt>
+                    <dd>@Model.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy")</dd>
+                </div>
+                <div>
+                    <dt>Đơn vị tài trợ</dt>
+                    <dd>@(Model.DonViTaiTro?.TenDonViTaiTro ?? "Chưa có thông tin")</dd>
+                </div>
+            </dl>
+        </div>
+    </section>
+</section>

@@ -1,34 +1,39 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
+
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
 
 // Add services to the container.
-builder.Services.AddControllersWithViews(options =>
+builder.Services.AddControllersWithViews();
+
+// Đăng ký Session (bắt buộc khi dùng app.UseSession())
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
 {
-    var p = options.ModelBindingMessageProvider;
-    p.SetValueMustBeANumberAccessor(name => $"{name} phải là một số (ví dụ 3.25).");
-    p.SetValueIsInvalidAccessor(v => $"Giá trị '{v}' không hợp lệ.");
-    p.SetAttemptedValueIsInvalidAccessor((v, name) => $"Giá trị '{v}' không hợp lệ cho {name}.");
-    p.SetUnknownValueIsInvalidAccessor(name => $"Giá trị không hợp lệ cho {name}.");
-    p.SetValueMustNotBeNullAccessor(_ => "Vui lòng nhập giá trị.");
-    p.SetMissingBindRequiredValueAccessor(name => $"Thiếu giá trị cho {name}.");
-    p.SetMissingKeyOrValueAccessor(() => "Vui lòng nhập giá trị.");
-    p.SetMissingRequestBodyRequiredValueAccessor(() => "Dữ liệu gửi lên không hợp lệ.");
-    p.SetNonPropertyAttemptedValueIsInvalidAccessor(v => $"Giá trị '{v}' không hợp lệ.");
-    p.SetNonPropertyUnknownValueIsInvalidAccessor(() => "Giá trị không hợp lệ.");
-    p.SetNonPropertyValueMustBeANumberAccessor(() => "Giá trị phải là một số.");
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(o =>
-{
-    o.IdleTimeout = TimeSpan.FromMinutes(30);
-    o.Cookie.HttpOnly = true;
-    o.Cookie.IsEssential = true;
-});
+// ===== Đăng ký các Service (Dependency Injection) =====
+// Module 3 - Học bổng (sinh viên xem)
+builder.Services.AddScoped<IHocBongService, HocBongService>();
+
+// Module 4 - Hồ sơ học bổng
+builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+
+// Module Email (dùng bởi KetQuaHocBong & LichPhongVan)
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// HttpClient cho EmailService (nếu dùng HTTP)
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
@@ -52,7 +57,6 @@ app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
 
 app.UseHttpsRedirection();
 app.UseRouting();
-
 app.UseSession();
 
 app.UseAuthorization();
@@ -61,8 +65,7 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=TaiKhoan}/{action=DangNhap}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

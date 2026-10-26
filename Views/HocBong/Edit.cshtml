@@ -1,0 +1,35 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong.HocBongFormViewModel
+
+@{
+    ViewData["Title"] = "Chỉnh sửa học bổng";
+    ViewData["FormAction"] = "Edit";
+}
+
+<section class="scholarship-form-page">
+    <header class="scholarship-form-heading">
+        <div>
+            <a class="scholarship-form-back" asp-action="Index">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                <span>Danh sách học bổng</span>
+            </a>
+            <h1>Chỉnh sửa học bổng</h1>
+            <p>Cập nhật thông tin chương trình <strong>#@Model.MaHocBong</strong>.</p>
+        </div>
+        <a class="scholarship-form-secondary"
+           asp-action="Details"
+           asp-route-id="@Model.MaHocBong">
+            <i class="bi bi-eye" aria-hidden="true"></i>
+            <span>Xem chi tiết</span>
+        </a>
+    </header>
+
+    <partial name="_HocBongForm" model="Model" />
+</section>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/hocbong/forms.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

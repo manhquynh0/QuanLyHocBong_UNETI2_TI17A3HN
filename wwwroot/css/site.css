@@ -35,7 +35,9 @@ a {
 }
 
 .app-shell {
+    display: flex;
     min-height: 100vh;
+    align-items: stretch;
 }
 
 .sidebar {
@@ -48,6 +50,7 @@ a {
     padding: 23px 22px 17px;
     color: var(--sidebar-text);
     background: var(--sidebar-bg);
+    overflow-y: auto;
 }
 
 .brand {
@@ -141,6 +144,10 @@ a {
 }
 
 .workspace {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 0;
+    min-width: 0;
     min-height: 100vh;
     margin-left: 250px;
 }
@@ -229,11 +236,128 @@ a.notification-button:focus-visible {
 }
 
 .page-content {
-    min-height: calc(100vh - 72px);
+    flex: 1 1 auto;
     padding: 24px;
     background: var(--page-bg);
 }
 
+/* ===== Student Dashboard CSS (Module 3) ===== */
+
+.dashboard-container {
+    max-width: 1200px;
+}
+
+.welcome-banner {
+    padding: 24px 28px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1a4f8c 0%, #2160ad 60%, #3b82f6 100%);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(33, 96, 173, 0.3);
+}
+
+.welcome-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.welcome-desc {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 13.5px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 20px;
+    background: #fff;
+    border: 1px solid #edf1f6;
+    border-radius: 14px;
+    box-shadow: 0 1px 3px rgba(22, 36, 61, 0.04);
+}
+
+.stat-icon {
+    display: grid;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 20px;
+}
+
+.icon-blue   { background: #dbeafe; color: #2160ad; }
+.icon-amber  { background: #fef3c7; color: #ca8a04; }
+.icon-green  { background: #dcfce7; color: #16a34a; }
+.icon-purple { background: #ede9fe; color: #7c3aed; }
+
+.stat-info {
+    min-width: 0;
+}
+
+.stat-label {
+    display: block;
+    color: #8a96a8;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stat-value {
+    margin: 2px 0 2px;
+    color: #1f2a3d;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-value small {
+    font-size: 13px;
+    font-weight: 500;
+    color: #8a96a8;
+}
+
+.stat-meta {
+    font-size: 12px;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge-warning  { background: #fef3c7; color: #ca8a04; border: 1px solid #fde68a; }
+.badge-info     { background: #dbeafe; color: #2160ad; border: 1px solid #bfdbfe; }
+.badge-success  { background: #dcfce7; color: #16a34a; border: 1px solid #bbf7d0; }
+.badge-danger   { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }
+.badge-purple   { background: #ede9fe; color: #7c3aed; border: 1px solid #ddd6fe; }
+.badge-cyan     { background: #cffafe; color: #0891b2; border: 1px solid #a5f3fc; }
+.badge-secondary{ background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+
+.hover-card {
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.hover-card:hover {
+    box-shadow: 0 6px 18px rgba(22, 36, 61, 0.1) !important;
+    transform: translateY(-1px);
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 1050px) {
     .sidebar {
         width: 210px;
@@ -244,8 +368,11 @@ a.notification-button:focus-visible {
     .workspace {
         margin-left: 210px;
     }
-}
 
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
 @media (max-width: 800px) {
     .sidebar {
         width: 72px;
@@ -294,6 +421,12 @@ a.notification-button:focus-visible {
     }
 }
 
+@media (max-width: 640px) {
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 @media (max-width: 560px) {
     .topbar {
         min-height: 64px;
@@ -326,5 +459,13 @@ a.notification-button:focus-visible {
     .page-content {
         min-height: calc(100vh - 64px);
         padding: 16px 13px;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-banner {
+        padding: 18px 16px;
     }
 }

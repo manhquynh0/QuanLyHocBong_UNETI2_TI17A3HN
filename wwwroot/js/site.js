@@ -45,19 +45,4 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    document.querySelectorAll("form.js-confirm").forEach(function (form) {
-        form.addEventListener("submit", function (e) {
-            if (form.dataset.confirmed === "1") return;
-            e.preventDefault();
-            window.unetiConfirm({
-                title: form.dataset.confirmTitle || "Xác nhận?",
-                body: form.dataset.confirmBody || "Hành động này không thể hoàn tác.",
-                okText: form.dataset.confirmOk || "Xác nhận",
-                onOk: function () {
-                    form.dataset.confirmed = "1";
-                    form.submit();
-                }
-            });
-        });
-    });
-});
+// Write your JavaScript code.

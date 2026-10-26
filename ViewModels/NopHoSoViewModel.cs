@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using ModelHocBong = QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 {
@@ -28,7 +29,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public List<IFormFile>? TaiLieus { get; set; }
 
         // ---- Chỉ để hiển thị, không nhận từ form ----
-        [BindNever] public HocBong? HocBong { get; set; }
+        [BindNever] public ModelHocBong? HocBong { get; set; }
         [BindNever] public SinhVien? SinhVien { get; set; }
         [BindNever] public List<string> LyDoKhongHopLe { get; set; } = new();
         public bool DuDieuKien => !LyDoKhongHopLe.Any();

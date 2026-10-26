@@ -1,0 +1,118 @@
+@model QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong.HocBongFormViewModel
+
+@{
+    var action = ViewData["FormAction"] as string ?? ViewContext.RouteData.Values["action"]?.ToString();
+    var isEdit = string.Equals(action, "Edit", StringComparison.OrdinalIgnoreCase);
+}
+
+<form asp-action="@action" asp-route-id="@(isEdit ? Model.MaHocBong : (int?)null)" method="post" class="scholarship-form-card">
+    <div asp-validation-summary="ModelOnly" class="scholarship-form-validation" role="alert"></div>
+    @if (isEdit)
+    {
+        <input type="hidden" asp-for="MaHocBong" />
+    }
+
+    <section class="scholarship-form-section" aria-labelledby="scholarship-basic-info">
+        <div class="scholarship-form-section-heading">
+            <span class="scholarship-form-section-icon"><i class="bi bi-award" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="scholarship-basic-info">Thông tin chương trình</h2>
+                <p>Các thông tin nhận diện và quy mô học bổng.</p>
+            </div>
+        </div>
+
+        <div class="scholarship-form-grid">
+            <div class="scholarship-form-field scholarship-form-field-wide">
+                <label asp-for="TenHocBong">Tên học bổng <span aria-hidden="true">*</span></label>
+                <input asp-for="TenHocBong" class="form-control" placeholder="Ví dụ: Học bổng Khuyến học UNETI" autocomplete="off" />
+                <span asp-validation-for="TenHocBong" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="MaDonViTaiTro">Đơn vị tài trợ <span aria-hidden="true">*</span></label>
+                <select asp-for="MaDonViTaiTro" class="form-select" asp-items="ViewBag.MaDonViTaiTro">
+                    <option value="">-- Chọn đơn vị tài trợ --</option>
+                </select>
+                <span asp-validation-for="MaDonViTaiTro" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="BacDaoTao">Bậc đào tạo <span aria-hidden="true">*</span></label>
+                <input asp-for="BacDaoTao" class="form-control" placeholder="Ví dụ: Đại học chính quy" />
+                <span asp-validation-for="BacDaoTao" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="SoSuat">Số suất học bổng <span aria-hidden="true">*</span></label>
+                <input asp-for="SoSuat" class="form-control" type="number" min="1" step="1" />
+                <span asp-validation-for="SoSuat" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="DiemTrungBinhToiThieu">Điểm trung bình tối thiểu <span aria-hidden="true">*</span></label>
+                <div class="scholarship-input-suffix">
+                    <input asp-for="DiemTrungBinhToiThieu" class="form-control" type="number" min="0" max="4" step="0.01" />
+                    <span> / 4.0</span>
+                </div>
+                <span asp-validation-for="DiemTrungBinhToiThieu" class="scholarship-field-error"></span>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="scholarship-form-section" aria-labelledby="scholarship-schedule">
+        <div class="scholarship-form-section-heading">
+            <span class="scholarship-form-section-icon"><i class="bi bi-calendar-event" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="scholarship-schedule">Thời gian nhận hồ sơ</h2>
+                <p>Trạng thái học bổng được tự động xác định từ hai mốc thời gian này.</p>
+            </div>
+        </div>
+
+        <div class="scholarship-form-grid scholarship-form-grid-two">
+            <div class="scholarship-form-field">
+                <label asp-for="NgayBatDauNhanHoSo">Ngày bắt đầu nhận hồ sơ <span aria-hidden="true">*</span></label>
+                <input asp-for="NgayBatDauNhanHoSo" class="form-control" type="date" />
+                <span asp-validation-for="NgayBatDauNhanHoSo" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="HanNopHoSo">Hạn nộp hồ sơ <span aria-hidden="true">*</span></label>
+                <input asp-for="HanNopHoSo" class="form-control" type="date" />
+                <span asp-validation-for="HanNopHoSo" class="scholarship-field-error"></span>
+            </div>
+        </div>
+    </section>
+
+    <section class="scholarship-form-section" aria-labelledby="scholarship-description">
+        <div class="scholarship-form-section-heading">
+            <span class="scholarship-form-section-icon"><i class="bi bi-card-text" aria-hidden="true"></i></span>
+            <div>
+                <h2 id="scholarship-description">Mô tả và điều kiện</h2>
+                <p>Cung cấp nội dung giúp sinh viên hiểu rõ quyền lợi và tiêu chí xét tuyển.</p>
+            </div>
+        </div>
+
+        <div class="scholarship-form-grid scholarship-form-grid-one">
+            <div class="scholarship-form-field">
+                <label asp-for="MoTaHocBong">Mô tả học bổng</label>
+                <textarea asp-for="MoTaHocBong" class="form-control" rows="4" maxlength="2000" placeholder="Mô tả quyền lợi, giá trị và thông tin liên quan..."></textarea>
+                <span asp-validation-for="MoTaHocBong" class="scholarship-field-error"></span>
+            </div>
+
+            <div class="scholarship-form-field">
+                <label asp-for="DieuKienXetHocBong">Điều kiện xét học bổng</label>
+                <textarea asp-for="DieuKienXetHocBong" class="form-control" rows="4" maxlength="2000" placeholder="Nhập mỗi điều kiện trên một dòng để dễ theo dõi..."></textarea>
+                <span asp-validation-for="DieuKienXetHocBong" class="scholarship-field-error"></span>
+            </div>
+        </div>
+    </section>
+
+    <footer class="scholarship-form-actions">
+        <a asp-action="Index" class="scholarship-form-cancel">Hủy</a>
+        <button type="submit" class="scholarship-form-submit">
+            <i class="bi @(isEdit ? "bi-check-lg" : "bi-plus-lg")" aria-hidden="true"></i>
+            @(isEdit ? "Lưu thay đổi" : "Tạo học bổng")
+        </button>
+    </footer>
+</form>

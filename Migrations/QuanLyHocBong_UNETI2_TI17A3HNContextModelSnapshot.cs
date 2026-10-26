@@ -31,12 +31,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaDonViTaiTro"));
 
                     b.Property<string>("EmailLienHe")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("MoTa")
-                        .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("nvarchar(2000)");
 
@@ -220,7 +218,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("NhanXet")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -257,7 +254,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<string>("GhiChu")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -428,7 +424,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                     b.Property<string>("VaiTro")
                         .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("MaTaiKhoan");
 
@@ -616,8 +612,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan", b =>
                 {
-                    b.Navigation("SinhVien")
-                        .IsRequired();
+                    b.Navigation("SinhVien");
                 });
 #pragma warning restore 612, 618
         }

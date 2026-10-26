@@ -42,7 +42,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
                 .WithMany(d => d.HocBongs)
                 .HasForeignKey(h => h.MaDonViTaiTro)
                 .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<HoSoHocBong>()
                 .HasOne(hs => hs.SinhVien)
                 .WithMany(s => s.HoSoHocBongs)

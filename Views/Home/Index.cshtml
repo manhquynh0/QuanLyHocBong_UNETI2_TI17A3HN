@@ -1,60 +1,8 @@
-﻿@{
-    var vaiTro = Context.Session.GetString("VaiTro");
-    var laSinhVien = vaiTro == "Sinh viên";
-    ViewData["Title"] = laSinhVien ? "Trang chủ" : "Trang tổng quan";
-    ViewData["Nav"] = "TrangChu";
+@{
+    ViewData["Title"] = "Home Page";
 }
 
-@if (laSinhVien)
-{
-    <div class="page-hero">
-        <div class="page-hero-copy">
-            <h2>Trang chủ</h2>
-            <p>Theo dõi học bổng đang mở, hồ sơ đã nộp và kết quả xét duyệt.</p>
-        </div>
-    </div>
-    <div class="row g-3">
-        <div class="col-md-4">
-            <a class="ui-card d-block h-100" asp-controller="HocBongSinhVien" asp-action="Index">
-                <div class="ui-card-body">
-                    <i class="bi bi-journal-text fs-3 text-primary"></i>
-                    <h3 class="ui-card-title mt-2">Danh sách học bổng</h3>
-                    <p class="ui-card-sub mb-0">Xem các chương trình đang nhận hồ sơ</p>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-4">
-            <a class="ui-card d-block h-100" asp-controller="HoSoCuaToi" asp-action="Index">
-                <div class="ui-card-body">
-                    <i class="bi bi-file-earmark-text fs-3 text-primary"></i>
-                    <h3 class="ui-card-title mt-2">Hồ sơ của tôi</h3>
-                    <p class="ui-card-sub mb-0">Theo dõi tiến trình xét duyệt</p>
-                </div>
-            </a>
-        </div>
-        <div class="col-md-4">
-            <a class="ui-card d-block h-100" asp-controller="HoSoCuaToi" asp-action="KetQua">
-                <div class="ui-card-body">
-                    <i class="bi bi-award fs-3 text-primary"></i>
-                    <h3 class="ui-card-title mt-2">Kết quả học bổng</h3>
-                    <p class="ui-card-sub mb-0">Xem quyết định đã công bố</p>
-                </div>
-            </a>
-        </div>
-    </div>
-}
-else
-{
-    <div class="page-hero">
-        <div class="page-hero-copy">
-            <h2>Trang tổng quan</h2>
-            <p>Cổng quản trị hệ thống xét duyệt học bổng UNETI.</p>
-        </div>
-        <a class="btn btn-outline-secondary btn-sm" asp-controller="Home" asp-action="DangNhapThu">Đăng nhập thử (sinh viên)</a>
-    </div>
-    <div class="ui-card">
-        <div class="ui-card-body">
-            <p class="mb-0 text-muted">Chọn mục bên trái để quản lý học bổng, sinh viên, xét duyệt hồ sơ và gửi thông báo.</p>
-        </div>
-    </div>
-}
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>

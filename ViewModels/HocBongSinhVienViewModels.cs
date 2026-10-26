@@ -3,6 +3,7 @@
 // Nội dung thực hiện: Module 3 - ViewModel danh sách và chi tiết học bổng phía sinh viên.
 using QuanLyHocBong_UNETI2_TI17A3HN.Helpers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using ModelHocBong = QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 {
@@ -53,7 +54,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 
     public class HocBongChiTietViewModel
     {
-        public HocBong HocBong { get; set; } = default!;
+        public ModelHocBong HocBong { get; set; } = default!;
         public List<string> LyDoKhongNop { get; set; } = new();
         public bool DuocNop => !LyDoKhongNop.Any();
     }
