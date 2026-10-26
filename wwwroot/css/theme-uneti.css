@@ -1,0 +1,148 @@
+:root {
+    --c-navy: var(--sidebar-bg, #0e1d35);
+    --c-blue: var(--primary-blue, #2160ad);
+    --c-blue-dark: #1a4f8c;
+    --c-blue-soft: #DBEAFE;
+    --c-cyan-soft: #CFFAFE;
+    --c-green: #16A34A;
+    --c-green-soft: #DCFCE7;
+    --c-yellow: #CA8A04;
+    --c-yellow-soft: #FEF3C7;
+    --c-orange: #EA580C;
+    --c-orange-soft: #FFEDD5;
+    --c-purple: #7C3AED;
+    --c-purple-soft: #EDE9FE;
+    --c-violet: #9333EA;
+    --c-red: #DC2626;
+    --c-white: #FFFFFF;
+    --c-bg: var(--page-bg, #f3f5f9);
+    --c-text: var(--text-color, #253247);
+    --c-muted: var(--muted-color, #788497);
+    --c-line: var(--border-color, #e5e9f0);
+}
+
+/* ---------- Nền, chữ ---------- */
+body { color: var(--c-text); }
+h1, h2, h3, h4, h5, h6 { color: var(--c-text); }
+.text-muted { color: var(--c-muted) !important; }
+.text-success { color: var(--c-green) !important; }
+.text-danger { color: var(--c-red) !important; }
+.text-warning { color: var(--c-yellow) !important; }
+main a:not(.btn):not(.page-link) { color: var(--c-blue); }
+main a:not(.btn):not(.page-link):hover { color: var(--c-blue-dark); }
+.breadcrumb-item.active { color: var(--c-muted); }
+
+/* ---------- Nút ---------- */
+.btn-primary {
+    --bs-btn-color: #fff; --bs-btn-bg: var(--c-blue); --bs-btn-border-color: var(--c-blue);
+    --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--c-blue-dark); --bs-btn-hover-border-color: var(--c-blue-dark);
+    --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--c-blue-dark); --bs-btn-active-border-color: var(--c-blue-dark);
+    --bs-btn-disabled-color: #fff; --bs-btn-disabled-bg: var(--c-blue); --bs-btn-disabled-border-color: var(--c-blue);
+}
+/* Nộp hồ sơ / CTA */
+.btn-cta {
+    --bs-btn-color: #fff; --bs-btn-bg: var(--c-orange); --bs-btn-border-color: var(--c-orange);
+    --bs-btn-hover-color: #fff; --bs-btn-hover-bg: #C2410C; --bs-btn-hover-border-color: #C2410C;
+    --bs-btn-active-color: #fff; --bs-btn-active-bg: #C2410C; --bs-btn-active-border-color: #C2410C;
+    --bs-btn-disabled-color: #fff; --bs-btn-disabled-bg: var(--c-orange); --bs-btn-disabled-border-color: var(--c-orange);
+}
+/* Danh sách / chức năng phụ */
+.btn-outline-purple {
+    --bs-btn-color: var(--c-purple); --bs-btn-border-color: var(--c-purple);
+    --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--c-purple); --bs-btn-hover-border-color: var(--c-purple);
+    --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--c-purple); --bs-btn-active-border-color: var(--c-purple);
+}
+/* Xóa / hủy */
+.btn-outline-danger {
+    --bs-btn-color: var(--c-red); --bs-btn-border-color: var(--c-red);
+    --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--c-red); --bs-btn-hover-border-color: var(--c-red);
+    --bs-btn-active-color: #fff; --bs-btn-active-bg: var(--c-red); --bs-btn-active-border-color: var(--c-red);
+}
+.btn-outline-secondary {
+    --bs-btn-color: #475569; --bs-btn-border-color: #CBD5E1;
+    --bs-btn-hover-color: var(--c-text); --bs-btn-hover-bg: #F1F5F9; --bs-btn-hover-border-color: #94A3B8;
+    --bs-btn-active-color: var(--c-text); --bs-btn-active-bg: #E2E8F0; --bs-btn-active-border-color: #94A3B8;
+}
+
+/* ---------- Thẻ (card) ---------- */
+.card {
+    --bs-card-bg: var(--c-white);
+    --bs-card-border-color: var(--c-line);
+    --bs-card-border-radius: .75rem;
+    --bs-card-inner-border-radius: calc(.75rem - 1px);
+    --bs-card-cap-bg: var(--c-blue-soft);
+}
+.card > .card-header { background: var(--c-blue-soft); color: var(--c-navy); border-bottom: 1px solid #BFDBFE; }
+.card > .card-footer { background: var(--c-white); border-top: 1px solid var(--c-line); }
+/* Card thông tin */
+.card-info > .card-header { background: var(--c-cyan-soft); color: #155E75; border-bottom-color: #A5F3FC; }
+/* Phỏng vấn / kết quả */
+.card-violet { border-color: #DDD6FE; }
+.card-violet > .card-header { background: var(--c-purple-soft); color: var(--c-violet); border-bottom-color: #DDD6FE; }
+/* Nộp hồ sơ */
+.card-cta { border-color: #FED7AA; }
+.card-cta > .card-header { background: var(--c-orange-soft); color: #9A3412; border-bottom-color: #FED7AA; }
+/* Học bổng hết hạn */
+.card-expired { background: #F1F5F9; border-style: dashed; }
+.card-expired .card-footer { background: transparent; }
+
+/* ---------- Trạng thái (pill) ---------- */
+.st {
+    display: inline-block; padding: .28em .7em; border-radius: 999px; font-size: .8rem; font-weight: 600;
+    line-height: 1.3; border: 1px solid transparent; white-space: nowrap;
+}
+.st-lg { font-size: 1rem; padding: .35em .9em; }
+.st-green  { background: var(--c-green-soft);  color: var(--c-green);  border-color: #BBF7D0; }
+.st-yellow { background: var(--c-yellow-soft); color: var(--c-yellow); border-color: #FDE68A; }
+.st-blue   { background: var(--c-blue-soft);   color: var(--c-blue);   border-color: #BFDBFE; }
+.st-purple { background: var(--c-purple-soft); color: var(--c-purple); border-color: #DDD6FE; }
+.st-violet { background: #F3E8FF;              color: var(--c-violet); border-color: #E9D5FF; }
+.st-red    { background: #FEE2E2;              color: var(--c-red);    border-color: #FECACA; }
+.st-gray   { background: #F1F5F9;              color: var(--c-muted);  border-color: var(--c-line); }
+
+/* ---------- Thông báo ---------- */
+.alert-success { --bs-alert-bg: var(--c-green-soft);  --bs-alert-color: #166534; --bs-alert-border-color: #BBF7D0; }
+.alert-warning { --bs-alert-bg: var(--c-yellow-soft); --bs-alert-color: #854D0E; --bs-alert-border-color: #FDE68A; }
+.alert-danger  { --bs-alert-bg: #FEE2E2;              --bs-alert-color: #991B1B; --bs-alert-border-color: #FECACA; }
+.alert-info    { --bs-alert-bg: var(--c-cyan-soft);   --bs-alert-color: #155E75; --bs-alert-border-color: #A5F3FC; }
+
+/* ---------- Form ---------- */
+.form-control:focus, .form-select:focus {
+    border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(33, 96, 173, .2);
+}
+.form-check-input:checked { background-color: var(--c-blue); border-color: var(--c-blue); }
+.form-check-input:focus { border-color: var(--c-blue); box-shadow: 0 0 0 .2rem rgba(33, 96, 173, .2); }
+.form-label { color: var(--c-text); font-weight: 500; }
+
+/* ---------- Bảng ---------- */
+.table-responsive { background: var(--c-white); border: 1px solid var(--c-line); border-radius: .75rem; }
+.table-responsive > .table { margin-bottom: 0; }
+.table-light { --bs-table-bg: var(--c-blue-soft); --bs-table-color: var(--c-navy); --bs-table-border-color: #BFDBFE; }
+.table-hover > tbody > tr:hover > * { --bs-table-bg-state: #F1F5F9; }
+
+/* ---------- Phân trang (danh sách = purple) ---------- */
+.pagination {
+    --bs-pagination-color: var(--c-purple);
+    --bs-pagination-hover-color: var(--c-purple); --bs-pagination-hover-bg: var(--c-purple-soft);
+    --bs-pagination-focus-color: var(--c-purple); --bs-pagination-focus-bg: var(--c-purple-soft);
+    --bs-pagination-active-bg: var(--c-purple); --bs-pagination-active-border-color: var(--c-purple);
+    --bs-pagination-disabled-color: #94A3B8;
+}
+.pagination .page-link { color: var(--c-purple); }
+.pagination .active > .page-link { color: #fff; background: var(--c-purple); border-color: var(--c-purple); }
+.pagination .disabled > .page-link { color: #94A3B8; }
+
+/* ---------- Tải tệp đính kèm hồ sơ ---------- */
+.upload-list { margin: 10px 0 0; padding: 0; }
+.upload-item {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 8px 12px;
+    border: 1px solid var(--c-line); border-radius: 10px; background: #fff;
+}
+.upload-item .upload-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.upload-item .upload-size { color: var(--c-muted); font-size: 12px; white-space: nowrap; }
+.upload-item .btn-remove { border: 0; background: transparent; color: var(--c-muted); }
+.upload-item .btn-remove:hover { color: var(--c-red); }
+.upload-error:empty { display: none; }
+.upload-error { margin-top: 6px; }
+.dropzone.dragover { border-color: var(--c-blue); background: var(--c-blue-soft); }
+.doc-icon-img { color: var(--c-blue); font-size: 20px; }

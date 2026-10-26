@@ -1,0 +1,19 @@
+@{
+    var ctrl = ViewContext.RouteData.Values["controller"]?.ToString();
+    string Active(string c) => ctrl == c ? "active" : "";
+}
+<a class="nav-item @Active("HocBongSinhVien")" asp-controller="HocBongSinhVien" asp-action="Index"
+   aria-current="@(ctrl == "HocBongSinhVien" ? "page" : null)">
+    <i class="bi bi-award"></i>
+    <span>Học bổng</span>
+</a>
+<a class="nav-item @Active("HoSoCuaToi")" asp-controller="HoSoCuaToi" asp-action="Index"
+   aria-current="@(ctrl == "HoSoCuaToi" ? "page" : null)">
+    <i class="bi bi-file-earmark-check"></i>
+    <span>Hồ sơ đã nộp</span>
+</a>
+<a class="nav-item @Active("HoSoCaNhan")" asp-controller="HoSoCaNhan" asp-action="Index"
+   aria-current="@(ctrl == "HoSoCaNhan" ? "page" : null)">
+    <i class="bi bi-person"></i>
+    <span>Thông tin cá nhân</span>
+</a>

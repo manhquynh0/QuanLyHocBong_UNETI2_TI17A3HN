@@ -1,0 +1,215 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - chi tiết một hồ sơ đã nộp (chỉ hồ sơ của chính sinh viên). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.Helpers
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model HoSoDaNopViewModel
+@{
+    ViewData["Title"] = "Chi tiết hồ sơ đã nộp";
+    ViewData["Nav"] = "HoSoCuaToi";
+    var ngayXuLy = Model.NgayXuLy.HasValue ? " · " + Model.NgayXuLy.Value.ToString("dd/MM") : "";
+
+    // Tiến trình hiển thị theo ĐÚNG trạng thái hiện tại (kể cả hồ sơ bị loại / đã hủy)
+    var buoc = new List<(string Text, string Css)> { ("Đã nộp hồ sơ · " + Model.NgayNop.ToString("dd/MM"), "done") };
+    switch (Model.TrangThai)
+    {
+        case TrangThaiHoSo.ChoDuyet:
+            buoc.Add(("Đang xét duyệt sơ bộ", "current"));
+            break;
+        case TrangThaiHoSo.KhongDatSoBo:
+            buoc.Add(("Không đạt xét duyệt sơ bộ" + ngayXuLy, "done"));
+            break;
+        case TrangThaiHoSo.DaHuy:
+            buoc.Add(("Hồ sơ đã bị hủy", ""));
+            break;
+        default:
+            buoc.Add(("Đạt xét duyệt sơ bộ" + ngayXuLy, "done"));
+            if (Model.TrangThai == TrangThaiHoSo.DatSoBo)
+            {
+                buoc.Add(("Chờ lập lịch phỏng vấn", "current"));
+            }
+            else if (Model.TrangThai == TrangThaiHoSo.ChoPhongVan)
+            {
+                buoc.Add(("Chờ phỏng vấn", "current"));
+            }
+            else if (Model.TrangThai == TrangThaiHoSo.DaPhongVan)
+            {
+                buoc.Add(("Đã phỏng vấn", "done"));
+                buoc.Add(("Chờ công bố kết quả", "current"));
+            }
+            else
+            {
+                buoc.Add(("Đã phỏng vấn", "done"));
+                buoc.Add(("Đã công bố kết quả", "done"));
+            }
+            break;
+    }
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Chi tiết hồ sơ đã nộp</h2>
+        <p>@Model.TenHocBong</p>
+    </div>
+    <partial name="_TrangThaiBadge" model="@Model.TrangThai" />
+</div>
+
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["ThongBao"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" style="white-space:pre-line;">
+        @TempData["Loi"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title mb-3">Thông tin sinh viên</h3>
+                <div class="info-grid">
+                    <div>
+                        <span class="field-label">Họ và tên</span>
+                        <div class="field-value">@Model.HoTenSinhVien</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Mã sinh viên</span>
+                        <div class="field-value">@Model.MaSinhVien</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Ngành</span>
+                        <div class="field-value">@Model.Nganh</div>
+                    </div>
+                    <div>
+                        <span class="field-label">GPA</span>
+                        <div class="field-value accent">@Model.DiemTrungBinhTichLuy.ToString("0.00") / 4.0</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Bậc đào tạo</span>
+                        <div class="field-value">@Model.BacDaoTao</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Ngày nộp</span>
+                        <div class="field-value">@Model.NgayNop.ToString("dd/MM/yyyy · HH:mm")</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Thư xin học bổng</h3>
+                <p class="mb-0" style="white-space:pre-line;">@Model.ThuXinHocBong</p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.NhanXetXetDuyet))
+        {
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Nhận xét xét duyệt sơ bộ</h3>
+                    @if (Model.NgayXuLy.HasValue)
+                    {
+                        <p class="ui-card-sub">Xử lý ngày @Model.NgayXuLy.Value.ToString("dd/MM/yyyy")</p>
+                    }
+                    <p class="mb-0" style="white-space:pre-line;">@Model.NhanXetXetDuyet</p>
+                </div>
+            </div>
+        }
+
+        @if (Model.DaCongBoKetQua)
+        {
+            var kq = Model.KetQua!;
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Kết quả xét học bổng</h3>
+                    <p class="ui-card-sub">Công bố ngày @kq.NgayCapNhat.ToString("dd/MM/yyyy")</p>
+                    <div class="mb-2">
+                        <span class="@(kq.KetQua == TrangThaiHoSo.DuocCap ? "st st-green" : "st st-red")">@kq.KetQua</span>
+                        @if (kq.DiemDanhGia.HasValue)
+                        {
+                            <span class="ms-2 text-muted">Điểm đánh giá: <strong>@kq.DiemDanhGia.Value.ToString("0.##")</strong></span>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(kq.NhanXet))
+                    {
+                        <p class="mb-0" style="white-space:pre-line;">@kq.NhanXet</p>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+        {
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title">Thành tích / ghi chú</h3>
+                    <p class="mb-0" style="white-space:pre-line;">@Model.GhiChu</p>
+                </div>
+            </div>
+        }
+
+        <partial name="_TaiLieuHoSo" model="@(new TaiLieuHoSoListViewModel
+        {
+            MaHoSoHocBong = Model.MaHoSoHocBong,
+            Items = Model.TaiLieus,
+            CoTheThem = Model.CoTheSuaTaiLieu,
+            CoTheXoa = Model.CoTheSuaTaiLieu
+        })" />
+    </div>
+
+    <div class="col-lg-4">
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title mb-3">Tiến trình hồ sơ</h3>
+                <ul class="timeline">
+                    @foreach (var b in buoc)
+                    {
+                        <li class="@b.Css">@b.Text</li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        @if (Model.LichPhongVan != null)
+        {
+            var l = Model.LichPhongVan;
+            <div class="ui-card mb-3">
+                <div class="ui-card-body">
+                    <h3 class="ui-card-title mb-3">Lịch phỏng vấn</h3>
+                    <div class="mb-2"><span class="field-label">Thời gian</span><div class="field-value">@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</div></div>
+                    <div class="mb-2"><span class="field-label">Hình thức</span><div class="field-value">@(l.HinhThucPhongVan ?? "—")</div></div>
+                    <div><span class="field-label">Địa điểm</span><div class="field-value">@(l.DiaDiemHoacLienKet ?? "—")</div></div>
+                </div>
+            </div>
+        }
+
+        <div class="ui-card mb-3">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Hỗ trợ</h3>
+                <p class="ui-card-sub mb-3">Nếu cần cập nhật tài liệu, vui lòng liên hệ Phòng Công tác sinh viên trước hạn xét duyệt.</p>
+                <a class="btn btn-outline-secondary w-100" href="mailto:scholarship@uneti.edu.vn">Gửi yêu cầu hỗ trợ</a>
+            </div>
+        </div>
+
+        @if (Model.CoTheHuy)
+        {
+            <form asp-action="Huy" asp-route-id="@Model.MaHoSoHocBong" method="post" class="js-confirm"
+                  data-confirm-title="Xác nhận hủy hồ sơ?"
+                  data-confirm-body="Hồ sơ sẽ bị hủy. Hành động này không thể hoàn tác."
+                  data-confirm-ok="Hủy hồ sơ">
+                <button type="submit" class="btn btn-outline-danger w-100">Hủy hồ sơ</button>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/tai-lieu-hoso.js" asp-append-version="true"></script>
+}

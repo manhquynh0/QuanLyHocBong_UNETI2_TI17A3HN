@@ -1,5 +1,6 @@
-﻿@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.StudentDashboardViewModel
+@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.StudentDashboardViewModel
 @{
+    Layout = "_LayoutStudent";
     ViewData["Title"] = "Trang chủ sinh viên";
     var sv = Model.SinhVien;
     var gpaRating = sv.DiemTrungBinhTichLuy >= 3.6m ? "Xuất sắc" : (sv.DiemTrungBinhTichLuy >= 3.2m ? "Giỏi" : (sv.DiemTrungBinhTichLuy >= 2.5m ? "Khá" : "Trung bình"));

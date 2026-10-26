@@ -1,0 +1,118 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - trang hồ sơ cá nhân của sinh viên (mức hoàn thiện, thông tin, thành tích). *@
+@model SinhVien
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    ViewData["Nav"] = "TaiKhoan";
+    var thieu = (List<string>)ViewBag.ThongTinThieu;
+    const int tongTruong = 7;
+    var daCo = tongTruong - thieu.Count;
+    string Hien(string? v) => string.IsNullOrWhiteSpace(v) ? "Chưa cập nhật" : v;
+    var chuCai = Model.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Thông tin cá nhân</h2>
+        <p>Thông tin được đồng bộ với hồ sơ sinh viên UNETI.</p>
+    </div>
+    <a asp-action="Edit" class="btn btn-primary btn-edit">
+        <i class="bi bi-pencil"></i> Chỉnh sửa thông tin
+    </a>
+</div>
+
+@if (TempData["ThongBao"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["ThongBao"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (thieu.Any())
+{
+    <div class="alert alert-warning mb-3">
+        Hồ sơ còn thiếu: <strong>@string.Join(", ", thieu)</strong> (@daCo/@tongTruong).
+        <a asp-action="Edit" class="alert-link">Cập nhật ngay</a>
+    </div>
+}
+
+<div class="profile-layout">
+    <div class="ui-card profile-side">
+        <div class="avatar-lg">@chuCai</div>
+        <h3>@Model.HoTen</h3>
+        <div class="profile-meta">@Model.MaSinhVien · @Hien(Model.Nganh)</div>
+        @if (!thieu.Any())
+        {
+            <span class="badge-verified">Hồ sơ đã xác thực</span>
+        }
+        else
+        {
+            <span class="st st-yellow">Cần bổ sung thông tin</span>
+        }
+    </div>
+
+    <div class="info-stack">
+        <div class="ui-card">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Thông tin cơ bản</h3>
+                <p class="ui-card-sub">Dữ liệu định danh và liên hệ</p>
+                <div class="info-grid">
+                    <div>
+                        <span class="field-label">Họ và tên</span>
+                        <div class="field-value">@Hien(Model.HoTen)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Ngày sinh</span>
+                        <div class="field-value">@(Model.NgaySinh == default ? "Chưa cập nhật" : Model.NgaySinh.ToString("dd/MM/yyyy"))</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Giới tính</span>
+                        <div class="field-value">@Hien(Model.GioiTinh)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Email</span>
+                        <div class="field-value">@Hien(Model.Email)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Số điện thoại</span>
+                        <div class="field-value">@Hien(Model.SoDienThoai)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Địa chỉ</span>
+                        <div class="field-value">@(string.IsNullOrWhiteSpace(Model.DiaChi) ? "—" : Model.DiaChi)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-card">
+            <div class="ui-card-body">
+                <h3 class="ui-card-title">Thông tin học tập</h3>
+                <p class="ui-card-sub">Kết quả gần nhất từ hệ thống đào tạo</p>
+                <div class="info-grid">
+                    <div>
+                        <span class="field-label">Bậc đào tạo</span>
+                        <div class="field-value">@Hien(Model.BacDaoTao)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Chuyên ngành</span>
+                        <div class="field-value">@Hien(Model.Nganh)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Trạng thái</span>
+                        <div class="field-value">@Hien(Model.TrangThai)</div>
+                    </div>
+                    <div>
+                        <span class="field-label">GPA tích lũy</span>
+                        <div class="field-value accent">@Model.DiemTrungBinhTichLuy.ToString("0.00") / 4.0</div>
+                    </div>
+                    <div class="grid-span-2">
+                        <span class="field-label">Thành tích học tập</span>
+                        <div class="field-value" style="white-space:pre-line;font-weight:500;">@(string.IsNullOrWhiteSpace(Model.ThanhTichHocTap) ? "Chưa cập nhật." : Model.ThanhTichHocTap)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,26 @@
+﻿@model QuanLyHocBong_UNETI2_TI17A3HN.Models.DonViTaiTro
+
+@{
+    ViewData["Title"] = "Xác nhận xóa";
+    ViewData["Nav"] = "QuanLyHocBong";
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Xác nhận xóa đơn vị tài trợ?</h2>
+        <p>Đơn vị “@Model.TenDonViTaiTro” sẽ bị xóa. Hành động này không thể hoàn tác.</p>
+    </div>
+</div>
+
+<div class="ui-card" style="max-width:480px;margin:24px auto;text-align:center;">
+    <div class="ui-card-body py-5">
+        <div class="confirm-icon"><i class="bi bi-exclamation-circle"></i></div>
+        <h3 class="mb-2">Xác nhận xóa?</h3>
+        <p class="text-muted mb-4">Đơn vị tài trợ “@Model.TenDonViTaiTro” sẽ bị xóa. Hành động này không thể hoàn tác.</p>
+        <form asp-action="Delete" class="d-flex justify-content-center gap-2">
+            <input type="hidden" asp-for="MaDonViTaiTro" />
+            <a asp-action="Index" class="btn btn-outline-secondary px-4">Hủy</a>
+            <button type="submit" class="btn btn-danger px-4"><i class="bi bi-trash me-1"></i> Xóa</button>
+        </form>
+    </div>
+</div>

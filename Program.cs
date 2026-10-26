@@ -1,21 +1,39 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
+
 var builder = WebApplication.CreateBuilder(args);
+
 builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options => { options.Cookie.HttpOnly = true; options.Cookie.IsEssential = true; options.IdleTimeout = TimeSpan.FromMinutes(30); });
 
-builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+// Đăng ký Session (bắt buộc khi dùng app.UseSession())
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// ===== Đăng ký các Service (Dependency Injection) =====
+// Module 3 - Học bổng (sinh viên xem)
 builder.Services.AddScoped<IHocBongService, HocBongService>();
+
+// Module 4 - Hồ sơ học bổng
+builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+
+// Module Email (dùng bởi KetQuaHocBong & LichPhongVan)
+builder.Services.AddScoped<IEmailService, EmailService>();
+
+// HttpClient cho EmailService (nếu dùng HTTP)
 builder.Services.AddHttpClient();
-builder.Services.AddScoped<QuanLyHocBong_UNETI2_TI17A3HN.Services.IEmailService, QuanLyHocBong_UNETI2_TI17A3HN.Services.EmailService>();
 
 var app = builder.Build();
 
@@ -26,6 +44,16 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+var enUS = new System.Globalization.CultureInfo("en-US");
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new Microsoft.AspNetCore.Localization.RequestCulture(enUS),
+    SupportedCultures = new[] { enUS },
+    SupportedUICultures = new[] { enUS }
+});
+
+app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
 
 app.UseHttpsRedirection();
 app.UseRouting();
@@ -39,6 +67,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=TaiKhoan}/{action=DangNhap}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

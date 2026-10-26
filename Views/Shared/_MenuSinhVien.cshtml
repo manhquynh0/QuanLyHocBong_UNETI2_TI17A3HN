@@ -1,0 +1,16 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - menu phía sinh viên. Chèn vào <ul class="navbar-nav"> của _Layout: <partial name="_MenuSinhVien" />
+   (Chỉ ẩn/hiện menu; việc chặn quyền thật sự nằm ở Controller.) *@
+@using Microsoft.AspNetCore.Http
+@if (Context.Session.GetString("VaiTro") == "Sinh viên")
+{
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="HocBongSinhVien" asp-action="Index">Học bổng</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="HoSoCuaToi" asp-action="Index">Hồ sơ đã nộp</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link text-dark" asp-controller="HoSoCaNhan" asp-action="Index">Thông tin cá nhân</a>
+    </li>
+}

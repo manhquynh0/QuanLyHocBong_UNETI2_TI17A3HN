@@ -1,0 +1,143 @@
+@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - form nộp hồ sơ xin học bổng (hiện điều kiện, chặn nộp khi không hợp lệ). *@
+@using QuanLyHocBong_UNETI2_TI17A3HN.Services
+@using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
+@model NopHoSoViewModel
+@{
+    ViewData["Title"] = "Nộp hồ sơ học bổng";
+    ViewData["Nav"] = "DanhSachHocBong";
+    var hb = Model.HocBong!;
+    var sv = Model.SinhVien;
+    string XepLoai(decimal gpa) => gpa >= 3.6m ? "Xuất sắc" : gpa >= 3.2m ? "Giỏi" : gpa >= 2.5m ? "Khá" : "Trung bình";
+}
+
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Nộp hồ sơ học bổng</h2>
+        <p>@hb.TenHocBong</p>
+    </div>
+</div>
+
+<div class="wizard" aria-label="Các bước nộp hồ sơ">
+    <div class="wizard-step done">
+        <span class="wizard-index">1</span>
+        <span>Thông tin cá nhân</span>
+    </div>
+    <div class="wizard-step active">
+        <span class="wizard-index">2</span>
+        <span>Thành tích học tập</span>
+    </div>
+    <div class="wizard-step">
+        <span class="wizard-index">3</span>
+        <span>Tài liệu minh chứng</span>
+    </div>
+    <div class="wizard-step">
+        <span class="wizard-index">4</span>
+        <span>Xác nhận</span>
+    </div>
+</div>
+
+@if (!Model.DuDieuKien)
+{
+    <div class="alert alert-danger">
+        <div class="fw-semibold mb-1">Không thể nộp hồ sơ vì:</div>
+        <ul class="mb-0 ps-3">
+            @foreach (var l in Model.LyDoKhongHopLe)
+            {
+                <li>@l</li>
+            }
+        </ul>
+        @if (sv != null && Model.LyDoKhongHopLe.Any(x => x.StartsWith("Hồ sơ cá nhân")))
+        {
+            <a asp-controller="HoSoCaNhan" asp-action="Edit" asp-route-returnUrl="@(Context.Request.Path.Add(Context.Request.QueryString))" class="alert-link">Cập nhật hồ sơ cá nhân</a>
+        }
+    </div>
+}
+
+<form asp-action="Create" method="post" enctype="multipart/form-data" novalidate data-loading>
+    <input type="hidden" asp-for="MaHocBong" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <div class="ui-card mb-3">
+        <div class="ui-card-body">
+            <h3 class="ui-card-title">Thành tích học tập</h3>
+            <p class="ui-card-sub">Bổ sung kết quả học tập gần nhất để hội đồng xét duyệt</p>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Điểm trung bình tích lũy *</label>
+                    <input class="form-control" value="@(sv == null ? "" : sv.DiemTrungBinhTichLuy.ToString("0.00") + " / 4.0")" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Bậc đào tạo *</label>
+                    <input class="form-control" value="@sv?.BacDaoTao" readonly />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Xếp loại học lực</label>
+                    <input class="form-control" value="@(sv == null ? "" : XepLoai(sv.DiemTrungBinhTichLuy))" readonly />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Thành tích nổi bật</label>
+                    <textarea asp-for="GhiChu" rows="3" class="form-control" disabled="@(!Model.DuDieuKien)"
+                              placeholder="Giải thưởng, thành viên đội tuyển, hoạt động nổi bật..."></textarea>
+                    <span asp-validation-for="GhiChu" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label asp-for="ThuXinHocBong" class="form-label"></label>
+                    <textarea asp-for="ThuXinHocBong" rows="6" class="form-control" disabled="@(!Model.DuDieuKien)"
+                              placeholder="Giới thiệu bản thân, lý do xin học bổng, kế hoạch học tập..."></textarea>
+                    <div class="form-text">Từ 30 đến 2000 ký tự.</div>
+                    <span asp-validation-for="ThuXinHocBong" class="text-danger"></span>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Tài liệu đính kèm <span class="text-muted fw-normal">(bảng điểm, minh chứng thành tích)</span></label>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-4">
+                            <select asp-for="LoaiTaiLieu" class="form-select" disabled="@(!Model.DuDieuKien)" aria-label="Loại tài liệu">
+                                @foreach (var l in TaiLieuHoSoRules.LoaiTaiLieuHopLe)
+                                {
+                                    <option value="@l">@l</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <label class="dropzone" for="taiLieuMinhChung">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <div class="fw-semibold">Tải lên bảng điểm và minh chứng</div>
+                        <small>PDF, JPG hoặc PNG · Tối đa @(TaiLieuHoSoRules.DungLuongToiDa / (1024 * 1024))MB mỗi tệp · Tối đa @TaiLieuHoSoRules.SoTepToiDa tệp</small>
+                    </label>
+                    <input id="taiLieuMinhChung" name="TaiLieus" type="file" multiple class="d-none"
+                           accept="@TaiLieuHoSoRules.DuoiChapNhan"
+                           disabled="@(!Model.DuDieuKien)"
+                           data-uploader
+                           data-max-bytes="@TaiLieuHoSoRules.DungLuongToiDa"
+                           data-max-files="@TaiLieuHoSoRules.SoTepToiDa"
+                           data-list="dsTaiLieuChon"
+                           data-error="loiTaiLieu" />
+                    <ul id="dsTaiLieuChon" class="upload-list list-unstyled"></ul>
+                    <div id="loiTaiLieu" class="upload-error text-danger small" role="alert"></div>
+                    @if (ViewData.ModelState.TryGetValue(nameof(Model.TaiLieus), out var tlState) && tlState.Errors.Count > 0)
+                    {
+                        <ul class="text-danger small mb-0 ps-3 mt-2">
+                            @foreach (var e in tlState.Errors)
+                            {
+                                <li>@e.ErrorMessage</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <a asp-controller="HocBongSinhVien" asp-action="Details" asp-route-id="@hb.MaHocBong" class="btn btn-outline-secondary px-4">Quay lại</a>
+        <button type="submit" class="btn btn-primary px-4" disabled="@(!Model.DuDieuKien)">
+            Nộp hồ sơ <i class="bi bi-send ms-1"></i>
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/tai-lieu-hoso.js" asp-append-version="true"></script>
+}
