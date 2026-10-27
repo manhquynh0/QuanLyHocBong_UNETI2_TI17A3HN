@@ -53,6 +53,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Column(TypeName = "nvarchar(50)")]
         public string TrangThai { get; set; }
 
+        public bool DaXoa { get; set; }
+
         public virtual DonViTaiTro DonViTaiTro { get; set; }
 
         public virtual ICollection<HoSoHocBong> HoSoHocBongs { get; set; }
