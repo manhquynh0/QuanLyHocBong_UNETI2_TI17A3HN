@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100145
 // Nội dung thực hiện: Module 4 - ViewModel cho form xét duyệt sơ bộ hồ sơ.
 
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
@@ -22,6 +23,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public DateTime NgayNop { get; set; }
         public string? ThuXinHocBong { get; set; }
         public string? ThanhTichHocTap { get; set; }
+        public string? FileMinhChung { get; set; }
 
         // Kết quả xét duyệt 
         [Required(ErrorMessage = "Vui lòng chọn kết quả xét duyệt")]

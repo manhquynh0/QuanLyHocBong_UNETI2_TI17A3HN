@@ -30,6 +30,20 @@
 
                     <dt class="col-sm-5">Ngày nộp</dt>
                     <dd class="col-sm-7">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                    <dt class="col-sm-5">Tài liệu đính kèm</dt>
+                    <dd class="col-sm-7">
+                        @if (!string.IsNullOrEmpty(Model.FileMinhChung))
+                        {
+                            <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem file minh chứng
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có file đính kèm</span>
+                        }
+                    </dd>
                 </dl>
             </div>
         </div>

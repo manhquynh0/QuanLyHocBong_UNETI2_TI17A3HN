@@ -38,6 +38,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Required]
         public bool TrangThai { get; set; }
 
+        [StringLength(1000)]
+        [Column(TypeName = "nvarchar(1000)")]
+        public string? AnhDaiDien { get; set; }
+
         public virtual SinhVien? SinhVien { get; set; }
     }
 }

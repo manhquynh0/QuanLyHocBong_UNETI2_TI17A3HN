@@ -15,6 +15,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public string TrangThai { get; set; } = string.Empty;
         public DateTime? NgayXuLy { get; set; }
         public string? NhanXetXetDuyet { get; set; }
+        public string? FileMinhChung { get; set; }
 
         // Thông tin sinh viên
         public int MaSinhVien { get; set; }

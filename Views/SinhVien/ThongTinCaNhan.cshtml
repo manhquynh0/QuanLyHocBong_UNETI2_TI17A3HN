@@ -1,6 +1,7 @@
 @model QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien
 @{
     ViewData["Title"] = "Thông tin cá nhân sinh viên";
+    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : Context.Session.GetString("AnhDaiDien");
 }
 
 <div class="container-fluid py-2" style="max-width: 820px;">
@@ -11,18 +12,47 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show small" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
     <div class="card border-0 shadow-sm rounded-3">
         <div class="card-header bg-white py-3 border-bottom">
             <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-person-circle text-primary me-2"></i>Thông tin cá nhân sinh viên</h5>
         </div>
         <div class="card-body p-4">
-            <form asp-action="CapNhatHoSo" method="post">
+            <form asp-action="CapNhatHoSo" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="MaSinhVien" />
                 <input type="hidden" asp-for="MaTaiKhoan" />
                 <input type="hidden" asp-for="Email" />
                 <input type="hidden" asp-for="TrangThai" />
+
+                <!-- AVATAR SECTION -->
+                <div class="d-flex align-items-center gap-3 pb-3 mb-3 border-bottom">
+                    <div class="position-relative">
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <img id="avatarPreview" src="@avatarUrl" alt="@Model.HoTen" class="rounded-circle border shadow-sm" style="width: 80px; height: 80px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div id="avatarFallback" class="rounded-circle bg-primary-subtle text-primary fw-bold d-flex align-items-center justify-content-center border" style="width: 80px; height: 80px; font-size: 28px;">
+                                @(string.IsNullOrWhiteSpace(Model.HoTen) ? "SV" : Model.HoTen.Substring(0, 1).ToUpper())
+                            </div>
+                            <img id="avatarPreview" src="" alt="@Model.HoTen" class="rounded-circle border shadow-sm d-none" style="width: 80px; height: 80px; object-fit: cover;" />
+                        }
+                    </div>
+                    <div class="flex-grow-1">
+                        <label class="form-label fw-semibold small mb-1">Ảnh đại diện</label>
+                        <input type="file" name="AnhDaiDienUpload" id="inputAvatar" class="form-control form-control-sm" accept="image/png, image/jpeg, image/jpg, image/webp" />
+                        <small class="text-muted">Định dạng JPG, PNG hoặc WEBP (tối đa 5MB)</small>
+                    </div>
+                </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -80,3 +110,25 @@
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        const inputAvatar = document.getElementById('inputAvatar');
+        const preview = document.getElementById('avatarPreview');
+        const fallback = document.getElementById('avatarFallback');
+
+        if (inputAvatar) {
+            inputAvatar.addEventListener('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        preview.src = e.target.result;
+                        preview.classList.remove('d-none');
+                        if (fallback) fallback.classList.add('d-none');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+    </script>
+}
