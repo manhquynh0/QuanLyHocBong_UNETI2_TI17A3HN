@@ -1,4 +1,4 @@
-@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.StudentDashboardViewModel
+﻿@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.StudentDashboardViewModel
 @{
     Layout = "_LayoutStudent";
     ViewData["Title"] = "Trang chủ sinh viên";
@@ -19,10 +19,10 @@
             </div>
         </div>
         <div class="welcome-actions">
-            <a asp-controller="HocBong" asp-action="Index" class="btn btn-light btn-sm fw-semibold shadow-sm">
+            <a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-light btn-sm fw-semibold shadow-sm">
                 <i class="bi bi-award-fill me-1 text-primary"></i> Khám phá học bổng
             </a>
-            <a asp-controller="SinhVien" asp-action="ThongTinCaNhan" class="btn btn-outline-light btn-sm fw-semibold">
+            <a asp-controller="HoSoCaNhan" asp-action="Index" class="btn btn-outline-light btn-sm fw-semibold">
                 <i class="bi bi-person-circle me-1"></i> Thông tin cá nhân
             </a>
         </div>
@@ -38,7 +38,7 @@
                 <span class="stat-label">Hồ sơ đã nộp</span>
                 <h3 class="stat-value">@Model.TongHoSoDaNop <small>Hồ sơ</small></h3>
                 <span class="stat-meta text-primary">
-                    <a asp-controller="HoSoHocBong" asp-action="HoSoCuaToi" class="text-decoration-none">
+                    <a asp-controller="HoSoCuaToi" asp-action="Index" class="text-decoration-none">
                         Xem chi tiết &rarr;
                     </a>
                 </span>
@@ -64,7 +64,7 @@
                 <span class="stat-label">Học bổng được cấp</span>
                 <h3 class="stat-value">@Model.HocBongDuocCap <small>Suất</small></h3>
                 <span class="stat-meta text-success">
-                    <a asp-controller="KetQuaHocBong" asp-action="Index" class="text-decoration-none text-success">
+                    <a asp-controller="HoSoCuaToi" asp-action="KetQua" class="text-decoration-none text-success">
                         Xem kết quả &rarr;
                     </a>
                 </span>
@@ -79,7 +79,7 @@
                 <span class="stat-label">Lịch phỏng vấn sắp tới</span>
                 <h3 class="stat-value">@Model.LichPhongVanSapToi <small>Lịch</small></h3>
                 <span class="stat-meta text-secondary">
-                    <a asp-controller="LichPhongVan" asp-action="Index" class="text-decoration-none">
+                    <a asp-controller="HoSoCuaToi" asp-action="LichPhongVan" class="text-decoration-none">
                         Xem lịch hẹn &rarr;
                     </a>
                 </span>
@@ -97,7 +97,7 @@
                     <h5 class="fw-bold mb-0 text-dark">
                         <i class="bi bi-file-earmark-person-fill text-primary me-2"></i>Hồ sơ xét tuyển của tôi
                     </h5>
-                    <a asp-controller="HoSoHocBong" asp-action="HoSoCuaToi" class="btn btn-sm btn-outline-primary">
+                    <a asp-controller="HoSoCuaToi" asp-action="Index" class="btn btn-sm btn-outline-primary">
                         Xem tất cả (@Model.TongHoSoDaNop) &rarr;
                     </a>
                 </div>
@@ -140,7 +140,7 @@
                                                 <span class="status-badge @badgeClass">@hs.TrangThai</span>
                                             </td>
                                             <td class="text-end pe-4">
-                                                <a asp-controller="HoSoHocBong" asp-action="Details" asp-route-id="@hs.MaHoSoHocBong" class="btn btn-sm btn-light border">
+                                                <a asp-controller="HoSoCuaToi" asp-action="Details" asp-route-id="@hs.MaHoSoHocBong" class="btn btn-sm btn-light border">
                                                     Chi tiết
                                                 </a>
                                             </td>
@@ -155,7 +155,7 @@
                         <div class="p-4 text-center text-muted">
                             <i class="bi bi-folder-x fs-1 text-secondary mb-2 d-block"></i>
                             <p class="mb-2">Bạn chưa nộp hồ sơ xin học bổng nào.</p>
-                            <a asp-controller="HocBong" asp-action="Index" class="btn btn-primary btn-sm">
+                            <a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-primary btn-sm">
                                 <i class="bi bi-plus-circle me-1"></i> Khám phá học bổng và nộp hồ sơ ngay
                             </a>
                         </div>
@@ -169,7 +169,7 @@
                     <h5 class="fw-bold mb-0 text-dark">
                         <i class="bi bi-award-fill text-warning me-2"></i>Chương trình học bổng đang nhận hồ sơ
                     </h5>
-                    <a asp-controller="HocBong" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                    <a asp-controller="HocBongSinhVien" asp-action="Index" class="btn btn-sm btn-outline-primary">
                         Xem tất cả &rarr;
                     </a>
                 </div>
@@ -196,7 +196,7 @@
                                                     }
                                                 </div>
                                                 <h6 class="fw-bold text-dark mb-1">
-                                                    <a asp-controller="HocBong" asp-action="Details" asp-route-id="@hb.MaHocBong" class="text-dark text-decoration-none">
+                                                    <a asp-controller="HocBongSinhVien" asp-action="Details" asp-route-id="@hb.MaHocBong" class="text-dark text-decoration-none">
                                                         @hb.TenHocBong
                                                     </a>
                                                 </h6>
@@ -221,10 +221,10 @@
                                             </div>
 
                                             <div class="pt-2 d-flex justify-content-between align-items-center">
-                                                <a asp-controller="HocBong" asp-action="Details" asp-route-id="@hb.MaHocBong" class="btn btn-sm btn-outline-secondary">
+                                                <a asp-controller="HocBongSinhVien" asp-action="Details" asp-route-id="@hb.MaHocBong" class="btn btn-sm btn-outline-secondary">
                                                     Chi tiết
                                                 </a>
-                                                <a asp-controller="HoSoHocBong" asp-action="NopHoSo" asp-route-maHocBong="@hb.MaHocBong" class="btn btn-sm btn-success fw-semibold">
+                                                <a asp-controller="HoSoCuaToi" asp-action="Create" asp-route-maHocBong="@hb.MaHocBong" class="btn btn-sm btn-success fw-semibold">
                                                     <i class="bi bi-send-fill me-1"></i> Nộp hồ sơ
                                                 </a>
                                             </div>
@@ -253,7 +253,7 @@
                     <h6 class="fw-bold mb-0 text-dark">
                         <i class="bi bi-calendar-check text-purple me-2"></i>Lịch phỏng vấn của tôi
                     </h6>
-                    <a asp-controller="LichPhongVan" asp-action="Index" class="btn btn-sm btn-link p-0 text-decoration-none">
+                    <a asp-controller="HoSoCuaToi" asp-action="LichPhongVan" class="btn btn-sm btn-link p-0 text-decoration-none">
                         Tất cả &rarr;
                     </a>
                 </div>

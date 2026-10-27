@@ -34,9 +34,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return;
             }
 
-            if (vaiTro != VaiTro.SinhVien)
+            bool laSinhVien = !string.IsNullOrWhiteSpace(vaiTro) &&
+                (vaiTro.Trim().Equals(VaiTro.SinhVien, StringComparison.OrdinalIgnoreCase)
+                 || vaiTro.Trim().Equals("SinhVien", StringComparison.OrdinalIgnoreCase)
+                 || vaiTro.Trim().StartsWith("Sinh", StringComparison.OrdinalIgnoreCase));
+
+            if (!laSinhVien)
             {
-                context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                context.Result = RedirectToAction("AccessDenied", "TaiKhoan");
                 return;
             }
 
