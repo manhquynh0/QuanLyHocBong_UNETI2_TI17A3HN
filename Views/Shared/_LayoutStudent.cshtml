@@ -6,6 +6,9 @@
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var action     = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
 
+    bool isStudent = vaiTro.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
+        || vaiTro.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
+
     string NavClass(string ctrl, string? act = null)
     {
         bool match = controller.Equals(ctrl, StringComparison.OrdinalIgnoreCase)
@@ -45,40 +48,85 @@
             </div>
             <div class="brand-copy">
                 <strong>Học bổng UNETI</strong>
-                <small>Hệ thống xét duyệt</small>
+                <small>@(isStudent ? "Cổng thông tin sinh viên" : "Cổng quản trị xét duyệt")</small>
             </div>
         </div>
 
         <nav class="side-nav">
-            <a href="@Url.Action("Index", "Home")" class="@NavClass("Home", "Index")">
-                <i class="bi bi-house-door"></i>
-                <span>Trang chủ</span>
-            </a>
+            @if (isStudent)
+            {
+                <a href="@Url.Action("Index", "Home")" class="@NavClass("Home", "Index")">
+                    <i class="bi bi-house-door"></i>
+                    <span>Trang chủ</span>
+                </a>
 
-            <a href="@Url.Action("Index", "HocBongSinhVien")" class="@NavClass("HocBongSinhVien")">
-                <i class="bi bi-card-checklist"></i>
-                <span>Danh sách học bổng</span>
-            </a>
+                <a href="@Url.Action("Index", "HocBongSinhVien")" class="@NavClass("HocBongSinhVien")">
+                    <i class="bi bi-card-checklist"></i>
+                    <span>Danh sách học bổng</span>
+                </a>
 
-            <a href="@Url.Action("HoSoCuaToi", "HoSoHocBong")" class="@NavClass("HoSoHocBong", "HoSoCuaToi") @NavClass("HoSoCuaToi")">
-                <i class="bi bi-folder2-open"></i>
-                <span>Hồ sơ của tôi</span>
-            </a>
+                <a href="@Url.Action("HoSoCuaToi", "HoSoHocBong")" class="@NavClass("HoSoHocBong", "HoSoCuaToi") @NavClass("HoSoCuaToi")">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Hồ sơ của tôi</span>
+                </a>
 
-            <a href="@Url.Action("Index", "LichPhongVan")" class="@NavClass("LichPhongVan")">
-                <i class="bi bi-calendar-check"></i>
-                <span>Lịch phỏng vấn</span>
-            </a>
+                <a href="@Url.Action("Index", "LichPhongVan")" class="@NavClass("LichPhongVan")">
+                    <i class="bi bi-calendar-check"></i>
+                    <span>Lịch phỏng vấn</span>
+                </a>
 
-            <a href="@Url.Action("Index", "KetQuaHocBong")" class="@NavClass("KetQuaHocBong")">
-                <i class="bi bi-patch-check"></i>
-                <span>Kết quả học bổng</span>
-            </a>
+                <a href="@Url.Action("Index", "KetQuaHocBong")" class="@NavClass("KetQuaHocBong")">
+                    <i class="bi bi-patch-check"></i>
+                    <span>Kết quả học bổng</span>
+                </a>
 
-            <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="@NavClass("SinhVien", "ThongTinCaNhan") @NavClass("HoSoCaNhan")">
-                <i class="bi bi-person"></i>
-                <span>Tài khoản</span>
-            </a>
+                <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="@NavClass("SinhVien", "ThongTinCaNhan") @NavClass("HoSoCaNhan")">
+                    <i class="bi bi-person"></i>
+                    <span>Tài khoản</span>
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("Index", "Home")" class="@NavClass("Home", "Index")">
+                    <i class="bi bi-house-door-fill"></i>
+                    <span>Trang tổng quan</span>
+                </a>
+                <a href="@Url.Action("Index", "DonViTaiTro")" class="@NavClass("DonViTaiTro")">
+                    <i class="bi bi-building"></i>
+                    <span>Đơn vị tài trợ</span>
+                </a>
+                <a href="@Url.Action("Index", "HocBong")" class="@NavClass("HocBong")">
+                    <i class="bi bi-award"></i>
+                    <span>Quản lý học bổng</span>
+                </a>
+                <a href="@Url.Action("Index", "SinhVien")" class="@NavClass("SinhVien")">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Quản lý sinh viên</span>
+                </a>
+                <a href="@Url.Action("Index", "HoSoHocBong")" class="@NavClass("HoSoHocBong")">
+                    <i class="bi bi-file-earmark-check"></i>
+                    <span>Xét duyệt hồ sơ</span>
+                </a>
+                <a href="@Url.Action("Index", "LichPhongVan")" class="@NavClass("LichPhongVan")">
+                    <i class="bi bi-calendar-event"></i>
+                    <span>Lịch phỏng vấn</span>
+                </a>
+                <a href="@Url.Action("Index", "KetQuaHocBong")" class="@NavClass("KetQuaHocBong")">
+                    <i class="bi bi-check2-circle"></i>
+                    <span>Kết quả học bổng</span>
+                </a>
+                <a href="@Url.Action("Index", "ThongKe")" class="@NavClass("ThongKe")">
+                    <i class="bi bi-bar-chart-fill"></i>
+                    <span>Thống kê báo cáo</span>
+                </a>
+                @if (vaiTro.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="@Url.Action("Index", "QuanLyTaiKhoan")" class="@NavClass("QuanLyTaiKhoan") @NavClass("TaiKhoan")">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Tài khoản cán bộ</span>
+                    </a>
+                }
+            }
         </nav>
 
         <a href="@Url.Action("DangXuat", "TaiKhoan")" class="nav-item logout-link">
@@ -92,12 +140,33 @@
 
         <!-- TOPBAR -->
         <header class="topbar">
-            <h1 class="topbar-title me-auto">@(ViewData["Title"] ?? "Danh sách học bổng")</h1>
+            <h1 class="topbar-title me-auto">@(ViewData["Title"] ?? (isStudent ? "Danh sách học bổng" : "Quản trị xét duyệt học bổng"))</h1>
             <div class="topbar-user">
-                <a href="@Url.Action("Index", "HocBongSinhVien")" class="notification-button" title="Thông báo học bổng">
-                    <i class="bi bi-bell"></i>
-                </a>
-                <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="d-flex align-items-center gap-2 text-decoration-none">
+                @if (isStudent)
+                {
+                    <a href="@Url.Action("Index", "HocBongSinhVien")" class="notification-button" title="Thông báo học bổng">
+                        <i class="bi bi-bell"></i>
+                    </a>
+                    <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="d-flex align-items-center gap-2 text-decoration-none">
+                        <div class="user-copy">
+                            <strong>@userName</strong>
+                            <small>@vaiTro</small>
+                        </div>
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <img src="@avatarUrl" alt="@userName" class="user-avatar rounded-circle" style="width: 38px; height: 38px; object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="user-avatar">@initials</div>
+                        }
+                    </a>
+                }
+                else
+                {
+                    <button class="notification-button" type="button" aria-label="Thông báo">
+                        <i class="bi bi-bell"></i>
+                    </button>
                     <div class="user-copy">
                         <strong>@userName</strong>
                         <small>@vaiTro</small>
@@ -110,7 +179,7 @@
                     {
                         <div class="user-avatar">@initials</div>
                     }
-                </a>
+                }
             </div>
         </header>
 
