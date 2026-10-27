@@ -8,7 +8,8 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<QuanLyHocBong_UNETI2_TI17A3HNContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("QuanLyHocBong_UNETI2_TI17A3HNContext") ?? throw new InvalidOperationException("Connection string 'QuanLyHocBong_UNETI2_TI17A3HNContext' not found."))
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -37,6 +38,22 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
 var app = builder.Build();
+
+// Tự động áp dụng Migration khi khởi động ứng dụng để các thành viên khác khi kéo code về chạy được ngay
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<QuanLyHocBong_UNETI2_TI17A3HNContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Lỗi xảy ra trong quá trình tự động cập nhật Database Migration.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
