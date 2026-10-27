@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,16 +9,19 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
     public class SinhVienController : Controller
     {
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
+        private readonly ISupabaseStorageService _storageService;
 
-        public SinhVienController(QuanLyHocBong_UNETI2_TI17A3HNContext context)
+        public SinhVienController(QuanLyHocBong_UNETI2_TI17A3HNContext context, ISupabaseStorageService storageService)
         {
             _context = context;
+            _storageService = storageService;
         }
 
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
@@ -72,7 +76,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
-        public async Task<IActionResult> Create(SinhVienCreateViewModel model)
+        public async Task<IActionResult> Create(SinhVienCreateViewModel model, IFormFile? AnhDaiDienUpload)
         {
             var username = model.TenDangNhap?.Trim() ?? "";
             var email = model.Email?.Trim() ?? "";
@@ -92,13 +96,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
+            string? avatarUrl = null;
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+            }
+
             var taiKhoan = new TaiKhoan
             {
                 TenDangNhap = username,
                 HoTen = model.HoTen.Trim(),
                 Email = email,
                 VaiTro = "Sinh viên",
-                TrangThai = model.KichHoatTaiKhoan
+                TrangThai = model.KichHoatTaiKhoan,
+                AnhDaiDien = avatarUrl
             };
             taiKhoan.MatKhau = new PasswordHasher<TaiKhoan>().HashPassword(taiKhoan, model.MatKhau);
 
@@ -118,7 +129,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 Nganh = model.Nganh,
                 DiemTrungBinhTichLuy = model.DiemTrungBinhTichLuy,
                 ThanhTichHocTap = model.ThanhTichHocTap?.Trim() ?? "Chưa cập nhật",
-                TrangThai = model.TrangThai
+                TrangThai = model.TrangThai,
+                AnhDaiDien = avatarUrl
             };
 
             _context.SinhVien.Add(sinhVien);
@@ -146,7 +158,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
-        public async Task<IActionResult> Edit(int id, SinhVien model, bool? KichHoatTaiKhoan, string? MatKhauMoi)
+        public async Task<IActionResult> Edit(int id, SinhVien model, bool? KichHoatTaiKhoan, string? MatKhauMoi, IFormFile? AnhDaiDienUpload)
         {
             if (id != model.MaSinhVien) return NotFound();
 
@@ -161,6 +173,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             if (ModelState.IsValid)
             {
+                if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+                {
+                    var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+                    if (!string.IsNullOrEmpty(avatarUrl))
+                    {
+                        sinhVien.AnhDaiDien = avatarUrl;
+                        if (sinhVien.TaiKhoan != null)
+                        {
+                            sinhVien.TaiKhoan.AnhDaiDien = avatarUrl;
+                        }
+                    }
+                }
+
                 sinhVien.HoTen = model.HoTen.Trim();
                 sinhVien.NgaySinh = model.NgaySinh;
                 sinhVien.GioiTinh = model.GioiTinh;
@@ -264,12 +289,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize]
-        public async Task<IActionResult> CapNhatHoSo(SinhVien model)
+        public async Task<IActionResult> CapNhatHoSo(SinhVien model, IFormFile? AnhDaiDienUpload)
         {
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
-            var sinhVien = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
+            var sinhVien = await _context.SinhVien.Include(s => s.TaiKhoan).FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
             if (sinhVien == null || sinhVien.MaSinhVien != model.MaSinhVien)
             {
                 return Forbid();
@@ -280,6 +305,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             if (ModelState.IsValid)
             {
+                if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+                {
+                    var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+                    if (!string.IsNullOrEmpty(avatarUrl))
+                    {
+                        sinhVien.AnhDaiDien = avatarUrl;
+                        if (sinhVien.TaiKhoan != null)
+                        {
+                            sinhVien.TaiKhoan.AnhDaiDien = avatarUrl;
+                        }
+                        HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                    }
+                }
+
                 sinhVien.HoTen = model.HoTen;
                 sinhVien.NgaySinh = model.NgaySinh;
                 sinhVien.GioiTinh = model.GioiTinh;
@@ -299,6 +338,35 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             return View("ThongTinCaNhan", model);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [RoleAuthorize]
+        public async Task<IActionResult> CapNhatAnhDaiDien(IFormFile? AnhDaiDienUpload)
+        {
+            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
+
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+                if (!string.IsNullOrEmpty(avatarUrl))
+                {
+                    var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
+                    if (sv != null) sv.AnhDaiDien = avatarUrl;
+                    var tk = await _context.TaiKhoan.FindAsync(maTaiKhoan.Value);
+                    if (tk != null) tk.AnhDaiDien = avatarUrl;
+                    await _context.SaveChangesAsync();
+                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                    TempData["SuccessMessage"] = "Cập nhật ảnh đại diện thành công!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Không thể tải lên ảnh đại diện. Vui lòng thử lại.";
+                }
+            }
+            return RedirectToAction(nameof(ThongTinCaNhan));
+        }
+
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> Details(int? id)
         {
@@ -316,4 +384,3 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         }
     }
 }
-

@@ -123,6 +123,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 TrangThai = hoSo.TrangThai,
                 NgayXuLy = hoSo.NgayXuLy,
                 NhanXetXetDuyet = hoSo.NhanXetXetDuyet,
+                FileMinhChung = hoSo.FileMinhChung,
 
                 // Sinh viên
                 MaSinhVien = hoSo.SinhVien.MaSinhVien,
@@ -178,7 +179,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 BacDaoTaoHocBong = hoSo.HocBong.BacDaoTao,
                 NgayNop = hoSo.NgayNop,
                 ThuXinHocBong = hoSo.ThuXinHocBong,
-                ThanhTichHocTap = hoSo.SinhVien.ThanhTichHocTap
+                ThanhTichHocTap = hoSo.SinhVien.ThanhTichHocTap,
+                FileMinhChung = hoSo.FileMinhChung
             };
         }
 

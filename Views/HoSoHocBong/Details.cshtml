@@ -1,4 +1,4 @@
-﻿@* Họ và tên: Phan Sỹ Tú
+@* Họ và tên: Phan Sỹ Tú
    Mã sinh viên: 23103100145
    Nội dung thực hiện: Module 4 - View chi tiết hồ sơ,
    so sánh điều kiện và hiển thị số suất. *@
@@ -70,6 +70,20 @@
 
                     <dt class="col-sm-4">Ghi chú</dt>
                     <dd class="col-sm-8">@(Model.GhiChu ?? "Không có")</dd>
+
+                    <dt class="col-sm-4">Tài liệu đính kèm</dt>
+                    <dd class="col-sm-8">
+                        @if (!string.IsNullOrEmpty(Model.FileMinhChung))
+                        {
+                            <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem tài liệu minh chứng
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Không có tệp đính kèm</span>
+                        }
+                    </dd>
                 </dl>
             </div>
         </div>

@@ -92,13 +92,19 @@
                                     }
                                 </td>
                                 <td class="text-end pe-4">
-                                    <div class="d-flex justify-content-end gap-2">
+                                    <div class="d-flex justify-content-end align-items-center gap-2">
+                                        @if (!string.IsNullOrEmpty(item.FileMinhChung))
+                                        {
+                                            <a href="@item.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-info" title="Xem file minh chứng">
+                                                <i class="bi bi-file-earmark-arrow-down"></i>
+                                            </a>
+                                        }
                                         <a asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-primary">
                                             Chi tiết
                                         </a>
                                         @if (item.TrangThai == "Chờ duyệt")
                                         {
-                                            <form asp-action="HuyHoSo" asp-route-id="@item.MaHoSoHocBong" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy hồ sơ này?');">
+                                            <form asp-action="HuyHoSo" asp-route-id="@item.MaHoSoHocBong" method="post" onsubmit="return confirm('Bạn có chắc chắn muốn hủy hồ sơ này?');" class="d-inline m-0">
                                                 @Html.AntiForgeryToken()
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Hủy</button>
                                             </form>
@@ -113,4 +119,3 @@
         </div>
     </div>
 </div>
-

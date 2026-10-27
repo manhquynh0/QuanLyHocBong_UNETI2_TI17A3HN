@@ -48,12 +48,31 @@ public class TaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Contr
         HttpContext.Session.SetInt32("MaTaiKhoan", account.MaTaiKhoan);
         HttpContext.Session.SetString("HoTen", account.HoTen);
         HttpContext.Session.SetString("VaiTro", role);
+
+        var avatar = account.AnhDaiDien;
+        if (string.IsNullOrEmpty(avatar))
+        {
+            var sv = await db.SinhVien.AsNoTracking().FirstOrDefaultAsync(s => s.MaTaiKhoan == account.MaTaiKhoan);
+            if (!string.IsNullOrEmpty(sv?.AnhDaiDien))
+            {
+                avatar = sv.AnhDaiDien;
+            }
+        }
+        if (!string.IsNullOrEmpty(avatar))
+        {
+            HttpContext.Session.SetString("AnhDaiDien", avatar);
+        }
+
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
         return RedirectToAction("Index", "Home");
     }
 
-    [HttpPost, ValidateAntiForgeryToken]
-    public IActionResult DangXuat() { HttpContext.Session.Clear(); return RedirectToAction(nameof(DangNhap)); }
+    [HttpGet, HttpPost]
+    public IActionResult DangXuat()
+    {
+        HttpContext.Session.Clear();
+        return RedirectToAction(nameof(DangNhap));
+    }
 
     [HttpGet]
     public IActionResult AccessDenied() => View();

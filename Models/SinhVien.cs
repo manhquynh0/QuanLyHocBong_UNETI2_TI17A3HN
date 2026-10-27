@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
@@ -16,7 +18,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Required(ErrorMessage = "Họ tên là bắt buộc")]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string HoTen { get; set; }
+        public string HoTen { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Ngày sinh là bắt buộc")]
         [DataType(DataType.Date)]
@@ -25,33 +27,33 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Required(ErrorMessage = "Giới tính là bắt buộc")]
         [StringLength(10)]
         [Column(TypeName = "nvarchar(10)")]
-        public string GioiTinh { get; set; }
+        public string GioiTinh { get; set; } = "Nam";
 
         [Required(ErrorMessage = "Số điện thoại là bắt buộc")]
         [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
         [StringLength(20)]
         [Column(TypeName = "varchar(20)")]
-        public string SoDienThoai { get; set; }
+        public string SoDienThoai { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email là bắt buộc")]
         [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
         [StringLength(100)]
         [Column(TypeName = "varchar(100)")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
         [StringLength(500)]
         [Column(TypeName = "nvarchar(500)")]
-        public string DiaChi { get; set; }
+        public string? DiaChi { get; set; }
 
         [Required(ErrorMessage = "Bậc đào tạo là bắt buộc")]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string BacDaoTao { get; set; }
+        public string BacDaoTao { get; set; } = "Đại học";
 
         [Required(ErrorMessage = "Ngành học là bắt buộc")]
         [StringLength(100)]
         [Column(TypeName = "nvarchar(100)")]
-        public string Nganh { get; set; }
+        public string Nganh { get; set; } = "Công nghệ thông tin";
 
         [Required(ErrorMessage = "Điểm trung bình tích lũy là bắt buộc")]
         [Range(0, 4, ErrorMessage = "Điểm trung bình tích lũy phải từ 0 đến 4")]
@@ -60,15 +62,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(1000)]
         [Column(TypeName = "nvarchar(1000)")]
-        public string ThanhTichHocTap { get; set; }
+        public string? ThanhTichHocTap { get; set; }
 
         [Required(ErrorMessage = "Trạng thái là bắt buộc")]
         [StringLength(50)]
         [Column(TypeName = "nvarchar(50)")]
-        public string TrangThai { get; set; }
+        public string TrangThai { get; set; } = "Đang học";
 
-        public virtual TaiKhoan TaiKhoan { get; set; }
+        [StringLength(1000)]
+        [Column(TypeName = "nvarchar(1000)")]
+        public string? AnhDaiDien { get; set; }
 
-        public virtual ICollection<HoSoHocBong> HoSoHocBongs { get; set; }
+        public virtual TaiKhoan? TaiKhoan { get; set; }
+
+        public virtual ICollection<HoSoHocBong> HoSoHocBongs { get; set; } = new List<HoSoHocBong>();
     }
 }

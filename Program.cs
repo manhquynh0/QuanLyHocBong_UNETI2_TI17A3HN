@@ -32,8 +32,9 @@ builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
 // Module Email (dùng bởi KetQuaHocBong & LichPhongVan)
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// HttpClient cho EmailService (nếu dùng HTTP)
+// HttpClient & Cloud Storage Service
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
 var app = builder.Build();
 

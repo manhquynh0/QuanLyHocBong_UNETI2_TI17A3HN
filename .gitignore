@@ -51,5 +51,5 @@ yarn-error.log*
 doc_content.txt
 *.tmp
 
-document.docx
+doc.docx
 skills-lock.json

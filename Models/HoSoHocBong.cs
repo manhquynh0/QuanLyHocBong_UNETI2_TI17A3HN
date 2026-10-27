@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
@@ -23,16 +25,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         [StringLength(4000, ErrorMessage = "Thư xin học bổng không được vượt quá 2000 ký tự")]
         [Column(TypeName = "nvarchar(2000)")]
-        public string ThuXinHocBong { get; set; }
+        public string ThuXinHocBong { get; set; } = string.Empty;
 
         [StringLength(1000)]
         [Column(TypeName = "nvarchar(1000)")]
-        public string GhiChu { get; set; }
+        public string? GhiChu { get; set; } = string.Empty;
 
         [Required]
         [StringLength(50)]
         [Column(TypeName = "nvarchar(50)")]
-        public string TrangThai { get; set; }
+        public string TrangThai { get; set; } = string.Empty;
 
         [DataType(DataType.DateTime)]
         public DateTime? NgayXuLy { get; set; }
@@ -41,13 +43,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Column(TypeName = "nvarchar(1000)")]
         public string? NhanXetXetDuyet { get; set; }
 
+        [StringLength(1000)]
+        [Column(TypeName = "nvarchar(1000)")]
+        public string? FileMinhChung { get; set; }
 
-        public virtual SinhVien SinhVien { get; set; }
+        public virtual SinhVien? SinhVien { get; set; }
 
-        public virtual HocBong HocBong { get; set; }
+        public virtual HocBong? HocBong { get; set; }
 
-        public virtual ICollection<LichPhongVan> LichPhongVans { get; set; }
+        public virtual ICollection<LichPhongVan> LichPhongVans { get; set; } = new List<LichPhongVan>();
 
-        public virtual KetQuaHocBong KetQuaHocBong { get; set; }
+        public virtual KetQuaHocBong? KetQuaHocBong { get; set; }
     }
 }

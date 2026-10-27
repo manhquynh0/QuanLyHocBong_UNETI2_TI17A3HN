@@ -49,7 +49,7 @@
             <h5 class="mb-0 fw-bold text-dark"><i class="bi bi-file-earmark-text text-primary me-2"></i>Nội dung hồ sơ ứng tuyển</h5>
         </div>
         <div class="card-body p-4">
-            <form asp-action="NopHoSo" method="post">
+            <form asp-action="NopHoSo" method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="MaHocBong" value="@Model.MaHocBong" />
 
@@ -58,6 +58,14 @@
                         Thư xin học bổng / Nguyện vọng & Cam kết học tập *
                     </label>
                     <textarea name="ThuXinHocBong" class="form-control" rows="6" placeholder="Trình bày lý do bạn xứng đáng nhận học bổng này, mục tiêu nghề nghiệp, hoàn cảnh khó khăn hoặc các dự án học tập đang thực hiện..." required>@Model.ThuXinHocBong</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small text-secondary">
+                        Tài liệu / File minh chứng đính kèm (PDF, JPG, PNG)
+                    </label>
+                    <input type="file" name="FileMinhChungUpload" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" />
+                    <small class="text-muted d-block mt-1">Đính kèm bản scan bảng điểm hoặc minh chứng thành tích học tập, giấy khen (tối đa 20MB).</small>
                 </div>
 
                 <div class="mb-4">
@@ -75,4 +83,3 @@
         </div>
     </div>
 </div>
-

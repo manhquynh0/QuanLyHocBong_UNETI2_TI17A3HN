@@ -3,12 +3,14 @@
 // Nội dung thực hiện: Module 4 - Controller xử lý tiếp nhận hồ sơ,
 // xét duyệt sơ bộ, quản lý trạng thái và kiểm soát số suất.
 
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
@@ -18,13 +20,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly IHoSoHocBongService _hoSoService;
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
+        private readonly ISupabaseStorageService _storageService;
 
         public HoSoHocBongController(
             IHoSoHocBongService hoSoService,
-            QuanLyHocBong_UNETI2_TI17A3HNContext context)
+            QuanLyHocBong_UNETI2_TI17A3HNContext context,
+            ISupabaseStorageService storageService)
         {
             _hoSoService = hoSoService;
             _context = context;
+            _storageService = storageService;
         }
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
@@ -45,28 +50,55 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // GET: /HoSoHocBong/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var model = await _hoSoService.LayChiTietAsync(id);
+            var hoSo = await _context.HoSoHocBong
+                .Include(h => h.SinhVien)
+                .Include(h => h.HocBong)
+                    .ThenInclude(hb => hb.DonViTaiTro)
+                .Include(h => h.LichPhongVans)
+                .Include(h => h.KetQuaHocBong)
+                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == id);
 
-            if (model == null)
+            if (hoSo == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(model);
+            return View(hoSo);
         }
 
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
         // GET: /HoSoHocBong/XetDuyetSoBo/5
         public async Task<IActionResult> XetDuyetSoBo(int id)
         {
-            var model = await _hoSoService.LayFormXetDuyetAsync(id);
+            var hoSo = await _context.HoSoHocBong
+                .Include(h => h.SinhVien)
+                .Include(h => h.HocBong)
+                    .ThenInclude(hb => hb.DonViTaiTro)
+                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == id);
 
-            if (model == null)
+            if (hoSo == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
+
+            ViewBag.HoSo = hoSo;
+
+            var model = new XetDuyetSoBoViewModel
+            {
+                MaHoSoHocBong = hoSo.MaHoSoHocBong,
+                TenSinhVien = hoSo.SinhVien?.HoTen ?? "",
+                TenHocBong = hoSo.HocBong?.TenHocBong ?? "",
+                TenDonViTaiTro = hoSo.HocBong?.DonViTaiTro?.TenDonViTaiTro ?? "",
+                DiemTrungBinh = hoSo.SinhVien?.DiemTrungBinhTichLuy ?? 0,
+                DiemYeuCau = hoSo.HocBong?.DiemTrungBinhToiThieu ?? 0,
+                BacDaoTaoSinhVien = hoSo.SinhVien?.BacDaoTao ?? "",
+                BacDaoTaoHocBong = hoSo.HocBong?.BacDaoTao ?? "",
+                NgayNop = hoSo.NgayNop,
+                ThuXinHocBong = hoSo.ThuXinHocBong,
+                ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? ""
+            };
 
             return View(model);
         }
@@ -77,6 +109,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> XetDuyetSoBo(XetDuyetSoBoViewModel model)
         {
+            var hoSo = await _context.HoSoHocBong
+                .Include(h => h.SinhVien)
+                .Include(h => h.HocBong)
+                    .ThenInclude(hb => hb.DonViTaiTro)
+                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == model.MaHoSoHocBong);
+            ViewBag.HoSo = hoSo;
+
             // Kiểm tra validation từ Data Annotation
             if (!ModelState.IsValid)
             {
@@ -164,7 +203,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> NopHoSo(int MaHocBong, string ThuXinHocBong, string? GhiChu)
+        public async Task<IActionResult> NopHoSo(int MaHocBong, string ThuXinHocBong, string? GhiChu, IFormFile? FileMinhChungUpload)
         {
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
@@ -202,6 +241,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return RedirectToAction(nameof(HoSoCuaToi));
             }
 
+            string? fileUrl = null;
+            if (FileMinhChungUpload != null && FileMinhChungUpload.Length > 0)
+            {
+                fileUrl = await _storageService.UploadFileAsync(FileMinhChungUpload, "minhchung");
+            }
+
             var hoSo = new HoSoHocBong
             {
                 MaSinhVien = sv.MaSinhVien,
@@ -209,7 +254,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 NgayNop = DateTime.Now,
                 ThuXinHocBong = (ThuXinHocBong ?? "").Trim(),
                 GhiChu = (GhiChu ?? "Đã nộp đầy đủ hồ sơ").Trim(),
-                TrangThai = "Chờ duyệt"
+                TrangThai = "Chờ duyệt",
+                FileMinhChung = fileUrl
             };
 
             _context.HoSoHocBong.Add(hoSo);
@@ -252,22 +298,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         }
 
         // Helper: Load lại thông tin readonly khi form bị lỗi
-        // (Vì khi submit form, các field readonly không được gửi lên server)
         private async Task LoadThongTinHienThiAsync(XetDuyetSoBoViewModel model)
         {
-            var formData = await _hoSoService.LayFormXetDuyetAsync(model.MaHoSoHocBong);
-            if (formData == null) return;
+            var hoSo = await _context.HoSoHocBong
+                .Include(h => h.SinhVien)
+                .Include(h => h.HocBong)
+                    .ThenInclude(hb => hb.DonViTaiTro)
+                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == model.MaHoSoHocBong);
+            if (hoSo == null) return;
 
-            model.TenSinhVien = formData.TenSinhVien;
-            model.TenHocBong = formData.TenHocBong;
-            model.TenDonViTaiTro = formData.TenDonViTaiTro;
-            model.DiemTrungBinh = formData.DiemTrungBinh;
-            model.DiemYeuCau = formData.DiemYeuCau;
-            model.BacDaoTaoSinhVien = formData.BacDaoTaoSinhVien;
-            model.BacDaoTaoHocBong = formData.BacDaoTaoHocBong;
-            model.NgayNop = formData.NgayNop;
-            model.ThuXinHocBong = formData.ThuXinHocBong;
-            model.ThanhTichHocTap = formData.ThanhTichHocTap;
+            model.TenSinhVien = hoSo.SinhVien?.HoTen ?? "";
+            model.TenHocBong = hoSo.HocBong?.TenHocBong ?? "";
+            model.TenDonViTaiTro = hoSo.HocBong?.DonViTaiTro?.TenDonViTaiTro ?? "";
+            model.DiemTrungBinh = hoSo.SinhVien?.DiemTrungBinhTichLuy ?? 0;
+            model.DiemYeuCau = hoSo.HocBong?.DiemTrungBinhToiThieu ?? 0;
+            model.BacDaoTaoSinhVien = hoSo.SinhVien?.BacDaoTao ?? "";
+            model.BacDaoTaoHocBong = hoSo.HocBong?.BacDaoTao ?? "";
+            model.NgayNop = hoSo.NgayNop;
+            model.ThuXinHocBong = hoSo.ThuXinHocBong;
+            model.ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? "";
         }
     }
 }
