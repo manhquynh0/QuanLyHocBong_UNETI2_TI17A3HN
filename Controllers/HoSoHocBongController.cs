@@ -50,55 +50,28 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // GET: /HoSoHocBong/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .Include(h => h.LichPhongVans)
-                .Include(h => h.KetQuaHocBong)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == id);
+            var model = await _hoSoService.LayChiTietAsync(id);
 
-            if (hoSo == null)
+            if (model == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
 
-            return View(hoSo);
+            return View(model);
         }
 
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
         // GET: /HoSoHocBong/XetDuyetSoBo/5
         public async Task<IActionResult> XetDuyetSoBo(int id)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == id);
+            var model = await _hoSoService.LayFormXetDuyetAsync(id);
 
-            if (hoSo == null)
+            if (model == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
-
-            ViewBag.HoSo = hoSo;
-
-            var model = new XetDuyetSoBoViewModel
-            {
-                MaHoSoHocBong = hoSo.MaHoSoHocBong,
-                TenSinhVien = hoSo.SinhVien?.HoTen ?? "",
-                TenHocBong = hoSo.HocBong?.TenHocBong ?? "",
-                TenDonViTaiTro = hoSo.HocBong?.DonViTaiTro?.TenDonViTaiTro ?? "",
-                DiemTrungBinh = hoSo.SinhVien?.DiemTrungBinhTichLuy ?? 0,
-                DiemYeuCau = hoSo.HocBong?.DiemTrungBinhToiThieu ?? 0,
-                BacDaoTaoSinhVien = hoSo.SinhVien?.BacDaoTao ?? "",
-                BacDaoTaoHocBong = hoSo.HocBong?.BacDaoTao ?? "",
-                NgayNop = hoSo.NgayNop,
-                ThuXinHocBong = hoSo.ThuXinHocBong,
-                ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? ""
-            };
 
             return View(model);
         }
@@ -317,6 +290,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             model.NgayNop = hoSo.NgayNop;
             model.ThuXinHocBong = hoSo.ThuXinHocBong;
             model.ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? "";
+            model.FileMinhChung = hoSo.FileMinhChung;
         }
     }
 }

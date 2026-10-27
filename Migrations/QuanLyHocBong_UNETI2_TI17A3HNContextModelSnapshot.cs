@@ -72,8 +72,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaHoSoHocBong"));
 
+                    b.Property<string>("FileMinhChung")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("GhiChu")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -310,13 +313,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaSinhVien"));
 
+                    b.Property<string>("AnhDaiDien")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
                     b.Property<string>("BacDaoTao")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("DiaChi")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
@@ -355,7 +361,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .HasColumnType("varchar(20)");
 
                     b.Property<string>("ThanhTichHocTap")
-                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -397,6 +402,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaTaiKhoan"));
+
+                    b.Property<string>("AnhDaiDien")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -594,8 +603,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong", b =>
                 {
-                    b.Navigation("KetQuaHocBong")
-                        .IsRequired();
+                    b.Navigation("KetQuaHocBong");
 
                     b.Navigation("LichPhongVans");
                 });
