@@ -140,6 +140,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("DaXoa")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("DiemTrungBinhToiThieu")
                         .HasColumnType("decimal(4,2)");
 
@@ -186,6 +189,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         {
                             MaHocBong = 1,
                             BacDaoTao = "Đại học",
+                            DaXoa = false,
                             DiemTrungBinhToiThieu = 3.6m,
                             DieuKienXetHocBong = "Không nợ môn, ĐTB >= 3.6",
                             HanNopHoSo = new DateTime(2026, 11, 30, 0, 0, 0, 0, DateTimeKind.Unspecified),
