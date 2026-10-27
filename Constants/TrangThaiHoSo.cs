@@ -25,7 +25,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Constants
             DaHuy
         };
 
-        // ===== Các trạng thái đang trong quá trình xử lý =====
+        // Các trạng thái đang trong quá trình xử lý 
         // Dùng để kiểm tra "sinh viên không được có 2 hồ sơ đang xử lý cùng học bổng"
         public static readonly string[] DangXuLy = new[]
         {
@@ -35,7 +35,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Constants
             DaPhongVan
         };
 
-        // ===== Các trạng thái được phép hủy bởi sinh viên =====
+        // Các trạng thái được phép hủy bởi sinh viên
         // (Chờ duyệt hoặc Đạt xét duyệt sơ bộ nhưng chưa có lịch phỏng vấn)
         public static readonly string[] CoTheHuy = new[]
         {

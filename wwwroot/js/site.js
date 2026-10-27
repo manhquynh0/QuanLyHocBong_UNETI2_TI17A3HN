@@ -46,3 +46,22 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
 // Write your JavaScript code.
+
+document.querySelectorAll(".side-nav .nav-item").forEach((item) => {
+    item.addEventListener("click", (event) => {
+        const currentItem = event.currentTarget;
+        const isPlaceholderLink = currentItem.getAttribute("href") === "#";
+
+        if (isPlaceholderLink) {
+            event.preventDefault();
+        }
+
+        document.querySelectorAll(".side-nav .nav-item").forEach((navItem) => {
+            navItem.classList.remove("active");
+            navItem.removeAttribute("aria-current");
+        });
+
+        currentItem.classList.add("active");
+        currentItem.setAttribute("aria-current", "page");
+    });
+});

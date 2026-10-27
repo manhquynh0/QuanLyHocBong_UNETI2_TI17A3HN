@@ -21,7 +21,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             _context = context;
         }
 
-        // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
+        // DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
         public async Task<HoSoFilterViewModel> LayDanhSachAsync(HoSoFilterViewModel filter)
         {
             var query = _context.HoSoHocBong
