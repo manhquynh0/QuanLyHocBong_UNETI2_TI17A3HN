@@ -103,7 +103,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
                     HanNopHoSo = new DateTime(2026, 11, 30),
                     MoTaHocBong = "Dành cho sinh viên xuất sắc khối ngành CNTT",
                     DieuKienXetHocBong = "Không nợ môn, ĐTB >= 3.6",
-                    TrangThai = "Đang nhận hồ sơ"
+                    TrangThai = "Đang nhận hồ sơ",
+                    DaXoa = false
                 }
             );
 

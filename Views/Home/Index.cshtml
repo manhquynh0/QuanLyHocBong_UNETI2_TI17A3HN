@@ -5,7 +5,7 @@
     var userName = ViewBag.UserName as string ?? "Admin";
 }
 
-<div class="dashboard-container">
+<div class="dashboard-container admin-dashboard">
     <!-- Welcome Banner matching Figma -->
     <div class="welcome-banner">
         <div class="welcome-content">
@@ -112,9 +112,9 @@
     </div>
 
     <!-- Charts Row -->
-    <div class="row g-4">
+    <div class="dashboard-charts">
         <!-- Monthly Applications Bar Chart -->
-        <div class="col-lg-7">
+        <div class="dashboard-chart-monthly">
             <div class="chart-card">
                 <div class="chart-header">
                     <h5 class="chart-title">Hồ sơ tiếp nhận theo tháng</h5>
@@ -142,62 +142,68 @@
         </div>
 
         <!-- Status Distribution Donut Chart -->
-        <div class="col-lg-5">
+        <div class="dashboard-chart-status">
             <div class="chart-card">
                 <div class="chart-header">
                     <h5 class="chart-title">Phân bổ trạng thái hồ sơ</h5>
                     <span class="badge bg-light text-secondary border">Tỷ lệ %</span>
                 </div>
-                <div class="donut-chart-wrapper">
-                    <svg viewBox="0 0 160 160" class="donut-svg">
-                        <circle cx="80" cy="80" r="60" fill="transparent" stroke="#f1f5f9" stroke-width="24" />
-                        @{
-                            double offset = 0;
-                            double circumference = 2 * Math.PI * 60; // ~376.99
-                            foreach (var s in Model.PhanBoTrangThai)
-                            {
-                                var dash = (s.TiLePhanTram / 100.0) * circumference;
-                                <circle cx="80" cy="80" r="60" fill="transparent"
-                                        stroke="@s.MauSac" stroke-width="24"
-                                        stroke-dasharray="@(dash.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)) @((circumference - dash).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
-                                        stroke-dashoffset="@((-offset).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
-                                        transform="rotate(-90 80 80)" />
-                                offset += dash;
+                <div class="status-chart-body">
+                    <div class="donut-chart-wrapper">
+                        <svg viewBox="0 0 160 160" class="donut-svg" role="img" aria-label="Biểu đồ phân bổ trạng thái hồ sơ">
+                            <circle cx="80" cy="80" r="58" fill="transparent" stroke="#f1f5f9" stroke-width="30" />
+                            @{
+                                double offset = 0;
+                                double radius = 58;
+                                double circumference = 2 * Math.PI * radius;
+                                foreach (var s in Model.PhanBoTrangThai)
+                                {
+                                    var dash = (s.TiLePhanTram / 100.0) * circumference;
+                                    var midAngle = ((offset + dash / 2) / circumference) * (2 * Math.PI) - (Math.PI / 2);
+                                    var labelX = 80 + Math.Cos(midAngle) * radius;
+                                    var labelY = 80 + Math.Sin(midAngle) * radius;
+                                    <circle cx="80" cy="80" r="@radius" fill="transparent"
+                                            stroke="@s.MauSac" stroke-width="30"
+                                            stroke-dasharray="@(dash.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)) @((circumference - dash).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                                            stroke-dashoffset="@((-offset).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
+                                            transform="rotate(-90 80 80)" />
+                                    @Html.Raw($"<text x=\"{labelX.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" y=\"{labelY.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)}\" class=\"donut-segment-label\">{s.TiLePhanTram.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}%</text>")
+                                    offset += dash;
+                                }
                             }
-                        }
-                    </svg>
-                    <div class="donut-center-text">
-                        <strong>@Model.TongHoSo</strong>
-                        <small>Hồ sơ</small>
-                    </div>
-                </div>
-                <div class="legend-list">
-                    @foreach (var s in Model.PhanBoTrangThai)
-                    {
-                        <div class="legend-item">
-                            <span class="legend-dot" style="background-color: @s.MauSac"></span>
-                            <span class="legend-name">@s.TenTrangThai</span>
-                            <span class="legend-pct">@(s.TiLePhanTram)%</span>
+                        </svg>
+                        <div class="donut-center-text">
+                            <strong>@Model.TongHoSo</strong>
+                            <small>Hồ sơ</small>
                         </div>
-                    }
+                    </div>
+                    <div class="legend-list">
+                        @foreach (var s in Model.PhanBoTrangThai)
+                        {
+                            <div class="legend-item">
+                                <span class="legend-dot" style="background-color: @s.MauSac"></span>
+                                <span class="legend-name">@s.TenTrangThai</span>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Recent Applications Table Section -->
-    <div class="card border-0 shadow-sm mt-4 rounded-3">
-        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+    <section class="dashboard-recent-card">
+        <div class="dashboard-recent-header">
             <div>
-                <h5 class="mb-0 fw-bold text-dark">Hồ sơ ứng tuyển gần đây</h5>
-                <small class="text-muted">Cập nhật hồ sơ sinh viên vừa gửi lên hệ thống</small>
+                <h2 class="dashboard-recent-title">Hồ sơ ứng tuyển gần đây</h2>
+                <p class="dashboard-recent-subtitle">Cập nhật hồ sơ sinh viên vừa gửi lên hệ thống</p>
             </div>
             <a asp-controller="HoSoHocBong" asp-action="Index" class="btn btn-sm btn-primary">
                 Xem tất cả hồ sơ <i class="bi bi-arrow-right ms-1"></i>
             </a>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 dashboard-recent-table">
                 <thead class="table-light">
                     <tr>
                         <th class="ps-4">Mã hồ sơ</th>
@@ -257,5 +263,9 @@
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/views/home/index.css" asp-append-version="true" />
+}
