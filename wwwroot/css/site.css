@@ -22,6 +22,9 @@ body {
     background: var(--page-bg);
     font-family: Inter, "Segoe UI", Arial, sans-serif;
     font-size: 14px;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 a {
@@ -38,6 +41,9 @@ a {
     display: flex;
     min-height: 100vh;
     align-items: stretch;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar {
@@ -146,7 +152,7 @@ a {
 .workspace {
     display: flex;
     flex-direction: column;
-    flex: 1 1 0;
+    flex: 1 1 auto;
     min-width: 0;
     min-height: 100vh;
     margin-left: 250px;
@@ -459,6 +465,7 @@ a.notification-button:focus-visible {
     .page-content {
         min-height: calc(100vh - 64px);
         padding: 16px 13px;
+        flex: 1 1 auto;
     }
 
     .stats-grid {

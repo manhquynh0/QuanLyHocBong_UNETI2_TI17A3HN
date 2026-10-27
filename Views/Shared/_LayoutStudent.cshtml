@@ -1,4 +1,4 @@
-@using Microsoft.AspNetCore.Http
+﻿@using Microsoft.AspNetCore.Http
 @{
     var userName   = Context.Session.GetString("HoTen") ?? "Sinh viên";
     var vaiTro     = Context.Session.GetString("VaiTro") ?? "Sinh viên";
@@ -65,22 +65,22 @@
                     <span>Danh sách học bổng</span>
                 </a>
 
-                <a href="@Url.Action("HoSoCuaToi", "HoSoHocBong")" class="@NavClass("HoSoHocBong", "HoSoCuaToi") @NavClass("HoSoCuaToi")">
+                <a href="@Url.Action("Index", "HoSoCuaToi")" class="@NavClass("HoSoCuaToi", "Index") @(controller == "HoSoCuaToi" && (action == "Index" || action == "Details" || action == "Create") ? "nav-item active" : "")">
                     <i class="bi bi-folder2-open"></i>
                     <span>Hồ sơ của tôi</span>
                 </a>
 
-                <a href="@Url.Action("Index", "LichPhongVan")" class="@NavClass("LichPhongVan")">
+                <a href="@Url.Action("LichPhongVan", "HoSoCuaToi")" class="@NavClass("HoSoCuaToi", "LichPhongVan")">
                     <i class="bi bi-calendar-check"></i>
                     <span>Lịch phỏng vấn</span>
                 </a>
 
-                <a href="@Url.Action("Index", "KetQuaHocBong")" class="@NavClass("KetQuaHocBong")">
+                <a href="@Url.Action("KetQua", "HoSoCuaToi")" class="@NavClass("HoSoCuaToi", "KetQua")">
                     <i class="bi bi-patch-check"></i>
                     <span>Kết quả học bổng</span>
                 </a>
 
-                <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="@NavClass("SinhVien", "ThongTinCaNhan") @NavClass("HoSoCaNhan")">
+                <a href="@Url.Action("Index", "HoSoCaNhan")" class="@NavClass("HoSoCaNhan")">
                     <i class="bi bi-person"></i>
                     <span>Tài khoản</span>
                 </a>
@@ -147,7 +147,7 @@
                     <a href="@Url.Action("Index", "HocBongSinhVien")" class="notification-button" title="Thông báo học bổng">
                         <i class="bi bi-bell"></i>
                     </a>
-                    <a href="@Url.Action("ThongTinCaNhan", "SinhVien")" class="d-flex align-items-center gap-2 text-decoration-none">
+                    <a href="@Url.Action("Index", "HoSoCaNhan")" class="d-flex align-items-center gap-2 text-decoration-none">
                         <div class="user-copy">
                             <strong>@userName</strong>
                             <small>@vaiTro</small>
