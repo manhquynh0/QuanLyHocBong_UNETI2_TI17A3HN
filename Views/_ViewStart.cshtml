@@ -1,3 +1,8 @@
-﻿@{
-    Layout = "_Layout";
+@using Microsoft.AspNetCore.Http
+@{
+    var role = Context.Session.GetString("VaiTro") ?? "";
+    bool isStudent = role.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
+        || role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
+
+    Layout = isStudent ? "_LayoutStudent" : "_Layout";
 }
