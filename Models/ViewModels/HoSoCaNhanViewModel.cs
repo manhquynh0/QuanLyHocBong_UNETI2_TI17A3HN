@@ -1,14 +1,20 @@
-// Họ và tên: Nguyễn Phi Hùng
+﻿// Họ và tên: Nguyễn Phi Hùng
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - ViewModel form cập nhật hồ sơ cá nhân.
 // Không có MaSinhVien/MaTaiKhoan/TrangThai để sinh viên không thể gửi (over-posting) dữ liệu của người khác.
 using System.ComponentModel.DataAnnotations;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 {
     public class HoSoCaNhanViewModel
     {
+        public string? AnhDaiDien { get; set; }
+
+        [Display(Name = "Ảnh đại diện")]
+        public IFormFile? FileAnhDaiDien { get; set; }
+
         // Chuẩn hóa ngay khi binding (cắt khoảng trắng thừa) để validation chạy trên dữ liệu đã chuẩn hóa.
         private string _hoTen = string.Empty;
         private string _soDienThoai = string.Empty;
