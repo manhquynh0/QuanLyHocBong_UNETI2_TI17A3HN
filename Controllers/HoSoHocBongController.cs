@@ -291,6 +291,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             model.ThuXinHocBong = hoSo.ThuXinHocBong;
             model.ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? "";
             model.FileMinhChung = hoSo.FileMinhChung;
+            model.TaiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, model.MaHoSoHocBong);
         }
     }
 }

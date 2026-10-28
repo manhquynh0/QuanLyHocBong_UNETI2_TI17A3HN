@@ -22,16 +22,23 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly IWebHostEnvironment _env;
+        private readonly ISupabaseStorageService _storageService;
 
-        public TaiLieuHoSoController(QuanLyHocBong_UNETI2_TI17A3HNContext context, IWebHostEnvironment env)
+        public TaiLieuHoSoController(
+            QuanLyHocBong_UNETI2_TI17A3HNContext context,
+            IWebHostEnvironment env,
+            ISupabaseStorageService storageService)
         {
             _context = context;
             _env = env;
+            _storageService = storageService;
         }
 
         private sealed record NguoiDung(int MaTaiKhoan, string Quyen, int? MaSinhVien)
         {
-            public bool LaSinhVien => Quyen == VaiTro.SinhVien;
+            public bool LaSinhVien =>
+                Quyen.Equals(VaiTro.SinhVien, StringComparison.OrdinalIgnoreCase) ||
+                Quyen.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
         }
 
         // Xác định người dùng từ Session (Module 1 lưu MaTaiKhoan, VaiTro). Trả về (người dùng, kết quả chặn).
@@ -42,7 +49,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (maTaiKhoan == null || string.IsNullOrEmpty(quyen))
                 return (null, RedirectToAction("DangNhap", "TaiKhoan"));
 
-            if (quyen == VaiTro.SinhVien)
+            if (quyen.Equals(VaiTro.SinhVien, StringComparison.OrdinalIgnoreCase) ||
+                quyen.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase))
             {
                 var maSv = await _context.SinhVien.AsNoTracking()
                     .Where(s => s.MaTaiKhoan == maTaiKhoan.Value)
@@ -52,7 +60,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return (new NguoiDung(maTaiKhoan.Value, quyen, maSv), null);
             }
 
-            if (quyen == VaiTro.Admin || quyen == VaiTro.CanBoHocBong)
+            if (quyen.Equals(VaiTro.Admin, StringComparison.OrdinalIgnoreCase) ||
+                quyen.Equals(VaiTro.CanBoHocBong, StringComparison.OrdinalIgnoreCase) ||
+                quyen.StartsWith("C", StringComparison.OrdinalIgnoreCase) ||
+                quyen.StartsWith("Admin", StringComparison.OrdinalIgnoreCase))
                 return (new NguoiDung(maTaiKhoan.Value, quyen, null), null);
 
             return (null, StatusCode(StatusCodes.Status403Forbidden));
@@ -71,7 +82,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             var tl = await _context.TaiLieuHoSo.AsNoTracking()
                 .Where(t => t.MaTaiLieu == id)
-                .Select(t => new { t.TenFileGoc, t.TenFileLuu, t.LoaiNoiDung, MaSinhVienSoHuu = t.HoSoHocBong.MaSinhVien })
+                .Select(t => new
+                {
+                    t.TenFileGoc,
+                    t.TenFileLuu,
+                    t.LoaiNoiDung,
+                    MaSinhVienSoHuu = t.HoSoHocBong.MaSinhVien,
+                    FileMinhChungCloud = t.HoSoHocBong.FileMinhChung
+                })
                 .FirstOrDefaultAsync();
             if (tl == null) return NotFound();
 
@@ -79,7 +97,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (nd!.LaSinhVien && tl.MaSinhVienSoHuu != nd.MaSinhVien) return NotFound();
 
             var duongDan = TaiLieuHoSoStorage.DuongDan(_env.ContentRootPath, tl.TenFileLuu);
-            if (duongDan == null || !System.IO.File.Exists(duongDan)) return NotFound();
+            if (duongDan == null || !System.IO.File.Exists(duongDan))
+            {
+                if (!string.IsNullOrEmpty(tl.FileMinhChungCloud) &&
+                    tl.FileMinhChungCloud.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Redirect(tl.FileMinhChungCloud);
+                }
+                return NotFound();
+            }
 
             var cd = new ContentDispositionHeaderValue(hienTrucTiep ? "inline" : "attachment");
             cd.SetHttpFileName(tl.TenFileGoc);
@@ -137,10 +163,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (!nd!.LaSinhVien) return StatusCode(StatusCodes.Status403Forbidden);   // cán bộ chỉ xem/tải
             var maSv = nd.MaSinhVien!.Value;
 
-            var hoSo = await _context.HoSoHocBong.AsNoTracking()
-                .Where(h => h.MaHoSoHocBong == maHoSo && h.MaSinhVien == maSv)
-                .Select(h => new { h.TrangThai })
-                .FirstOrDefaultAsync();
+            var hoSo = await _context.HoSoHocBong
+                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == maHoSo && h.MaSinhVien == maSv);
             if (hoSo == null) return NotFound();
 
             var quayLai = RedirectToAction("Details", "HoSoCuaToi", new { id = maHoSo });
@@ -170,6 +194,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             try
             {
                 daLuu = await TaiLieuHoSoStorage.LuuAsync(_env.ContentRootPath, tep);
+                if (string.IsNullOrEmpty(hoSo.FileMinhChung))
+                {
+                    var cloudUrl = await _storageService.UploadFileAsync(tep[0], "minhchung");
+                    if (!string.IsNullOrEmpty(cloudUrl))
+                    {
+                        hoSo.FileMinhChung = cloudUrl;
+                    }
+                }
                 _context.TaiLieuHoSo.AddRange(TaiLieuHoSoStorage.TaoBanGhi(maHoSo, daLuu, loai, nd.MaTaiKhoan));
                 await _context.SaveChangesAsync();
             }

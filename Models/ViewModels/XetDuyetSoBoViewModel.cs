@@ -24,6 +24,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public string? ThuXinHocBong { get; set; }
         public string? ThanhTichHocTap { get; set; }
         public string? FileMinhChung { get; set; }
+        public List<TaiLieuItem> TaiLieus { get; set; } = new();
 
         // Kết quả xét duyệt 
         [Required(ErrorMessage = "Vui lòng chọn kết quả xét duyệt")]

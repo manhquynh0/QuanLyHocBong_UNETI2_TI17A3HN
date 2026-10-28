@@ -118,6 +118,7 @@
                         <th>Đơn vị tài trợ</th>
                         <th>Ngày nộp</th>
                         <th>Điểm TB</th>
+                        <th>Đính kèm</th>
                         <th>Trạng thái</th>
                         <th style="width: 200px;">Thao tác</th>
                     </tr>
@@ -138,6 +139,25 @@
                                     <span class="badge bg-warning text-dark" title="Không đủ điểm yêu cầu (@item.DiemYeuCau)">
                                         !
                                     </span>
+                                }
+                            </td>
+                            <td>
+                                @if (item.SoTaiLieu > 0)
+                                {
+                                    <a asp-controller="TaiLieuHoSo" asp-action="DanhSach" asp-route-id="@item.MaHoSoHocBong"
+                                       class="badge bg-primary text-decoration-none" title="Xem danh sách tệp đính kèm">
+                                        <i class="bi bi-paperclip"></i> @item.SoTaiLieu tệp
+                                    </a>
+                                }
+                                else if (!string.IsNullOrEmpty(item.FileMinhChung))
+                                {
+                                    <a href="@item.FileMinhChung" target="_blank" class="badge bg-primary text-decoration-none">
+                                        <i class="bi bi-paperclip"></i> 1 tệp
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">Không có</span>
                                 }
                             </td>
                             <td>

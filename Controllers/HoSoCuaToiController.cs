@@ -14,10 +14,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     public class HoSoCuaToiController : SinhVienBaseController
     {
         private readonly IWebHostEnvironment _env;
+        private readonly ISupabaseStorageService _storageService;
 
-        public HoSoCuaToiController(QuanLyHocBong_UNETI2_TI17A3HNContext context, IWebHostEnvironment env) : base(context)
+        public HoSoCuaToiController(
+            QuanLyHocBong_UNETI2_TI17A3HNContext context,
+            IWebHostEnvironment env,
+            ISupabaseStorageService storageService) : base(context)
         {
             _env = env;
+            _storageService = storageService;
         }
 
         // Truy vấn hồ sơ của MỘT sinh viên -> mọi action đọc dữ liệu đều đi qua đây nên không lộ hồ sơ người khác.
@@ -149,6 +154,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
+            string? cloudUrl = null;
+            if (tep.Count > 0)
+            {
+                cloudUrl = await _storageService.UploadFileAsync(tep[0], "minhchung");
+            }
+
             var daLuuVaoDb = false;
             try
             {
@@ -172,7 +183,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     NgayNop = DateTime.Now,                       // do hệ thống xác định
                     ThuXinHocBong = model.ThuXinHocBong.Trim(),
                     GhiChu = model.GhiChu?.Trim() ?? string.Empty, // cột DB là NOT NULL
-                    TrangThai = TrangThaiHoSo.ChoDuyet            // hồ sơ mới luôn là Chờ duyệt
+                    TrangThai = TrangThaiHoSo.ChoDuyet,           // hồ sơ mới luôn là Chờ duyệt
+                    FileMinhChung = cloudUrl
                 };
                 _context.HoSoHocBong.Add(hoSo);
                 await _context.SaveChangesAsync();
