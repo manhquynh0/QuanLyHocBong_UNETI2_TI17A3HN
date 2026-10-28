@@ -1,12 +1,16 @@
 // Họ và tên: Phan Sỹ Tú
 // Mã sinh viên: 23103100145
 // Nội dung thực hiện: Module 4 - Xử lý nghiệp vụ tiếp nhận hồ sơ,
-// xét duyệt sơ bộ, quản lý trạng thái và kiểm soát số suất.
+// xét duyệt sơ bộ, quản lý trạng thái và kiểm soát số suất (kết hợp Repository & UnitOfWork).
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
-using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Abstractions;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
@@ -14,21 +18,17 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 {
     public class HoSoHocBongService : IHoSoHocBongService
     {
-        private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public HoSoHocBongService(QuanLyHocBong_UNETI2_TI17A3HNContext context)
+        public HoSoHocBongService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
         public async Task<HoSoFilterViewModel> LayDanhSachAsync(HoSoFilterViewModel filter)
         {
-            var query = _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .AsQueryable();
+            var query = _unitOfWork.HoSoHocBongs.QueryWithDetails(asNoTracking: true);
 
             // Tìm kiếm theo tên SV hoặc tên học bổng
             if (!string.IsNullOrWhiteSpace(filter.TuKhoa))
@@ -78,6 +78,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             if (filter.TongSoTrang == 0) filter.TongSoTrang = 1;
             filter.KichThuocTrang = pageSize;
 
+            var taiLieuQuery = _unitOfWork.TaiLieuHoSos.Query(asNoTracking: true);
+
             filter.DanhSach = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -91,7 +93,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                     TrangThai = h.TrangThai,
                     DiemTrungBinh = h.SinhVien.DiemTrungBinhTichLuy,
                     DiemYeuCau = h.HocBong.DiemTrungBinhToiThieu,
-                    SoTaiLieu = _context.TaiLieuHoSo.Count(t => t.MaHoSoHocBong == h.MaHoSoHocBong),
+                    SoTaiLieu = taiLieuQuery.Count(t => t.MaHoSoHocBong == h.MaHoSoHocBong),
                     FileMinhChung = h.FileMinhChung
                 })
                 .ToListAsync();
@@ -102,20 +104,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         // 2. CHI TIẾT HỒ SƠ
         public async Task<HoSoChiTietViewModel?> LayChiTietAsync(int maHoSo)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == maHoSo);
-
+            var hoSo = await _unitOfWork.HoSoHocBongs.GetByIdWithDetailsAsync(maHoSo);
             if (hoSo == null) return null;
 
-            // Đếm số hồ sơ đã được cấp học bổng của học bổng này
-            int soDaCap = await _context.HoSoHocBong
-                .CountAsync(h => h.MaHocBong == hoSo.MaHocBong
-                              && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
-
-            var taiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, maHoSo);
+            int soDaCap = await _unitOfWork.HoSoHocBongs.CountApprovedByHocBongAsync(hoSo.MaHocBong);
+            var taiLieus = await _unitOfWork.HoSoHocBongs.GetTaiLieuItemsAsync(maHoSo);
 
             return new HoSoChiTietViewModel
             {
@@ -164,15 +157,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
         public async Task<XetDuyetSoBoViewModel?> LayFormXetDuyetAsync(int maHoSo)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == maHoSo);
-
+            var hoSo = await _unitOfWork.HoSoHocBongs.GetByIdWithDetailsAsync(maHoSo);
             if (hoSo == null) return null;
 
-            var taiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, maHoSo);
+            var taiLieus = await _unitOfWork.HoSoHocBongs.GetTaiLieuItemsAsync(maHoSo);
 
             return new XetDuyetSoBoViewModel
             {
@@ -195,10 +183,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         // 4. XỬ LÝ XÉT DUYỆT SƠ BỘ (POST)
         public async Task<(bool ThanhCong, string? Loi)> XetDuyetSoBoAsync(XetDuyetSoBoViewModel model)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == model.MaHoSoHocBong);
+            var hoSo = await _unitOfWork.HoSoHocBongs.GetByIdWithDetailsAsync(model.MaHoSoHocBong);
 
             // Hồ sơ tồn tại?
             if (hoSo == null)
@@ -246,22 +231,21 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             hoSo.NgayXuLy = DateTime.Now;
             hoSo.NhanXetXetDuyet = model.NhanXetXetDuyet.Trim();
 
-            await _context.SaveChangesAsync();
+            _unitOfWork.HoSoHocBongs.Update(hoSo);
+            await _unitOfWork.SaveChangesAsync();
 
             return (true, null);
         }
 
         // 5. ĐẾM SỐ HỒ SƠ ĐÃ ĐƯỢC CẤP HỌC BỔNG
-        public async Task<int> DemSoDaCapAsync(int maHocBong)
+        public Task<int> DemSoDaCapAsync(int maHocBong)
         {
-            return await _context.HoSoHocBong
-                .CountAsync(h => h.MaHocBong == maHocBong
-                              && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
+            return _unitOfWork.HoSoHocBongs.CountApprovedByHocBongAsync(maHocBong);
         }
 
-        public async Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
+        public Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
         {
-            return await _context.DonViTaiTro
+            return _unitOfWork.DonViTaiTros.Query(asNoTracking: true)
                 .Where(d => d.TrangThai == true)
                 .OrderBy(d => d.TenDonViTaiTro)
                 .ToListAsync();

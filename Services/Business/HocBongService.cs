@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
-using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
+using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Abstractions;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong;
 
@@ -11,20 +15,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
     public class HocBongService : IHocBongService
     {
         private const int KichThuocTrang = 10;
-        private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public HocBongService(QuanLyHocBong_UNETI2_TI17A3HNContext context)
+        public HocBongService(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<HocBongIndexViewModel> LayDanhSachAsync(HocBongIndexViewModel filters)
         {
-            var query = _context.HocBong
-                .AsNoTracking()
-                .Where(h => !h.DaXoa)
-                .Include(h => h.DonViTaiTro)
-                .AsQueryable();
+            var query = _unitOfWork.HocBongs.QueryActiveWithSponsor(asNoTracking: true);
 
             var tuKhoa = filters.TuKhoa?.Trim();
             if (!string.IsNullOrEmpty(tuKhoa))
@@ -119,17 +119,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
         public Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
         {
-            return _context.DonViTaiTro
-                .AsNoTracking()
+            return _unitOfWork.DonViTaiTros.Query(asNoTracking: true)
                 .OrderBy(d => d.TenDonViTaiTro)
                 .ToListAsync();
         }
 
         public async Task<HocBong?> LayTheoMaAsync(int maHocBong)
         {
-            var hocBong = await _context.HocBong
-                .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong && !h.DaXoa);
+            var hocBong = await _unitOfWork.HocBongs.GetByIdWithSponsorAsync(maHocBong);
             if (hocBong is not null)
             {
                 hocBong.TrangThai = TrangThaiHocBong.TinhTrang(
@@ -142,7 +139,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
         public Task<int> DemSoHoSoAsync(int maHocBong)
         {
-            return _context.HoSoHocBong.CountAsync(h => h.MaHocBong == maHocBong);
+            return _unitOfWork.HoSoHocBongs.CountByHocBongAsync(maHocBong);
         }
 
         public async Task<(bool ThanhCong, string? Loi)> TaoAsync(HocBong hocBong)
@@ -156,15 +153,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             hocBong.TrangThai = TrangThaiHocBong.TinhTrang(
                 hocBong.NgayBatDauNhanHoSo,
                 hocBong.HanNopHoSo);
-            _context.HocBong.Add(hocBong);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.HocBongs.AddAsync(hocBong);
+            await _unitOfWork.SaveChangesAsync();
             return (true, null);
         }
 
         public async Task<(bool ThanhCong, string? Loi)> CapNhatAsync(int maHocBong, HocBong hocBong)
         {
-            var hocBongHienTai = await _context.HocBong
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong && !h.DaXoa);
+            var hocBongHienTai = await _unitOfWork.HocBongs.GetActiveByIdAsync(maHocBong);
             if (hocBongHienTai is null)
             {
                 return (false, "Không tìm thấy học bổng cần cập nhật.");
@@ -176,8 +172,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 return (false, loi);
             }
 
-            var coHoSoDangKy = await _context.HoSoHocBong
-                .AnyAsync(h => h.MaHocBong == maHocBong);
+            var coHoSoDangKy = await _unitOfWork.HoSoHocBongs.AnyAsync(h => h.MaHocBong == maHocBong);
             if (coHoSoDangKy
                 && (hocBong.NgayBatDauNhanHoSo.Date != hocBongHienTai.NgayBatDauNhanHoSo.Date
                     || hocBong.HanNopHoSo.Date != hocBongHienTai.HanNopHoSo.Date))
@@ -185,9 +180,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 return (false, "Không thể thay đổi thời gian nhận hồ sơ vì học bổng đã có hồ sơ đăng ký.");
             }
 
-            var soHoSoDuocCap = await _context.HoSoHocBong
-                .CountAsync(h => h.MaHocBong == maHocBong
-                    && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
+            var soHoSoDuocCap = await _unitOfWork.HoSoHocBongs.CountApprovedByHocBongAsync(maHocBong);
             if (hocBong.SoSuat < soHoSoDuocCap)
             {
                 return (false, $"Số suất không thể nhỏ hơn {soHoSoDuocCap}, là số hồ sơ đã được cấp học bổng.");
@@ -206,21 +199,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 hocBong.NgayBatDauNhanHoSo,
                 hocBong.HanNopHoSo);
 
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return (true, null);
         }
 
         public async Task<(bool ThanhCong, string? Loi)> XoaAsync(int maHocBong)
         {
-            var hocBong = await _context.HocBong
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong && !h.DaXoa);
+            var hocBong = await _unitOfWork.HocBongs.GetActiveByIdAsync(maHocBong);
             if (hocBong is null)
             {
                 return (false, "Không tìm thấy học bổng cần xóa.");
             }
 
             hocBong.DaXoa = true;
-            await _context.SaveChangesAsync();
+            await _unitOfWork.SaveChangesAsync();
             return (true, null);
         }
 
@@ -231,7 +223,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 return "Hạn nộp hồ sơ không thể trước ngày bắt đầu nhận hồ sơ.";
             }
 
-            if (!await _context.DonViTaiTro.AnyAsync(d => d.MaDonViTaiTro == hocBong.MaDonViTaiTro))
+            if (!await _unitOfWork.DonViTaiTros.AnyAsync(d => d.MaDonViTaiTro == hocBong.MaDonViTaiTro))
             {
                 return "Đơn vị tài trợ đã chọn không tồn tại.";
             }
@@ -241,8 +233,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
         private async Task PopulateFilterOptionsAsync(HocBongIndexViewModel model)
         {
-            model.DonViTaiTroOptions = await _context.DonViTaiTro
-                .AsNoTracking()
+            model.DonViTaiTroOptions = await _unitOfWork.DonViTaiTros.Query(asNoTracking: true)
                 .OrderBy(d => d.TenDonViTaiTro)
                 .Select(d => new SelectListItem
                 {
@@ -250,14 +241,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                     Text = d.TenDonViTaiTro
                 })
                 .ToListAsync();
-            model.BacDaoTaoOptions = await _context.HocBong
-                .AsNoTracking()
-                .Where(h => !h.DaXoa)
-                .Select(h => h.BacDaoTao)
-                .Distinct()
-                .OrderBy(value => value)
+
+            var bacDaoTaos = await _unitOfWork.HocBongs.GetDistinctBacDaoTaoAsync();
+            model.BacDaoTaoOptions = bacDaoTaos
                 .Select(value => new SelectListItem { Value = value, Text = value })
-                .ToListAsync();
+                .ToList();
+
             model.TrangThaiOptions = new[]
                 {
                     TrangThaiHocBong.SapMo,
