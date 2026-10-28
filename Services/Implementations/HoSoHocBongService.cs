@@ -90,7 +90,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                     NgayNop = h.NgayNop,
                     TrangThai = h.TrangThai,
                     DiemTrungBinh = h.SinhVien.DiemTrungBinhTichLuy,
-                    DiemYeuCau = h.HocBong.DiemTrungBinhToiThieu
+                    DiemYeuCau = h.HocBong.DiemTrungBinhToiThieu,
+                    SoTaiLieu = _context.TaiLieuHoSo.Count(t => t.MaHoSoHocBong == h.MaHoSoHocBong),
+                    FileMinhChung = h.FileMinhChung
                 })
                 .ToListAsync();
 
@@ -113,6 +115,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 .CountAsync(h => h.MaHocBong == hoSo.MaHocBong
                               && h.TrangThai == TrangThaiHoSo.DuocCapHocBong);
 
+            var taiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, maHoSo);
+
             return new HoSoChiTietViewModel
             {
                 // Hồ sơ
@@ -124,6 +128,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 NgayXuLy = hoSo.NgayXuLy,
                 NhanXetXetDuyet = hoSo.NhanXetXetDuyet,
                 FileMinhChung = hoSo.FileMinhChung,
+                TaiLieus = taiLieus,
 
                 // Sinh viên
                 MaSinhVien = hoSo.SinhVien.MaSinhVien,
@@ -167,6 +172,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
             if (hoSo == null) return null;
 
+            var taiLieus = await TaiLieuHoSoStorage.DanhSachAsync(_context, maHoSo);
+
             return new XetDuyetSoBoViewModel
             {
                 MaHoSoHocBong = hoSo.MaHoSoHocBong,
@@ -180,7 +187,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 NgayNop = hoSo.NgayNop,
                 ThuXinHocBong = hoSo.ThuXinHocBong,
                 ThanhTichHocTap = hoSo.SinhVien.ThanhTichHocTap,
-                FileMinhChung = hoSo.FileMinhChung
+                FileMinhChung = hoSo.FileMinhChung,
+                TaiLieus = taiLieus
             };
         }
 

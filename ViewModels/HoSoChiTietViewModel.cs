@@ -16,6 +16,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public DateTime? NgayXuLy { get; set; }
         public string? NhanXetXetDuyet { get; set; }
         public string? FileMinhChung { get; set; }
+        public List<TaiLieuItem> TaiLieus { get; set; } = new();
 
         // Thông tin sinh viên
         public int MaSinhVien { get; set; }

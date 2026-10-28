@@ -14,6 +14,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
         public string TrangThai { get; set; } = string.Empty;
         public decimal DiemTrungBinh { get; set; }
         public decimal DiemYeuCau { get; set; }
+        public int SoTaiLieu { get; set; }
+        public string? FileMinhChung { get; set; }
 
         // Cờ tiện dụng cho View
         public bool DuDiem => DiemTrungBinh >= DiemYeuCau;

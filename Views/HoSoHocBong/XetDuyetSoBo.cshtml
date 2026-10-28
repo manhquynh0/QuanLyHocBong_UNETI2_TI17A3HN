@@ -33,7 +33,32 @@
 
                     <dt class="col-sm-5">Tài liệu đính kèm</dt>
                     <dd class="col-sm-7">
-                        @if (!string.IsNullOrEmpty(Model.FileMinhChung))
+                        @if (Model.TaiLieus != null && Model.TaiLieus.Any())
+                        {
+                            <div class="list-group">
+                                @foreach (var t in Model.TaiLieus)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
+                                        <div>
+                                            <i class="bi @(t.LaPdf ? "bi-file-earmark-pdf text-danger" : "bi-file-earmark-image text-primary") me-1"></i>
+                                            <strong style="word-break:break-all;">@t.TenFileGoc</strong>
+                                            <div class="small text-muted">
+                                                @t.LoaiTaiLieu · @t.DungLuongHienThi
+                                            </div>
+                                        </div>
+                                        <div class="text-nowrap ms-2">
+                                            <a asp-controller="TaiLieuHoSo" asp-action="Xem" asp-route-id="@t.MaTaiLieu" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye me-1"></i>Xem
+                                            </a>
+                                            <a asp-controller="TaiLieuHoSo" asp-action="Tai" asp-route-id="@t.MaTaiLieu" class="btn btn-sm btn-outline-secondary">
+                                                <i class="bi bi-download me-1"></i>Tải
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else if (!string.IsNullOrEmpty(Model.FileMinhChung))
                         {
                             <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
                                 <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem file minh chứng
