@@ -182,10 +182,36 @@
             var l = Model.LichPhongVan;
             <div class="ui-card mb-3">
                 <div class="ui-card-body">
-                    <h3 class="ui-card-title mb-3">Lịch phỏng vấn</h3>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h3 class="ui-card-title mb-0">Lịch phỏng vấn</h3>
+                        @if (l.TrangThai == "Đã hoàn thành")
+                        {
+                            <span class="st st-green"><i class="bi bi-check-circle-fill me-1"></i> Đã hoàn thành</span>
+                        }
+                        else if (l.TrangThai == "Đã lên lịch")
+                        {
+                            <span class="st st-blue"><i class="bi bi-clock-fill me-1"></i> Đã lên lịch</span>
+                        }
+                        else if (l.TrangThai == "Đã hủy")
+                        {
+                            <span class="st st-gray"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
+                        }
+                        else
+                        {
+                            <span class="st st-gray">@l.TrangThai</span>
+                        }
+                    </div>
                     <div class="mb-2"><span class="field-label">Thời gian</span><div class="field-value">@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</div></div>
                     <div class="mb-2"><span class="field-label">Hình thức</span><div class="field-value">@(l.HinhThucPhongVan ?? "—")</div></div>
-                    <div><span class="field-label">Địa điểm</span><div class="field-value">@(l.DiaDiemHoacLienKet ?? "—")</div></div>
+                    <div class="mb-2"><span class="field-label">Địa điểm</span><div class="field-value">@(l.DiaDiemHoacLienKet ?? "—")</div></div>
+                    @if (!string.IsNullOrWhiteSpace(l.NguoiPhongVan))
+                    {
+                        <div class="mb-2"><span class="field-label">Hội đồng phỏng vấn</span><div class="field-value">@l.NguoiPhongVan</div></div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(l.GhiChu))
+                    {
+                        <div><span class="field-label">Ghi chú</span><div class="field-value text-muted small">@l.GhiChu</div></div>
+                    }
                 </div>
             </div>
         }
