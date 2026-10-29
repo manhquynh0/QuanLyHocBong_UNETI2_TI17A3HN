@@ -1,4 +1,4 @@
-@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+﻿@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
    Nội dung thực hiện: Module 3 - trang hồ sơ cá nhân của sinh viên (mức hoàn thiện, thông tin, thành tích). *@
 @using Microsoft.AspNetCore.Http
 @model SinhVien
@@ -11,6 +11,7 @@
     string Hien(string? v) => string.IsNullOrWhiteSpace(v) ? "Chưa cập nhật" : v;
     var chuCai = string.IsNullOrWhiteSpace(Model.HoTen) ? "S" : Model.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
     var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : Context.Session.GetString("AnhDaiDien");
+    var chuCai = string.IsNullOrWhiteSpace(Model.HoTen) ? "S" : Model.HoTen.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
 }
 
 <div class="page-hero">
@@ -49,6 +50,17 @@
 <div class="profile-layout">
     <div class="ui-card profile-side">
         @if (!string.IsNullOrEmpty(avatarUrl))
+                @if (!string.IsNullOrEmpty(Model.AnhDaiDien))
+        {
+            <img src="@Model.AnhDaiDien" alt="@Model.HoTen" class="avatar-lg rounded-circle" style="object-fit:cover;" />
+        }
+        else
+        {
+            <div class="avatar-lg">@chuCai</div>
+        }
+        <h3>@Model.HoTen</h3>
+        <div class="profile-meta">@Model.MaSinhVien · @Hien(Model.Nganh)</div>
+        @if (!thieu.Any())
         {
             <div class="avatar-lg p-0">
                 <img src="@avatarUrl" alt="@Model.HoTen" style="width: 100%; height: 100%; object-fit: cover;" />

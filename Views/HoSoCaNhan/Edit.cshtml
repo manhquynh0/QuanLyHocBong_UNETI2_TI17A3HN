@@ -1,6 +1,7 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
    Nội dung thực hiện: Module 3 - form cập nhật hồ sơ cá nhân (validation hiển thị trên View). *@
 @using Microsoft.AspNetCore.Http
+   Nội dung thực hiện: Module 3 - form cập nhật hồ sơ cá nhân và ảnh đại diện (validation hiển thị trên View). *@
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model HoSoCaNhanViewModel
 @{
@@ -10,6 +11,7 @@
     var hoTen = ViewBag.HoTenHoSo as string ?? Model.HoTen;
     var chuCai = (hoTen ?? "S").Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
     var avatarUrl = ViewBag.AnhDaiDien as string ?? Context.Session.GetString("AnhDaiDien");
+    var chuCai = string.IsNullOrWhiteSpace(hoTen) ? "S" : hoTen.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
 }
 
 <div class="page-hero">
@@ -21,6 +23,7 @@
 
 <form asp-action="Edit" method="post" enctype="multipart/form-data" novalidate data-loading>
     <input type="hidden" asp-for="ReturnUrl" />
+    <input type="hidden" asp-for="AnhDaiDien" />
     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
     <div class="profile-layout">
@@ -38,6 +41,25 @@
                     <img id="avatarPreview" src="" alt="@hoTen" style="width: 100%; height: 100%; object-fit: cover;" />
                 </div>
             }
+            <div class="position-relative d-inline-block mb-3">
+                @if (!string.IsNullOrEmpty(Model.AnhDaiDien))
+                {
+                    <img id="avatarPreview" src="@Model.AnhDaiDien" alt="Avatar" class="avatar-lg rounded-circle" style="object-fit:cover;" />
+                    <div id="avatarFallback" class="avatar-lg d-none">@chuCai</div>
+                }
+                else
+                {
+                    <div id="avatarFallback" class="avatar-lg">@chuCai</div>
+                    <img id="avatarPreview" src="" alt="Avatar" class="avatar-lg rounded-circle d-none" style="object-fit:cover;" />
+                }
+                <label for="uploadAvatar" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 shadow" style="width:34px;height:34px;padding:0;display:grid;place-items:center;cursor:pointer;" title="Đổi ảnh đại diện">
+                    <i class="bi bi-camera-fill"></i>
+                </label>
+                <input type="file" id="uploadAvatar" name="FileAnhDaiDien" accept="image/png,image/jpeg,image/jpg,image/webp" class="d-none" onchange="previewAvatar(this)" />
+            </div>
+            <div class="small text-muted mb-2">Nhấn vào máy ảnh để đổi avatar</div>
+            <span asp-validation-for="FileAnhDaiDien" class="text-danger small d-block mb-2"></span>
+
             <h3>@hoTen</h3>
             <div class="profile-meta">#@ViewBag.MaSinhVien · @Model.Nganh</div>
             <div class="mb-3">
@@ -80,22 +102,22 @@
                         <div class="col-12">
                             <label asp-for="GioiTinh" class="form-label d-block"></label>
                             <div class="form-check form-check-inline">
-                                <input asp-for="GioiTinh" type="radio" value="Nam" id="gt_nam" class="form-check-input" />
-                                <label class="form-check-label" for="gt_nam">Nam</label>
+                                <input class="form-check-input" type="radio" asp-for="GioiTinh" value="Nam" id="gtNam" />
+                                <label class="form-check-label" for="gtNam">Nam</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input asp-for="GioiTinh" type="radio" value="Nữ" id="gt_nu" class="form-check-input" />
-                                <label class="form-check-label" for="gt_nu">Nữ</label>
+                                <input class="form-check-input" type="radio" asp-for="GioiTinh" value="Nữ" id="gtNu" />
+                                <label class="form-check-label" for="gtNu">Nữ</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input asp-for="GioiTinh" type="radio" value="Khác" id="gt_khac" class="form-check-input" />
-                                <label class="form-check-label" for="gt_khac">Khác</label>
+                                <input class="form-check-input" type="radio" asp-for="GioiTinh" value="Khác" id="gtKhac" />
+                                <label class="form-check-label" for="gtKhac">Khác</label>
                             </div>
-                            <div><span asp-validation-for="GioiTinh" class="text-danger"></span></div>
+                            <span asp-validation-for="GioiTinh" class="text-danger d-block"></span>
                         </div>
                         <div class="col-12">
-                            <label asp-for="DiaChi" class="form-label">Địa chỉ liên hệ</label>
-                            <input asp-for="DiaChi" maxlength="500" class="form-control" autocomplete="street-address" />
+                            <label asp-for="DiaChi" class="form-label"></label>
+                            <input asp-for="DiaChi" class="form-control" maxlength="500" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" />
                             <span asp-validation-for="DiaChi" class="text-danger"></span>
                         </div>
                     </div>
@@ -104,27 +126,26 @@
 
             <div class="ui-card">
                 <div class="ui-card-body">
-                    <h3 class="ui-card-title">Thông tin học tập</h3>
-                    <p class="ui-card-sub">Kết quả gần nhất từ hệ thống đào tạo</p>
+                    <h3 class="ui-card-title">Thông tin đào tạo</h3>
+                    <p class="ui-card-sub">Cập nhật đúng để hệ thống lọc học bổng phù hợp</p>
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label asp-for="BacDaoTao" class="form-label"></label>
+                        <div class="col-md-6">
+                            <label asp-for="BacDaoTao" class="form-label">Bậc đào tạo <span class="text-danger">*</span></label>
                             <select asp-for="BacDaoTao" class="form-select">
-                                <option value="">-- Chọn bậc đào tạo --</option>
-                                <option value="Cao đẳng">Cao đẳng</option>
                                 <option value="Đại học">Đại học</option>
+                                <option value="Cao đẳng">Cao đẳng</option>
                                 <option value="Thạc sĩ">Thạc sĩ</option>
                             </select>
                             <span asp-validation-for="BacDaoTao" class="text-danger"></span>
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="Nganh" class="form-label">Chuyên ngành</label>
-                            <input asp-for="Nganh" maxlength="100" class="form-control" />
+                        <div class="col-md-6">
+                            <label asp-for="Nganh" class="form-label">Chuyên ngành <span class="text-danger">*</span></label>
+                            <input asp-for="Nganh" class="form-control" maxlength="100" />
                             <span asp-validation-for="Nganh" class="text-danger"></span>
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="DiemTrungBinhTichLuy" class="form-label">GPA tích lũy</label>
-                            <input asp-for="DiemTrungBinhTichLuy" type="number" step="0.01" class="form-control" />
+                        <div class="col-md-6">
+                            <label asp-for="DiemTrungBinhTichLuy" class="form-label">GPA tích lũy (thang 4) <span class="text-danger">*</span></label>
+                            <input asp-for="DiemTrungBinhTichLuy" type="number" step="0.01" min="0" max="4" class="form-control" placeholder="3.25" />
                             <span asp-validation-for="DiemTrungBinhTichLuy" class="text-danger"></span>
                         </div>
                         <div class="col-12">
@@ -151,6 +172,24 @@
     <partial name="_ValidationScriptsPartial" />
     <script src="~/js/validation-vi.js" asp-append-version="true"></script>
     <script>
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var preview = document.getElementById('avatarPreview');
+                    var fallback = document.getElementById('avatarFallback');
+                    if (preview) {
+                        preview.src = e.target.result;
+                        preview.classList.remove('d-none');
+                    }
+                    if (fallback) {
+                        fallback.classList.add('d-none');
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         document.querySelectorAll('form input[type=text], form input[type=email], form input[type=tel]').forEach(function (el) {
             el.addEventListener('blur', function () { el.value = el.value.trim(); });
         });

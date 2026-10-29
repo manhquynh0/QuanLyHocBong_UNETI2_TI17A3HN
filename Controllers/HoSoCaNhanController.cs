@@ -1,6 +1,6 @@
 // Họ và tên: Nguyễn Phi Hùng
 // Mã sinh viên: 23103100148
-// Nội dung thực hiện: Module 3 - xem và cập nhật hồ sơ cá nhân của sinh viên đang đăng nhập.
+// Nội dung thực hiện: Module 3 - xem và cập nhật hồ sơ cá nhân của sinh viên đang đăng nhập (bao gồm ảnh đại diện).
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +26,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         }
 
         // GET: /HoSoCaNhan
+        private readonly IWebHostEnvironment _env;
+
+        public HoSoCaNhanController(QuanLyHocBong_UNETI2_TI17A3HNContext context, IWebHostEnvironment env) : base(context)
+        {
+            _env = env;
+        }
+
+        // GET: /HoSoCaNhan -> hồ sơ cá nhân.
+        // Không nhận mã sinh viên từ URL: luôn lấy theo tài khoản trong Session, nên đổi tham số trên URL vô tác dụng.
         public async Task<IActionResult> Index()
         {
             var sv = await LaySinhVienHienTaiAsync();
@@ -45,6 +54,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             var model = new HoSoCaNhanViewModel
             {
+                AnhDaiDien = sv.AnhDaiDien,
                 HoTen = sv.HoTen,
                 NgaySinh = sv.NgaySinh,
                 GioiTinh = sv.GioiTinh,
@@ -66,6 +76,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(HoSoCaNhanViewModel model, IFormFile? AnhDaiDienUpload)
         {
+            // Đối tượng được cập nhật luôn là sinh viên của tài khoản đang đăng nhập.
             var sv = await LaySinhVienHienTaiAsync(theoDoi: true);
             if (sv == null) return View("ChuaCoHoSo");
 
@@ -96,6 +107,40 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 if (loiAnh != null)
                 {
                     ModelState.AddModelError(string.Empty, loiAnh);
+            // ---- Kiểm tra & Lưu file ảnh đại diện nếu có tải lên ----
+            string? newAvatarPath = null;
+            if (model.FileAnhDaiDien != null && model.FileAnhDaiDien.Length > 0)
+            {
+                var duoiChoPhep = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+                var ext = Path.GetExtension(model.FileAnhDaiDien.FileName).ToLowerInvariant();
+                if (!duoiChoPhep.Contains(ext))
+                {
+                    ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Ảnh đại diện chỉ chấp nhận định dạng JPG, JPEG, PNG hoặc WEBP");
+                }
+                else if (model.FileAnhDaiDien.Length > 5 * 1024 * 1024)
+                {
+                    ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Dung lượng ảnh đại diện tối đa là 5MB");
+                }
+                else
+                {
+                    try
+                    {
+                        var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                        if (!Directory.Exists(uploadFolder))
+                            Directory.CreateDirectory(uploadFolder);
+
+                        var fileName = $"{Guid.NewGuid():N}{ext}";
+                        var filePath = Path.Combine(uploadFolder, fileName);
+                        using (var stream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await model.FileAnhDaiDien.CopyToAsync(stream);
+                        }
+                        newAvatarPath = $"/uploads/avatars/{fileName}";
+                    }
+                    catch
+                    {
+                        ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Không thể lưu tệp ảnh đại diện. Vui lòng thử lại.");
+                    }
                 }
             }
 
@@ -122,6 +167,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             var soDienThoai = model.SoDienThoai.StartsWith("+84") ? "0" + model.SoDienThoai[3..] : model.SoDienThoai;
 
+            if (!string.IsNullOrEmpty(newAvatarPath))
+            {
+                sv.AnhDaiDien = newAvatarPath;
+            }
+
             sv.HoTen = model.HoTen;
             sv.NgaySinh = model.NgaySinh!.Value.Date;
             sv.GioiTinh = model.GioiTinh;
@@ -142,7 +192,23 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             try
             {
+                // Đồng bộ sang bảng TaiKhoan
+                var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+                if (tk != null)
+                {
+                    if (!string.IsNullOrEmpty(sv.AnhDaiDien))
+                        tk.AnhDaiDien = sv.AnhDaiDien;
+                    tk.HoTen = sv.HoTen;
+                    tk.Email = sv.Email;
+                }
+
                 await _context.SaveChangesAsync();
+
+                // Cập nhật Session để hiển thị ngay trên thanh Topbar
+                if (!string.IsNullOrEmpty(sv.AnhDaiDien))
+                {
+                    HttpContext.Session.SetString("AnhDaiDien", sv.AnhDaiDien);
+                }
                 HttpContext.Session.SetString("HoTen", sv.HoTen);
             }
             catch (DbUpdateException)
@@ -152,7 +218,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
-            TempData["ThongBao"] = "Đã cập nhật hồ sơ cá nhân.";
+            TempData["ThongBao"] = "Đã cập nhật hồ sơ cá nhân và ảnh đại diện.";
             if (model.ReturnUrl != null) return LocalRedirect(model.ReturnUrl);
             return RedirectToAction(nameof(Index));
         }
@@ -200,6 +266,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             ViewBag.AnhDaiDien = !string.IsNullOrEmpty(sv.AnhDaiDien)
                 ? sv.AnhDaiDien
                 : HttpContext.Session.GetString("AnhDaiDien");
+            ViewBag.AnhDaiDien = sv.AnhDaiDien;
         }
     }
 }
