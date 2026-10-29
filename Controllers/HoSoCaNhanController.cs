@@ -1,7 +1,12 @@
 // Họ và tên: Nguyễn Phi Hùng
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - xem và cập nhật hồ sơ cá nhân của sinh viên đang đăng nhập (bao gồm ảnh đại diện).
+using System;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,24 +22,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private static readonly Regex HoTenRegex = new(@"^[\p{L}][\p{L}\p{M} .'\-]*$", RegexOptions.Compiled);
         private const int TuoiToiThieu = 15;
         private readonly ISupabaseStorageService _storageService;
+        private readonly IWebHostEnvironment _env;
 
         public HoSoCaNhanController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
-            ISupabaseStorageService storageService) : base(context)
+            ISupabaseStorageService storageService,
+            IWebHostEnvironment env) : base(context)
         {
             _storageService = storageService;
-        }
-
-        // GET: /HoSoCaNhan
-        private readonly IWebHostEnvironment _env;
-
-        public HoSoCaNhanController(QuanLyHocBong_UNETI2_TI17A3HNContext context, IWebHostEnvironment env) : base(context)
-        {
             _env = env;
         }
 
-        // GET: /HoSoCaNhan -> hồ sơ cá nhân.
-        // Không nhận mã sinh viên từ URL: luôn lấy theo tài khoản trong Session, nên đổi tham số trên URL vô tác dụng.
+        // GET: /HoSoCaNhan
         public async Task<IActionResult> Index()
         {
             var sv = await LaySinhVienHienTaiAsync();
@@ -76,7 +75,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(HoSoCaNhanViewModel model, IFormFile? AnhDaiDienUpload)
         {
-            // Đối tượng được cập nhật luôn là sinh viên của tài khoản đang đăng nhập.
             var sv = await LaySinhVienHienTaiAsync(theoDoi: true);
             if (sv == null) return View("ChuaCoHoSo");
 
@@ -100,47 +98,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 decimal.Round(model.DiemTrungBinhTichLuy.Value, 2) != model.DiemTrungBinhTichLuy.Value)
                 ModelState.AddModelError(nameof(model.DiemTrungBinhTichLuy), "Điểm trung bình chỉ nhập tối đa 2 chữ số thập phân (ví dụ 3.25)");
 
-            // Kiểm tra ảnh đại diện nếu có chọn tệp
-            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            var fileUpload = model.FileAnhDaiDien ?? AnhDaiDienUpload;
+            if (fileUpload != null && fileUpload.Length > 0)
             {
-                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(fileUpload);
                 if (loiAnh != null)
                 {
-                    ModelState.AddModelError(string.Empty, loiAnh);
-            // ---- Kiểm tra & Lưu file ảnh đại diện nếu có tải lên ----
-            string? newAvatarPath = null;
-            if (model.FileAnhDaiDien != null && model.FileAnhDaiDien.Length > 0)
-            {
-                var duoiChoPhep = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-                var ext = Path.GetExtension(model.FileAnhDaiDien.FileName).ToLowerInvariant();
-                if (!duoiChoPhep.Contains(ext))
-                {
-                    ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Ảnh đại diện chỉ chấp nhận định dạng JPG, JPEG, PNG hoặc WEBP");
-                }
-                else if (model.FileAnhDaiDien.Length > 5 * 1024 * 1024)
-                {
-                    ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Dung lượng ảnh đại diện tối đa là 5MB");
-                }
-                else
-                {
-                    try
-                    {
-                        var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
-                        if (!Directory.Exists(uploadFolder))
-                            Directory.CreateDirectory(uploadFolder);
-
-                        var fileName = $"{Guid.NewGuid():N}{ext}";
-                        var filePath = Path.Combine(uploadFolder, fileName);
-                        using (var stream = new FileStream(filePath, FileMode.Create))
-                        {
-                            await model.FileAnhDaiDien.CopyToAsync(stream);
-                        }
-                        newAvatarPath = $"/uploads/avatars/{fileName}";
-                    }
-                    catch
-                    {
-                        ModelState.AddModelError(nameof(model.FileAnhDaiDien), "Không thể lưu tệp ảnh đại diện. Vui lòng thử lại.");
-                    }
+                    ModelState.AddModelError(nameof(model.FileAnhDaiDien), loiAnh);
                 }
             }
 
@@ -150,27 +114,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
-            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            if (fileUpload != null && fileUpload.Length > 0)
             {
-                var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
-                if (!string.IsNullOrEmpty(avatarUrl))
+                var avatarUrl = await _storageService.UploadFileAsync(fileUpload, "avatars");
+                if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    sv.AnhDaiDien = avatarUrl;
-                    var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
-                    if (tk != null)
-                    {
-                        tk.AnhDaiDien = avatarUrl;
-                    }
-                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                    var ext = Path.GetExtension(fileUpload.FileName).ToLowerInvariant();
+                    var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                    Directory.CreateDirectory(uploadFolder);
+                    var fileName = $"{Guid.NewGuid():N}{ext}";
+                    var filePath = Path.Combine(uploadFolder, fileName);
+                    await using var stream = new FileStream(filePath, FileMode.Create);
+                    await fileUpload.CopyToAsync(stream);
+                    avatarUrl = $"/uploads/avatars/{fileName}";
                 }
+
+                sv.AnhDaiDien = avatarUrl;
             }
 
             var soDienThoai = model.SoDienThoai.StartsWith("+84") ? "0" + model.SoDienThoai[3..] : model.SoDienThoai;
-
-            if (!string.IsNullOrEmpty(newAvatarPath))
-            {
-                sv.AnhDaiDien = newAvatarPath;
-            }
 
             sv.HoTen = model.HoTen;
             sv.NgaySinh = model.NgaySinh!.Value.Date;
@@ -183,28 +145,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             sv.DiemTrungBinhTichLuy = model.DiemTrungBinhTichLuy!.Value;
             sv.ThanhTichHocTap = model.ThanhTichHocTap?.Trim() ?? string.Empty;
 
-            var taiKhoan = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
-            if (taiKhoan != null)
+            var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+            if (tk != null)
             {
-                taiKhoan.HoTen = sv.HoTen;
-                taiKhoan.Email = sv.Email;
+                if (!string.IsNullOrEmpty(sv.AnhDaiDien))
+                    tk.AnhDaiDien = sv.AnhDaiDien;
+                tk.HoTen = sv.HoTen;
+                tk.Email = sv.Email;
             }
 
             try
             {
-                // Đồng bộ sang bảng TaiKhoan
-                var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
-                if (tk != null)
-                {
-                    if (!string.IsNullOrEmpty(sv.AnhDaiDien))
-                        tk.AnhDaiDien = sv.AnhDaiDien;
-                    tk.HoTen = sv.HoTen;
-                    tk.Email = sv.Email;
-                }
-
                 await _context.SaveChangesAsync();
-
-                // Cập nhật Session để hiển thị ngay trên thanh Topbar
                 if (!string.IsNullOrEmpty(sv.AnhDaiDien))
                 {
                     HttpContext.Session.SetString("AnhDaiDien", sv.AnhDaiDien);
@@ -218,7 +170,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
-            TempData["ThongBao"] = "Đã cập nhật hồ sơ cá nhân và ảnh đại diện.";
+            TempData["ThongBao"] = "Đã cập nhật hồ sơ cá nhân.";
             if (model.ReturnUrl != null) return LocalRedirect(model.ReturnUrl);
             return RedirectToAction(nameof(Index));
         }
@@ -240,19 +192,24 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 }
 
                 var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
-                if (!string.IsNullOrEmpty(avatarUrl))
+                if (string.IsNullOrEmpty(avatarUrl))
                 {
-                    sv.AnhDaiDien = avatarUrl;
-                    var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
-                    if (tk != null) tk.AnhDaiDien = avatarUrl;
-                    await _context.SaveChangesAsync();
-                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
-                    TempData["ThongBao"] = "Đã cập nhật ảnh đại diện thành công.";
+                    var ext = Path.GetExtension(AnhDaiDienUpload.FileName).ToLowerInvariant();
+                    var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                    Directory.CreateDirectory(uploadFolder);
+                    var fileName = $"{Guid.NewGuid():N}{ext}";
+                    var filePath = Path.Combine(uploadFolder, fileName);
+                    await using var stream = new FileStream(filePath, FileMode.Create);
+                    await AnhDaiDienUpload.CopyToAsync(stream);
+                    avatarUrl = $"/uploads/avatars/{fileName}";
                 }
-                else
-                {
-                    TempData["Loi"] = "Không thể tải lên ảnh đại diện lúc này. Vui lòng thử lại sau.";
-                }
+
+                sv.AnhDaiDien = avatarUrl;
+                var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+                if (tk != null) tk.AnhDaiDien = avatarUrl;
+                await _context.SaveChangesAsync();
+                HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                TempData["ThongBao"] = "Đã cập nhật ảnh đại diện thành công.";
             }
 
             return RedirectToAction(nameof(Index));
@@ -266,7 +223,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             ViewBag.AnhDaiDien = !string.IsNullOrEmpty(sv.AnhDaiDien)
                 ? sv.AnhDaiDien
                 : HttpContext.Session.GetString("AnhDaiDien");
-            ViewBag.AnhDaiDien = sv.AnhDaiDien;
         }
     }
 }

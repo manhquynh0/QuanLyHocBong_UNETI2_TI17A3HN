@@ -1,13 +1,8 @@
-@* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
-   Nội dung thực hiện: Module 3 - danh sách lịch phỏng vấn, trạng thái buổi phỏng vấn và kết quả xét duyệt của sinh viên. *@
-@using QuanLyHocBong_UNETI2_TI17A3HN.Helpers
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model List<HoSoDaNopViewModel>
 @{
     ViewData["Title"] = "Lịch phỏng vấn";
     ViewData["Nav"] = "LichPhongVan";
-
-    var pvThanhCong = Model.FirstOrDefault(h => (h.LichPhongVan != null && h.LichPhongVan.TrangThai == "Đã hoàn thành") || h.TrangThai == TrangThaiHoSo.DuocCap || h.TrangThai == TrangThaiHoSo.DaPhongVan);
 }
 
 <div class="page-hero">
@@ -16,35 +11,6 @@
         <p>Các buổi phỏng vấn học bổng đã được xếp lịch cho hồ sơ của bạn.</p>
     </div>
 </div>
-
-@if (pvThanhCong != null)
-{
-    <div class="result-banner">
-        <div class="result-banner-copy">
-            <div class="result-icon"><i class="bi bi-check-circle-fill"></i></div>
-            <div>
-                <h3>Buổi phỏng vấn đã hoàn thành thành công!</h3>
-                <p>
-                    Chương trình: <strong>@pvThanhCong.TenHocBong</strong>
-                    @if (pvThanhCong.KetQua != null && pvThanhCong.KetQua.DiemDanhGia.HasValue)
-                    {
-                        <span> · Điểm đánh giá: <strong>@pvThanhCong.KetQua.DiemDanhGia.Value.ToString("0.##")</strong> / 100</span>
-                    }
-                    @if (pvThanhCong.TrangThai == TrangThaiHoSo.DuocCap)
-                    {
-                        <span class="ms-1 fw-bold text-success">· Được cấp học bổng</span>
-                    }
-                </p>
-            </div>
-        </div>
-        @if (pvThanhCong.DaCongBoKetQua)
-        {
-            <a asp-action="KetQua" class="btn btn-success">
-                <i class="bi bi-award-fill me-1"></i> Xem kết quả
-            </a>
-        }
-    </div>
-}
 
 @if (!Model.Any())
 {
@@ -61,10 +27,9 @@ else
                     <tr>
                         <th>Học bổng</th>
                         <th>Thời gian</th>
-                        <th>Hình thức & Địa điểm</th>
-                        <th>Trạng thái phỏng vấn</th>
-                        <th>Kết quả xét duyệt</th>
-                        <th class="text-end">Thao tác</th>
+                        <th>Hình thức</th>
+                        <th>Địa điểm</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,71 +37,10 @@ else
                     {
                         var l = h.LichPhongVan!;
                         <tr>
-                            <td>
-                                <div class="fw-semibold text-dark">@h.TenHocBong</div>
-                                @if (!string.IsNullOrWhiteSpace(l.NguoiPhongVan))
-                                {
-                                    <div class="small text-muted mt-1"><i class="bi bi-people me-1"></i>HĐPV: @l.NguoiPhongVan</div>
-                                }
-                            </td>
-                            <td>
-                                <div class="fw-medium">@l.ThoiGianBatDau.ToString("dd/MM/yyyy")</div>
-                                <div class="small text-muted">@l.ThoiGianBatDau.ToString("HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</div>
-                            </td>
-                            <td>
-                                <div><span class="badge bg-light text-dark border">@(l.HinhThucPhongVan ?? "Trực tiếp")</span></div>
-                                <div class="small text-muted mt-1 text-truncate" style="max-width: 220px;" title="@l.DiaDiemHoacLienKet">
-                                    <i class="bi bi-geo-alt me-1"></i>@(l.DiaDiemHoacLienKet ?? "—")
-                                </div>
-                            </td>
-                            <td>
-                                @if (l.TrangThai == "Đã hoàn thành")
-                                {
-                                    <span class="st st-green"><i class="bi bi-check-circle-fill me-1"></i> Đã hoàn thành</span>
-                                }
-                                else if (l.TrangThai == "Đã lên lịch")
-                                {
-                                    <span class="st st-blue"><i class="bi bi-clock-fill me-1"></i> Đã lên lịch</span>
-                                }
-                                else if (l.TrangThai == "Đã hủy")
-                                {
-                                    <span class="st st-gray"><i class="bi bi-x-circle me-1"></i> Đã hủy</span>
-                                }
-                                else
-                                {
-                                    <span class="st st-gray">@l.TrangThai</span>
-                                }
-                            </td>
-                            <td>
-                                @if (h.KetQua != null)
-                                {
-                                    <div>
-                                        <span class="st @(h.KetQua.KetQua == TrangThaiHoSo.DuocCap ? "st-green" : "st-red")">
-                                            @if (h.KetQua.KetQua == TrangThaiHoSo.DuocCap)
-                                            {
-                                                <i class="bi bi-award-fill me-1"></i>
-                                            }
-                                            @h.KetQua.KetQua
-                                        </span>
-                                    </div>
-                                    @if (h.KetQua.DiemDanhGia.HasValue)
-                                    {
-                                        <div class="small text-muted mt-1">
-                                            <i class="bi bi-star-fill text-warning me-1"></i>Điểm: <strong class="text-dark">@h.KetQua.DiemDanhGia.Value.ToString("0.##")</strong>
-                                        </div>
-                                    }
-                                }
-                                else if (l.TrangThai == "Đã hoàn thành" || h.TrangThai == TrangThaiHoSo.DaPhongVan)
-                                {
-                                    <span class="badge bg-light text-primary border">
-                                        <i class="bi bi-hourglass-split me-1"></i> Đang chờ công bố
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small">—</span>
-                                }
-                            </td>
+                            <td class="fw-semibold">@h.TenHocBong</td>
+                            <td>@l.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @l.ThoiGianKetThuc.ToString("HH:mm")</td>
+                            <td>@(l.HinhThucPhongVan ?? "—")</td>
+                            <td>@(l.DiaDiemHoacLienKet ?? "—")</td>
                             <td class="text-end">
                                 <a asp-action="Details" asp-route-id="@h.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
                             </td>

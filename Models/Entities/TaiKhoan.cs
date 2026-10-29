@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -41,6 +42,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [StringLength(1000)]
         [Column(TypeName = "nvarchar(1000)")]
         public string? AnhDaiDien { get; set; }
+
+        // Lưu Refresh Token và thời gian hết hạn trong Database
+        [StringLength(255)]
+        [Column(TypeName = "varchar(255)")]
+        public string? RefreshToken { get; set; }
+
+        public DateTime? RefreshTokenExpiryTime { get; set; }
 
         public virtual SinhVien? SinhVien { get; set; }
     }

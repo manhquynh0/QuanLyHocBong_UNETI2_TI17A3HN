@@ -229,8 +229,22 @@
                         <div class="d-flex flex-column gap-2">
                             @foreach (var pv in Model.LichPhongVanList)
                             {
-                                <div class="p-3 rounded-3 border bg-light">
-                                    <div class="fw-bold text-dark small mb-1">@(pv.HoSoHocBong?.HocBong?.TenHocBong ?? "Phỏng vấn học bổng")</div>
+                                <div class="p-3 bg-light rounded-2 border-start border-4 @(pv.TrangThai == "Đã hoàn thành" ? "border-success" : "border-primary")">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <div class="fw-bold text-dark small">@(pv.HoSoHocBong?.HocBong?.TenHocBong ?? "Phỏng vấn học bổng")</div>
+                                        @if (pv.TrangThai == "Đã hoàn thành")
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">Đã hoàn thành</span>
+                                        }
+                                        else if (pv.TrangThai == "Đã lên lịch")
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Đã lên lịch</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary">@pv.TrangThai</span>
+                                        }
+                                    </div>
                                     <div class="small text-muted mb-1" style="font-variant-numeric: tabular-nums;">
                                         <i class="bi bi-clock me-1"></i>@pv.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") – @pv.ThoiGianKetThuc.ToString("HH:mm")
                                     </div>
@@ -240,32 +254,6 @@
                                     <div class="small text-muted">
                                         <i class="bi bi-person-workspace me-1"></i>Hội đồng: @pv.NguoiPhongVan
                                     </div>
-                        foreach (var pv in Model.LichPhongVanList)
-                        {
-                            <div class="p-3 bg-light rounded-2 mb-2 border-start border-4 @(pv.TrangThai == "Đã hoàn thành" ? "border-success" : "border-primary")">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <div class="fw-bold text-dark small">@(pv.HoSoHocBong?.HocBong?.TenHocBong ?? "Phỏng vấn học bổng")</div>
-                                    @if (pv.TrangThai == "Đã hoàn thành")
-                                    {
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Đã hoàn thành</span>
-                                    }
-                                    else if (pv.TrangThai == "Đã lên lịch")
-                                    {
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Đã lên lịch</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary-subtle text-secondary">@pv.TrangThai</span>
-                                    }
-                                </div>
-                                <div class="small text-muted mb-1">
-                                    <i class="bi bi-clock me-1"></i>@pv.ThoiGianBatDau.ToString("dd/MM/yyyy HH:mm") - @pv.ThoiGianKetThuc.ToString("HH:mm")
-                                </div>
-                                <div class="small text-muted mb-1">
-                                    <i class="bi bi-geo-alt me-1"></i>@pv.DiaDiemHoacLienKet (@pv.HinhThucPhongVan)
-                                </div>
-                                <div class="small text-muted">
-                                    <i class="bi bi-person me-1"></i>Người PV: @pv.NguoiPhongVan
                                 </div>
                             }
                         </div>

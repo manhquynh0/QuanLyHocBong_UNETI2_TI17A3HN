@@ -1,7 +1,7 @@
 // ============================================================================
 // ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
 // NHÓM 2 - LỚP TI17A3HN - UNETI
-// MODULE 1: PHÂN QUYỀN TRÊN CONTROLLER (AUTHENTICATION & AUTHORIZATION FILTER)
+// MODULE 1: XÁC MINH JWT ACCESS TOKEN & PHÂN QUYỀN TRÊN CONTROLLER
 // ============================================================================
 
 using System;
@@ -9,6 +9,7 @@ using System.Linq;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
 {
@@ -24,11 +25,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var session = context.HttpContext.Session;
-            var maTaiKhoan = session.GetInt32("MaTaiKhoan");
-            var vaiTro = session.GetString("VaiTro");
+            // Lấy thông tin người dùng đã được xác minh qua JWT AccessToken (hoặc làm mới bằng RefreshToken)
+            var jwtUser = context.HttpContext.Items["JwtUser"] as JwtPayloadData;
+            int? maTaiKhoan = jwtUser?.MaTaiKhoan ?? context.HttpContext.Session.GetInt32("MaTaiKhoan");
+            string? vaiTro = jwtUser?.VaiTro ?? context.HttpContext.Session.GetString("VaiTro");
 
-            // 1. Kiểm tra đăng nhập
+            // 1. Kiểm tra đăng nhập (AccessToken hợp lệ)
             if (!maTaiKhoan.HasValue || string.IsNullOrEmpty(vaiTro))
             {
                 var returnUrl = context.HttpContext.Request.Path + context.HttpContext.Request.QueryString;
@@ -62,11 +64,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
             allowedRole = allowedRole.Trim();
             userRole = userRole.Trim();
 
-            // Khớp chính xác
             if (allowedRole.Equals(userRole, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            // Nhóm Cán bộ: "Cán bộ học bổng", "Cán bộ xét duyệt", "Cán bộ", "CanBo"
             bool isCanBoAllowed = allowedRole.Contains("Cán bộ", StringComparison.OrdinalIgnoreCase)
                                || allowedRole.Contains("Cán", StringComparison.OrdinalIgnoreCase)
                                || allowedRole.Equals("CanBo", StringComparison.OrdinalIgnoreCase);
@@ -80,7 +80,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
             if (isCanBoAllowed && isCanBoUser)
                 return true;
 
-            // Nhóm Quản trị viên
             bool isAdminAllowed = allowedRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)
                                || allowedRole.Equals("Quản trị viên", StringComparison.OrdinalIgnoreCase);
             bool isAdminUser = userRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)
@@ -90,7 +89,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
             if (isAdminAllowed && isAdminUser)
                 return true;
 
-            // Nhóm Sinh viên
             bool isStudentAllowed = allowedRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
                                  || allowedRole.Equals("Sinh vien", StringComparison.OrdinalIgnoreCase);
             bool isStudentUser = userRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)

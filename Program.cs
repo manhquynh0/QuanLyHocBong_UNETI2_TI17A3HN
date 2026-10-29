@@ -35,6 +35,7 @@ app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseSession();
+app.UseMiddleware<JwtAuthMiddleware>(); // Xác minh JWT AccessToken & tự động làm mới bằng RefreshToken trong DB
 app.UseAuthorization();
 
 // 4. Ánh xạ Route MVC & Static Assets
