@@ -1,5 +1,75 @@
 @model QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoanFormViewModel
-@{ var editing = Model.MaTaiKhoan != 0; ViewData["Title"] = editing ? "Sửa tài khoản" : "Thêm tài khoản"; }
-<h1 class="h3">@ViewData["Title"]</h1><form asp-action="@(editing ? "Edit" : "Create")" asp-route-id="@Model.MaTaiKhoan" method="post"><input asp-for="MaTaiKhoan" type="hidden"/><div asp-validation-summary="ModelOnly" class="text-danger"></div>
-<div class="mb-3"><label asp-for="TenDangNhap" class="form-label"></label><input asp-for="TenDangNhap" class="form-control"/><span asp-validation-for="TenDangNhap" class="text-danger"></span></div><div class="mb-3"><label asp-for="MatKhau" class="form-label">Mật khẩu @(editing ? "(để trống nếu giữ nguyên)" : "")</label><input asp-for="MatKhau" class="form-control"/><span asp-validation-for="MatKhau" class="text-danger"></span></div>
-<div class="mb-3"><label asp-for="HoTen" class="form-label"></label><input asp-for="HoTen" class="form-control"/><span asp-validation-for="HoTen" class="text-danger"></span></div><div class="mb-3"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control"/><span asp-validation-for="Email" class="text-danger"></span></div><div class="mb-3"><label asp-for="VaiTro" class="form-label"></label><select asp-for="VaiTro" class="form-select"><option>Admin</option><option>Cán bộ học bổng</option><option>Sinh viên</option></select></div><div class="form-check mb-3"><input asp-for="TrangThai" class="form-check-input"/><label asp-for="TrangThai" class="form-check-label">Đang hoạt động</label></div><button class="btn btn-primary">Lưu</button> <a asp-action="Index" class="btn btn-secondary">Quay lại</a></form>
+@{
+    var editing = Model.MaTaiKhoan != 0;
+    ViewData["Title"] = editing ? "Cập nhật tài khoản" : "Thêm tài khoản mới";
+}
+
+<div class="sponsor-page" style="max-width: 760px;">
+    <div class="page-hero">
+        <div class="page-hero-copy">
+            <h2>@ViewData["Title"]</h2>
+            <p>Cấu hình thông tin định danh, mật khẩu và vai trò phân quyền trên hệ thống.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Danh sách tài khoản
+        </a>
+    </div>
+
+    <div class="ui-card">
+        <div class="ui-card-body">
+            <form asp-action="@(editing ? "Edit" : "Create")" asp-route-id="@Model.MaTaiKhoan" method="post">
+                <input asp-for="MaTaiKhoan" type="hidden" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="TenDangNhap" class="form-label">Tên đăng nhập <span class="text-danger">*</span></label>
+                        <input asp-for="TenDangNhap" class="form-control" placeholder="Nhập mã đăng nhập" />
+                        <span asp-validation-for="TenDangNhap" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="MatKhau" class="form-label">Mật khẩu @(editing ? "(để trống nếu giữ nguyên)" : "*")</label>
+                        <input asp-for="MatKhau" type="password" class="form-control" placeholder="••••••••" />
+                        <span asp-validation-for="MatKhau" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="HoTen" class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                        <input asp-for="HoTen" class="form-control" placeholder="Nhập họ và tên đầy đủ" />
+                        <span asp-validation-for="HoTen" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Email" class="form-label">Địa chỉ Email <span class="text-danger">*</span></label>
+                        <input asp-for="Email" type="email" class="form-control" placeholder="user@uneti.edu.vn" />
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="VaiTro" class="form-label">Vai trò phân quyền</label>
+                        <select asp-for="VaiTro" class="form-select">
+                            <option value="Admin">Admin</option>
+                            <option value="Cán bộ học bổng">Cán bộ học bổng</option>
+                            <option value="Sinh viên">Sinh viên</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-end pb-2">
+                        <div class="form-check">
+                            <input asp-for="TrangThai" class="form-check-input" />
+                            <label asp-for="TrangThai" class="form-check-label fw-medium">Kích hoạt tài khoản hoạt động</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions mt-4 pt-3 border-top">
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4">Hủy</a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check-lg me-1"></i> @(editing ? "Lưu thay đổi" : "Tạo tài khoản")
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

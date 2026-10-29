@@ -1,9 +1,5 @@
-// ============================================================================
-// ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
-// NHÓM 2 - LỚP TI17A3HN - UNETI
-// MODULE PHỤ TRÁCH: Module 5 - Dashboard & Thống kê
-// NỘI DUNG: Controller tổng quan hệ thống, thống kê số liệu Dashboard bằng LINQ
-// ============================================================================
+// Họ và tên: Vũ Mạnh Quỳnh
+// Nội dung thực hiện: Module 5 - Controller tổng quan hệ thống, thống kê 9 số liệu Dashboard bằng LINQ.
 
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
@@ -102,7 +98,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 var today = DateTime.Today;
                 var hocBongDangMo = await _context.HocBong
                     .Include(h => h.DonViTaiTro)
-                    .Where(h => h.TrangThai == "Đang nhận hồ sơ" && h.HanNopHoSo >= today && h.NgayBatDauNhanHoSo <= today)
+                    .Where(h => !h.DaXoa && h.TrangThai == "Đang nhận hồ sơ" && h.HanNopHoSo >= today && h.NgayBatDauNhanHoSo <= today)
                     .OrderBy(h => h.HanNopHoSo)
                     .Take(4)
                     .ToListAsync();
@@ -124,8 +120,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             // 1. Tính toán 9 chỉ số tổng hợp theo Mục 9.5 doc.docx bằng LINQ
             var tongDonViTaiTro = await _context.DonViTaiTro.CountAsync();
-            var tongHocBong = await _context.HocBong.CountAsync();
-            var hocBongDangNhan = await _context.HocBong.CountAsync(h => h.TrangThai == "Đang nhận hồ sơ");
+            var tongHocBong = await _context.HocBong.CountAsync(h => !h.DaXoa);
+            var hocBongDangNhan = await _context.HocBong.CountAsync(h => !h.DaXoa && h.TrangThai == "Đang nhận hồ sơ");
             var tongSinhVien = await _context.SinhVien.CountAsync();
             var tongHoSo = await _context.HoSoHocBong.CountAsync();
             var hoSoChoDuyet = await _context.HoSoHocBong.CountAsync(hs => hs.TrangThai == "Chờ duyệt");
@@ -170,25 +166,22 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     });
                 }
             }
-            else
-            {
-                phanBoTrangThai = new List<StatusDistributionStat>
-                {
-                    new() { TenTrangThai = "Chờ duyệt", SoLuong = 48, TiLePhanTram = 40.0, MauSac = "#3b82f6" },
-                    new() { TenTrangThai = "Chờ phỏng vấn", SoLuong = 34, TiLePhanTram = 28.3, MauSac = "#8b5cf6" },
-                    new() { TenTrangThai = "Được cấp học bổng", SoLuong = 26, TiLePhanTram = 21.7, MauSac = "#10b981" },
-                    new() { TenTrangThai = "Không đạt", SoLuong = 12, TiLePhanTram = 10.0, MauSac = "#ef4444" }
-                };
-            }
 
-            // 3. Thống kê theo tháng bằng LINQ
-            var hoSoTheoThang = new List<MonthlyApplicationStat>
-            {
-                new() { Thang = "T10/2025", SoLuong = 45 },
-                new() { Thang = "T11/2025", SoLuong = 85 },
-                new() { Thang = "T12/2025", SoLuong = 110 },
-                new() { Thang = "T01/2026", SoLuong = 120 }
-            };
+            // 3. Thống kê hồ sơ nộp theo tháng từ Database bằng LINQ (Mục 9.5 & 22.8)
+            var ngayNopList = await _context.HoSoHocBong
+                .Select(hs => hs.NgayNop)
+                .ToListAsync();
+
+            var hoSoTheoThang = ngayNopList
+                .GroupBy(d => new { d.Year, d.Month })
+                .OrderBy(g => g.Key.Year).ThenBy(g => g.Key.Month)
+                .TakeLast(6)
+                .Select(g => new MonthlyApplicationStat
+                {
+                    Thang = $"T{g.Key.Month:D2}/{g.Key.Year}",
+                    SoLuong = g.Count()
+                })
+                .ToList();
 
             // 4. Lấy danh sách hồ sơ gần đây bằng LINQ
             var hoSoGanDay = await _context.HoSoHocBong

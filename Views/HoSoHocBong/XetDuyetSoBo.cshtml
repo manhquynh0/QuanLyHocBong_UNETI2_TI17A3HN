@@ -8,183 +8,189 @@
     ViewData["Title"] = "Xét duyệt sơ bộ hồ sơ #" + Model.MaHoSoHocBong;
 }
 
-<h2 class="mb-3">@ViewData["Title"]</h2>
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>Thẩm định sơ bộ hồ sơ #@Model.MaHoSoHocBong</h2>
+        <p>@Model.TenSinhVien · @Model.TenHocBong</p>
+    </div>
+    <a asp-action="Details" asp-route-id="@Model.MaHoSoHocBong" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Chi tiết hồ sơ
+    </a>
+</div>
 
-<div class="row">
-    @* Cột trái: Thông tin hiển thị (readonly) *@
-    <div class="col-md-7">
-        <div class="card mb-3">
-            <div class="card-header bg-info text-dark">
-                <strong>Thông tin hồ sơ</strong>
+<div class="row g-3">
+    <!-- Cột trái: Thông tin đối chiếu (readonly) -->
+    <div class="col-lg-7">
+        <div class="ui-card mb-3">
+            <div class="ui-card-head">
+                <h5>Thông tin ứng tuyển & Minh chứng</h5>
+                <span class="text-muted small">Nộp ngày @Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</span>
             </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Sinh viên</dt>
-                    <dd class="col-sm-7">@Model.TenSinhVien</dd>
+            <div class="ui-card-body">
+                <div class="info-grid mb-3">
+                    <div>
+                        <span class="field-label">Sinh viên</span>
+                        <div class="field-value">@Model.TenSinhVien</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Chương trình học bổng</span>
+                        <div class="field-value">@Model.TenHocBong</div>
+                    </div>
+                    <div>
+                        <span class="field-label">Đơn vị tài trợ</span>
+                        <div class="field-value">@Model.TenDonViTaiTro</div>
+                    </div>
+                </div>
 
-                    <dt class="col-sm-5">Học bổng</dt>
-                    <dd class="col-sm-7">@Model.TenHocBong</dd>
-
-                    <dt class="col-sm-5">Đơn vị tài trợ</dt>
-                    <dd class="col-sm-7">@Model.TenDonViTaiTro</dd>
-
-                    <dt class="col-sm-5">Ngày nộp</dt>
-                    <dd class="col-sm-7">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</dd>
-
-                    <dt class="col-sm-5">Tài liệu đính kèm</dt>
-                    <dd class="col-sm-7">
-                        @if (Model.TaiLieus != null && Model.TaiLieus.Any())
-                        {
-                            <div class="list-group">
-                                @foreach (var t in Model.TaiLieus)
-                                {
-                                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
-                                        <div>
-                                            <i class="bi @(t.LaPdf ? "bi-file-earmark-pdf text-danger" : "bi-file-earmark-image text-primary") me-1"></i>
-                                            <strong style="word-break:break-all;">@t.TenFileGoc</strong>
-                                            <div class="small text-muted">
-                                                @t.LoaiTaiLieu · @t.DungLuongHienThi
-                                            </div>
-                                        </div>
-                                        <div class="text-nowrap ms-2">
-                                            <a asp-controller="TaiLieuHoSo" asp-action="Xem" asp-route-id="@t.MaTaiLieu" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-eye me-1"></i>Xem
-                                            </a>
-                                            <a asp-controller="TaiLieuHoSo" asp-action="Tai" asp-route-id="@t.MaTaiLieu" class="btn btn-sm btn-outline-secondary">
-                                                <i class="bi bi-download me-1"></i>Tải
-                                            </a>
+                <div>
+                    <span class="field-label mb-2">Tài liệu minh chứng đính kèm</span>
+                    @if (Model.TaiLieus != null && Model.TaiLieus.Any())
+                    {
+                        <div class="d-flex flex-column gap-2">
+                            @foreach (var t in Model.TaiLieus)
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 px-3 rounded-3 border bg-white">
+                                    <div>
+                                        <i class="bi @(t.LaPdf ? "bi-file-earmark-pdf text-danger" : "bi-file-earmark-image text-primary") me-1"></i>
+                                        <strong style="word-break:break-all;">@t.TenFileGoc</strong>
+                                        <div class="small text-muted">
+                                            @t.LoaiTaiLieu · @t.DungLuongHienThi
                                         </div>
                                     </div>
-                                }
+                                    <div class="text-nowrap ms-2">
+                                        <a asp-controller="TaiLieuHoSo" asp-action="Xem" asp-route-id="@t.MaTaiLieu" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye me-1"></i>Xem
+                                        </a>
+                                        <a asp-controller="TaiLieuHoSo" asp-action="Tai" asp-route-id="@t.MaTaiLieu" class="btn btn-sm btn-outline-secondary">
+                                            <i class="bi bi-download me-1"></i>Tải
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.FileMinhChung))
+                    {
+                        <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem file minh chứng
+                        </a>
+                    }
+                    else
+                    {
+                        <span class="text-muted small">Không có file đính kèm</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="ui-card mb-3">
+            <div class="ui-card-head">
+                <h5>Đối chiếu tiêu chí tự động</h5>
+            </div>
+            <div class="ui-card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light">
+                            <span class="field-label">Điểm TB tích lũy</span>
+                            <div class="d-flex align-items-center justify-content-between mt-1">
+                                <strong class="fs-5">@Model.DiemTrungBinh.ToString("0.00") <small class="text-muted fw-normal">/ Chuẩn @Model.DiemYeuCau.ToString("0.00")</small></strong>
+                                <span class="st @(Model.DuDiem ? "st-green" : "st-red")">@(Model.DuDiem ? "Đủ điểm" : "Chưa đạt")</span>
                             </div>
-                        }
-                        else if (!string.IsNullOrEmpty(Model.FileMinhChung))
-                        {
-                            <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem file minh chứng
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Không có file đính kèm</span>
-                        }
-                    </dd>
-                </dl>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 rounded-3 border bg-light">
+                            <span class="field-label">Bậc đào tạo</span>
+                            <div class="d-flex align-items-center justify-content-between mt-1">
+                                <strong class="fs-6">@Model.BacDaoTaoSinhVien <small class="text-muted fw-normal">/ @Model.BacDaoTaoHocBong</small></strong>
+                                <span class="st @(Model.DungBacDaoTao ? "st-green" : "st-red")">@(Model.DungBacDaoTao ? "Khớp bậc" : "Không khớp")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        @* So sánh điều kiện *@
-        <div class="card mb-3">
-            <div class="card-header">
-                <strong>So sánh điều kiện</strong>
+        <div class="ui-card">
+            <div class="ui-card-head">
+                <h5>Thư xin học bổng &amp; Thành tích học tập</h5>
             </div>
-            <div class="card-body">
-                <p>
-                    <strong>Điểm TB tích lũy:</strong>
-                    <span class="badge @(Model.DuDiem ? "bg-success" : "bg-danger")">
-                        @Model.DiemTrungBinh.ToString("0.00")
-                    </span>
-                    <span class="text-muted">/ Yêu cầu: @Model.DiemYeuCau.ToString("0.00")</span>
-                    @if (!Model.DuDiem)
+            <div class="ui-card-body">
+                <div class="mb-3">
+                    <span class="field-label">Thư xin học bổng</span>
+                    @if (!string.IsNullOrEmpty(Model.ThuXinHocBong))
                     {
-                        <span class="badge bg-warning text-dark">Không đủ điểm</span>
+                        <div class="p-3 rounded-3 border bg-light mt-1" style="white-space: pre-line;">@Model.ThuXinHocBong</div>
                     }
-                </p>
-                <p class="mb-0">
-                    <strong>Bậc đào tạo:</strong>
-                    <span class="badge @(Model.DungBacDaoTao ? "bg-success" : "bg-danger")">
-                        @Model.BacDaoTaoSinhVien
-                    </span>
-                    <span class="text-muted">/ HB: @Model.BacDaoTaoHocBong</span>
-                    @if (!Model.DungBacDaoTao)
+                    else
                     {
-                        <span class="badge bg-warning text-dark">Không khớp bậc</span>
+                        <p class="text-muted small mb-0">Không có</p>
                     }
-                </p>
-            </div>
-        </div>
+                </div>
 
-        @* Thư xin học bổng + thành tích *@
-        <div class="card mb-3">
-            <div class="card-header">
-                <strong>Thư xin học bổng &amp; Thành tích</strong>
-            </div>
-            <div class="card-body">
-                <p><strong>Thư xin học bổng:</strong></p>
-                @if (!string.IsNullOrEmpty(Model.ThuXinHocBong))
-                {
-                    <div class="border p-2 bg-light mb-3">@Model.ThuXinHocBong</div>
-                }
-                else
-                {
-                    <p class="text-muted">Không có</p>
-                }
-
-                <p><strong>Thành tích học tập:</strong></p>
-                @if (!string.IsNullOrEmpty(Model.ThanhTichHocTap))
-                {
-                    <div class="border p-2 bg-light">@Model.ThanhTichHocTap</div>
-                }
-                else
-                {
-                    <p class="text-muted mb-0">Không có</p>
-                }
+                <div>
+                    <span class="field-label">Thành tích học tập</span>
+                    @if (!string.IsNullOrEmpty(Model.ThanhTichHocTap))
+                    {
+                        <div class="p-3 rounded-3 border bg-light mt-1" style="white-space: pre-line;">@Model.ThanhTichHocTap</div>
+                    }
+                    else
+                    {
+                        <p class="text-muted small mb-0">Không có</p>
+                    }
+                </div>
             </div>
         </div>
     </div>
 
-    @* Cột phải: Form xét duyệt *@
-    <div class="col-md-5">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <strong>Kết quả xét duyệt sơ bộ</strong>
+    <!-- Cột phải: Form kết luận sơ duyệt -->
+    <div class="col-lg-5">
+        <div class="ui-card">
+            <div class="ui-card-head">
+                <h5>Quyết định xét duyệt sơ bộ</h5>
             </div>
-            <div class="card-body">
+            <div class="ui-card-body">
                 <form asp-action="XetDuyetSoBo" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="MaHoSoHocBong" />
 
-                    @* Hiển thị lỗi chung *@
-                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
-                    @* Chọn kết quả *@
                     <div class="mb-3">
-                        <label class="form-label"><strong>Kết quả xét duyệt</strong></label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="KetQua" value="Dat" id="kqDat" />
-                            <label class="form-check-label text-success" for="kqDat">
-                                <strong>Đạt xét duyệt sơ bộ</strong>
-                            </label>
+                        <label class="form-label">Kết luận thẩm định sơ bộ <span class="text-danger">*</span></label>
+                        <div class="d-flex flex-column gap-2 p-3 rounded-3 border bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" asp-for="KetQua" value="Dat" id="kqDat" />
+                                <label class="form-check-label text-success fw-bold" for="kqDat">
+                                    Đạt xét duyệt sơ bộ (Đủ điều kiện vào vòng phỏng vấn)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" asp-for="KetQua" value="KhongDat" id="kqKhongDat" />
+                                <label class="form-check-label text-danger fw-bold" for="kqKhongDat">
+                                    Không đạt xét duyệt sơ bộ
+                                </label>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="KetQua" value="KhongDat"
-                                   id="kqKhongDat" />
-                            <label class="form-check-label text-danger" for="kqKhongDat">
-                                <strong>Không đạt xét duyệt sơ bộ</strong>
-                            </label>
-                        </div>
-                        <span asp-validation-for="KetQua" class="text-danger"></span>
+                        <span asp-validation-for="KetQua" class="text-danger small"></span>
                     </div>
 
-                    @* Nhận xét *@
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label asp-for="NhanXetXetDuyet" class="form-label">
-                            <strong>Nhận xét xét duyệt</strong>
-                            <span class="text-danger">*</span>
+                            Nhận xét của cán bộ thẩm định <span class="text-danger">*</span>
                         </label>
                         <textarea asp-for="NhanXetXetDuyet" class="form-control" rows="5"
-                                  placeholder="Nhập nhận xét về hồ sơ..."></textarea>
-                        <span asp-validation-for="NhanXetXetDuyet" class="text-danger"></span>
+                                  placeholder="Ghi rõ đánh giá về hồ sơ, minh chứng và lý do đạt / không đạt sơ duyệt..."></textarea>
+                        <span asp-validation-for="NhanXetXetDuyet" class="text-danger small"></span>
                     </div>
 
-                    @* Nút *@
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary"
-                                onclick="return confirm('Xác nhận xét duyệt hồ sơ này?');">
-                            <i class="bi bi-check-circle"></i> Xác nhận xét duyệt
+                                onclick="return confirm('Xác nhận lưu kết quả xét duyệt sơ bộ cho hồ sơ này?');">
+                            <i class="bi bi-check2-circle me-1"></i> Lưu kết quả xét duyệt
                         </button>
                         <a asp-action="Details" asp-route-id="@Model.MaHoSoHocBong" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Quay lại chi tiết
+                            Hủy và quay lại
                         </a>
                     </div>
                 </form>

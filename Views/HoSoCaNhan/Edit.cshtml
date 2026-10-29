@@ -1,4 +1,6 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
+   Nội dung thực hiện: Module 3 - form cập nhật hồ sơ cá nhân (validation hiển thị trên View). *@
+@using Microsoft.AspNetCore.Http
    Nội dung thực hiện: Module 3 - form cập nhật hồ sơ cá nhân và ảnh đại diện (validation hiển thị trên View). *@
 @using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
 @model HoSoCaNhanViewModel
@@ -7,13 +9,15 @@
     ViewData["Nav"] = "TaiKhoan";
     var huyUrl = !string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : Url.Action("Index", "HoSoCaNhan");
     var hoTen = ViewBag.HoTenHoSo as string ?? Model.HoTen;
+    var chuCai = (hoTen ?? "S").Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
+    var avatarUrl = ViewBag.AnhDaiDien as string ?? Context.Session.GetString("AnhDaiDien");
     var chuCai = string.IsNullOrWhiteSpace(hoTen) ? "S" : hoTen.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
 }
 
 <div class="page-hero">
     <div class="page-hero-copy">
         <h2>Cập nhật hồ sơ sinh viên</h2>
-        <p>Thông tin được đồng bộ với hồ sơ sinh viên UNETI.</p>
+        <p>Thông tin và ảnh đại diện được đồng bộ trực tiếp với hồ sơ sinh viên UNETI.</p>
     </div>
 </div>
 
@@ -24,6 +28,19 @@
 
     <div class="profile-layout">
         <div class="ui-card profile-side">
+            @if (!string.IsNullOrEmpty(avatarUrl))
+            {
+                <div class="avatar-lg p-0">
+                    <img id="avatarPreview" src="@avatarUrl" alt="@hoTen" style="width: 100%; height: 100%; object-fit: cover;" />
+                </div>
+            }
+            else
+            {
+                <div id="avatarFallback" class="avatar-lg">@chuCai</div>
+                <div id="avatarPreviewWrap" class="avatar-lg p-0 d-none">
+                    <img id="avatarPreview" src="" alt="@hoTen" style="width: 100%; height: 100%; object-fit: cover;" />
+                </div>
+            }
             <div class="position-relative d-inline-block mb-3">
                 @if (!string.IsNullOrEmpty(Model.AnhDaiDien))
                 {
@@ -44,8 +61,16 @@
             <span asp-validation-for="FileAnhDaiDien" class="text-danger small d-block mb-2"></span>
 
             <h3>@hoTen</h3>
-            <div class="profile-meta">@ViewBag.MaSinhVien · @Model.Nganh</div>
-            <span class="badge-verified">Hồ sơ đã xác thực</span>
+            <div class="profile-meta">#@ViewBag.MaSinhVien · @Model.Nganh</div>
+            <div class="mb-3">
+                <span class="badge-verified"><i class="bi bi-patch-check-fill"></i> Hồ sơ đã xác thực</span>
+            </div>
+
+            <div class="pt-3 border-top text-start">
+                <label for="inputAvatar" class="form-label small mb-1">Ảnh đại diện mới</label>
+                <input type="file" name="AnhDaiDienUpload" id="inputAvatar" class="form-control form-control-sm" accept="image/png, image/jpeg, image/jpg, image/webp" />
+                <small class="text-muted d-block mt-1" style="font-size: 11px;">JPG, PNG hoặc WEBP (tối đa 5MB)</small>
+            </div>
         </div>
 
         <div class="info-stack">
@@ -168,5 +193,25 @@
         document.querySelectorAll('form input[type=text], form input[type=email], form input[type=tel]').forEach(function (el) {
             el.addEventListener('blur', function () { el.value = el.value.trim(); });
         });
+
+        const inputAvatar = document.getElementById('inputAvatar');
+        const preview = document.getElementById('avatarPreview');
+        const previewWrap = document.getElementById('avatarPreviewWrap');
+        const fallback = document.getElementById('avatarFallback');
+
+        if (inputAvatar && preview) {
+            inputAvatar.addEventListener('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        preview.src = e.target.result;
+                        if (previewWrap) previewWrap.classList.remove('d-none');
+                        if (fallback) fallback.classList.add('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
     </script>
 }

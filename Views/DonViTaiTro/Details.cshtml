@@ -1,3 +1,50 @@
 @model QuanLyHocBong_UNETI2_TI17A3HN.Models.DonViTaiTro
-@{ ViewData["Title"] = "Chi tiết đơn vị tài trợ"; }
-<h1 class="h3">@Model.TenDonViTaiTro</h1><dl class="row"><dt class="col-sm-3">Email liên hệ</dt><dd class="col-sm-9">@Model.EmailLienHe</dd><dt class="col-sm-3">Mô tả</dt><dd class="col-sm-9">@Model.MoTa</dd><dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@(Model.TrangThai ? "Hoạt động" : "Ngừng hoạt động")</dd><dt class="col-sm-3">Học bổng liên quan</dt><dd class="col-sm-9">@Model.HocBongs.Count</dd></dl><a asp-action="Index" class="btn btn-secondary">Quay lại</a>
+@{
+    ViewData["Title"] = "Chi tiết đơn vị tài trợ";
+}
+
+<div class="sponsor-page" style="max-width: 860px;">
+    <div class="page-hero">
+        <div class="page-hero-copy">
+            <h2>@Model.TenDonViTaiTro</h2>
+            <p>Thông tin đối tác tài trợ và các chương trình học bổng trực thuộc.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.MaDonViTaiTro" class="btn btn-primary">
+                <i class="bi bi-pencil me-1"></i> Chỉnh sửa
+            </a>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Quay lại
+            </a>
+        </div>
+    </div>
+
+    <div class="ui-card mb-3">
+        <div class="ui-card-head">
+            <h5>Hồ sơ đối tác</h5>
+            <span class="sponsor-status @(Model.TrangThai ? "is-active" : "is-inactive")">
+                <span></span>@(Model.TrangThai ? "Đang hoạt động" : "Ngừng hoạt động")
+            </span>
+        </div>
+        <div class="ui-card-body">
+            <div class="info-grid">
+                <div>
+                    <span class="field-label">Mã đơn vị</span>
+                    <div class="field-value">#@Model.MaDonViTaiTro</div>
+                </div>
+                <div>
+                    <span class="field-label">Email liên hệ</span>
+                    <div class="field-value">@(string.IsNullOrWhiteSpace(Model.EmailLienHe) ? "Chưa cập nhật" : Model.EmailLienHe)</div>
+                </div>
+                <div>
+                    <span class="field-label">Số chương trình tài trợ</span>
+                    <div class="field-value">@Model.HocBongs.Count chương trình</div>
+                </div>
+                <div class="grid-span-2" style="grid-column: 1 / -1;">
+                    <span class="field-label">Mô tả hợp tác</span>
+                    <div class="field-value fw-normal" style="white-space: pre-line;">@(string.IsNullOrWhiteSpace(Model.MoTa) ? "Chưa có thông tin mô tả chi tiết." : Model.MoTa)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

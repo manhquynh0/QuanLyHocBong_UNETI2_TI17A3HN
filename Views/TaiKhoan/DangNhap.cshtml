@@ -7,28 +7,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Đăng nhập - Học bổng UNETI</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
     <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
 </head>
 <body class="login-page">
     <main class="login-layout">
         <section class="login-intro" aria-label="Giới thiệu hệ thống">
             <a class="login-brand" asp-controller="Home" asp-action="Index">
-                <span class="brand-icon"><i class="bi bi-mortarboard-fill">◆</i></span>
+                <span class="brand-icon"><i class="bi bi-mortarboard-fill"></i></span>
                 <span>Học bổng UNETI</span>
             </a>
             <div class="intro-copy">
-                <h1>Hệ thống quản lý Học bổng &amp; Xét duyệt hồ sơ trực tuyến</h1>
-                <p>Giải pháp tối ưu hóa quy trình xét duyệt học bổng, kết nối sinh viên với các nhà tài trợ giáo dục uy tín.</p>
+                <div class="intro-kicker">Đại học Kinh tế - Kỹ thuật Công nghiệp</div>
+                <h1>Cổng Quản lý Học bổng &amp; Xét duyệt Hồ sơ Trực tuyến</h1>
+                <p>Hệ thống tiếp nhận hồ sơ, thẩm định tiêu chí học thuật, xếp lịch phỏng vấn và công bố quyết định trao học bổng minh bạch dành cho sinh viên và hội đồng xét duyệt.</p>
+                <div class="intro-pillars">
+                    <div class="intro-pillar">
+                        <strong>Minh bạch tiêu chí</strong>
+                        <span>Đối chiếu tự động điểm GPA tích lũy và điều kiện bậc đào tạo theo từng quỹ tài trợ.</span>
+                    </div>
+                    <div class="intro-pillar">
+                        <strong>Theo dõi thời gian thực</strong>
+                        <span>Cập nhật trạng thái sơ duyệt, lịch hẹn phỏng vấn và thông báo kết quả qua email.</span>
+                    </div>
+                </div>
             </div>
-            <small class="intro-footer">© 2026 Đại học Kinh tế - Kỹ thuật Công nghiệp</small>
+            <small class="intro-footer">© 2026 Trường Đại học Kinh tế - Kỹ thuật Công nghiệp (UNETI)</small>
         </section>
 
         <section class="login-panel" aria-label="Đăng nhập tài khoản">
             <div class="login-card">
                 <div class="login-heading">
-                    <span class="heading-mark"><i class="bi bi-mortarboard-fill">◆</i></span>
-                    <h2>Đăng nhập</h2>
-                    <p>Vui lòng sử dụng tài khoản UNETI</p>
+                    <span class="heading-mark"><i class="bi bi-mortarboard-fill"></i></span>
+                    <h2>Đăng nhập hệ thống</h2>
+                    <p>Sử dụng tài khoản sinh viên hoặc cán bộ UNETI để tiếp tục</p>
                 </div>
                 <form asp-action="DangNhap" method="post" class="login-form">
                     @Html.AntiForgeryToken()
@@ -37,22 +49,22 @@
                     <div class="field-group">
                         <label asp-for="TenDangNhap">Email hoặc tên đăng nhập</label>
                         <div class="input-wrap">
-                            <span class="input-icon" aria-hidden="true">♙</span>
-                            <input asp-for="TenDangNhap" class="login-input" placeholder="Nhập email hoặc tên đăng nhập" autocomplete="username" autofocus />
+                            <span class="input-icon" aria-hidden="true"><i class="bi bi-person"></i></span>
+                            <input asp-for="TenDangNhap" class="login-input" placeholder="Nhập mã tài khoản hoặc email UNETI" autocomplete="username" autofocus />
                         </div>
                         <span asp-validation-for="TenDangNhap" class="field-error"></span>
                     </div>
                     <div class="field-group password-group">
                         <label asp-for="MatKhau">Mật khẩu</label>
                         <div class="input-wrap">
-                            <span class="input-icon" aria-hidden="true">▣</span>
+                            <span class="input-icon" aria-hidden="true"><i class="bi bi-lock"></i></span>
                             <input asp-for="MatKhau" class="login-input" placeholder="Nhập mật khẩu" autocomplete="current-password" />
                             <button class="password-toggle" type="button" aria-label="Hiện mật khẩu" onclick="togglePassword(this)">Hiện</button>
                         </div>
                         <span asp-validation-for="MatKhau" class="field-error"></span>
                     </div>
-                    <button class="login-submit" type="submit">Đăng nhập hệ thống <span aria-hidden="true">→</span></button>
-                    <p class="login-help">Quên mật khẩu? Vui lòng liên hệ quản trị viên.</p>
+                    <button class="login-submit" type="submit">Đăng nhập vào cổng học bổng</button>
+                    <p class="login-help">Cần cấp lại mật khẩu? Liên hệ Phòng Công tác Sinh viên hoặc Quản trị viên hệ thống.</p>
                 </form>
             </div>
         </section>

@@ -24,9 +24,6 @@
                 <p>@dat.TenHocBong</p>
             </div>
         </div>
-        <a class="btn btn-success" href="mailto:scholarship@uneti.edu.vn">
-            <i class="bi bi-download me-1"></i> Tải quyết định
-        </a>
     </div>
 }
 
@@ -44,7 +41,7 @@
                         <th>Chương trình</th>
                         <th>Kết quả</th>
                         <th>Ngày nộp</th>
-                        <th>Thao tác</th>
+                        <th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -75,8 +72,8 @@
                         <tr>
                             <td class="fw-semibold">@h.TenHocBong</td>
                             <td><span class="st @kqClass">@kqText</span></td>
-                            <td>@h.NgayNop.ToString("dd/MM/yyyy")</td>
-                            <td>
+                            <td style="font-variant-numeric: tabular-nums;">@h.NgayNop.ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">
                                 <a asp-action="Details" asp-route-id="@h.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary">Chi tiết</a>
                             </td>
                         </tr>

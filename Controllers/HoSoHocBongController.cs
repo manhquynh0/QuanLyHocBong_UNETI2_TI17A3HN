@@ -34,6 +34,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
         // GET: /HoSoHocBong
+        [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> Index(HoSoFilterViewModel filter)
         {
             var model = await _hoSoService.LayDanhSachAsync(filter);
@@ -48,6 +49,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 2. CHI TIẾT HỒ SƠ
         // GET: /HoSoHocBong/Details/5
+        [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> Details(int id)
         {
             var model = await _hoSoService.LayChiTietAsync(id);
@@ -63,6 +65,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
         // GET: /HoSoHocBong/XetDuyetSoBo/5
+        [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> XetDuyetSoBo(int id)
         {
             var model = await _hoSoService.LayFormXetDuyetAsync(id);
@@ -80,6 +83,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /HoSoHocBong/XetDuyetSoBo
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> XetDuyetSoBo(XetDuyetSoBoViewModel model)
         {
             var hoSo = await _context.HoSoHocBong
@@ -113,6 +117,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // 5. KIỂM TRA SỐ SUẤT ĐÃ CẤP (JSON - dùng cho AJAX)
         // GET: /HoSoHocBong/KiemTraSoSuat/5
         [HttpGet]
+        [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> KiemTraSoSuat(int maHocBong)
         {
             var soDaCap = await _hoSoService.DemSoDaCapAsync(maHocBong);
@@ -163,7 +168,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (sv == null)
             {
                 TempData["ErrorMessage"] = "Vui lòng cập nhật hồ sơ sinh viên trước khi nộp hồ sơ.";
-                return RedirectToAction("ThongTinCaNhan", "SinhVien");
+                return RedirectToAction("Index", "HoSoCaNhan");
             }
 
             ViewBag.HocBong = hocBong;
@@ -187,14 +192,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (hocBong == null) return NotFound();
 
             var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
-            if (sv == null) return RedirectToAction("ThongTinCaNhan", "SinhVien");
+            if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
 
             ViewBag.HocBong = hocBong;
             ViewBag.SinhVien = sv;
 
-            if (hocBong.TrangThai != "Đang nhận hồ sơ" || hocBong.HanNopHoSo < DateTime.Today)
+            if (hocBong.TrangThai != "Đang nhận hồ sơ" || hocBong.HanNopHoSo < DateTime.Today || hocBong.NgayBatDauNhanHoSo > DateTime.Today)
             {
-                TempData["ErrorMessage"] = "Học bổng này đã đóng hoặc hết hạn nhận hồ sơ.";
+                TempData["ErrorMessage"] = "Học bổng này chưa mở, tạm dừng, đã đóng hoặc hết hạn nhận hồ sơ.";
                 return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
             }
 
@@ -217,6 +222,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             string? fileUrl = null;
             if (FileMinhChungUpload != null && FileMinhChungUpload.Length > 0)
             {
+                var dsLoiTep = await TaiLieuHoSoStorage.KiemTraAsync(new[] { FileMinhChungUpload }, 0);
+                if (dsLoiTep.Count > 0)
+                {
+                    TempData["ErrorMessage"] = string.Join(" ", dsLoiTep);
+                    return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
+                }
+
                 fileUrl = await _storageService.UploadFileAsync(FileMinhChungUpload, "minhchung");
             }
 

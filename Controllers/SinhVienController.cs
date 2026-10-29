@@ -91,6 +91,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 ModelState.AddModelError("Email", "Email này đã được sử dụng bởi một sinh viên khác.");
             }
 
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    ModelState.AddModelError(string.Empty, loiAnh);
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(model);
@@ -170,6 +179,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             ModelState.Remove("TaiKhoan");
             ModelState.Remove("HoSoHocBongs");
+
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    ModelState.AddModelError(string.Empty, loiAnh);
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -303,6 +321,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             ModelState.Remove("TaiKhoan");
             ModelState.Remove("HoSoHocBongs");
 
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    ModelState.AddModelError(string.Empty, loiAnh);
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
@@ -348,6 +375,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
             {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    TempData["ErrorMessage"] = loiAnh;
+                    return RedirectToAction(nameof(ThongTinCaNhan));
+                }
+
                 var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
                 if (!string.IsNullOrEmpty(avatarUrl))
                 {

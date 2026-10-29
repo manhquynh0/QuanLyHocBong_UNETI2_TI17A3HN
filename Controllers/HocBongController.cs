@@ -1,5 +1,10 @@
+// Họ và tên: Nguyễn Văn Tình
+// Mã sinh viên: 23103100142
+// Nội dung thực hiện: Module 2 - Quản lý học bổng, tìm kiếm, lọc, sắp xếp và phân trang.
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
@@ -7,6 +12,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
+    [RoleAuthorize("Admin", "Cán bộ học bổng")]
     public class HocBongController : Controller
     {
         private readonly IHocBongService _hocBongService;
@@ -49,7 +55,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             return View(new HocBongFormViewModel
             {
                 NgayBatDauNhanHoSo = DateTime.Today,
-                HanNopHoSo = DateTime.Today
+                HanNopHoSo = DateTime.Today.AddDays(30),
+                TrangThai = TrangThaiHocBong.DangNhanHoSo
             });
         }
 
@@ -190,7 +197,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 DieuKienXetHocBong = model.DieuKienXetHocBong ?? string.Empty,
                 TrangThai = TrangThaiHocBong.TinhTrang(
                     model.NgayBatDauNhanHoSo!.Value,
-                    model.HanNopHoSo!.Value)
+                    model.HanNopHoSo!.Value,
+                    DateTime.Today,
+                    model.TrangThai)
             };
         }
 
@@ -207,7 +216,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 NgayBatDauNhanHoSo = hocBong.NgayBatDauNhanHoSo,
                 HanNopHoSo = hocBong.HanNopHoSo,
                 MoTaHocBong = hocBong.MoTaHocBong,
-                DieuKienXetHocBong = hocBong.DieuKienXetHocBong
+                DieuKienXetHocBong = hocBong.DieuKienXetHocBong,
+                TrangThai = hocBong.TrangThai
             };
         }
 

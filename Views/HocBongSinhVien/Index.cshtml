@@ -5,7 +5,6 @@
 @{
     ViewData["Title"] = "Danh sách học bổng";
 
-    // Giữ nguyên từ khóa, bộ lọc, kiểu sắp xếp khi chuyển trang
     Dictionary<string, string> RouteTrang(int trang)
     {
         var d = new Dictionary<string, string> { ["page"] = trang.ToString(), ["sort"] = Model.Sort };
@@ -23,89 +22,87 @@
 
 <div class="page-hero">
     <div class="page-hero-copy">
-        <h2>Danh sách học bổng</h2>
+        <h2>Chương trình học bổng</h2>
         <p>
             @if (Model.CoHoSoCaNhan)
             {
-                <span>Điểm trung bình tích lũy của bạn: <strong>@Model.DiemCuaToi.ToString("0.00")</strong></span>
+                <span>Điểm trung bình tích lũy hiện tại của bạn: <strong class="text-primary">@Model.DiemCuaToi.ToString("0.00") / 4.0</strong></span>
             }
             else
             {
-                <span>Tài khoản chưa có hồ sơ sinh viên.</span>
+                <span>Tài khoản chưa đồng bộ hồ sơ sinh viên.</span>
             }
         </p>
     </div>
 </div>
 
-<form method="get" asp-action="Index" class="ui-card mb-3">
-    <div class="ui-card-body">
+<form method="get" asp-action="Index" class="uneti-filter-card">
     <div class="row g-2 align-items-end">
-        <div class="col-lg-4">
-            <label class="form-label mb-1">Tìm kiếm</label>
+        <div class="col-lg-3 col-md-6">
+            <label class="form-label">Từ khóa</label>
             <input type="text" name="keyword" value="@Model.Keyword" class="form-control"
-                   placeholder="Tên học bổng hoặc đơn vị tài trợ" />
+                   placeholder="Tên học bổng hoặc đơn vị tài trợ..." />
         </div>
         <div class="col-lg-3 col-md-6">
-            <label class="form-label mb-1">Đơn vị tài trợ</label>
+            <label class="form-label">Đơn vị tài trợ</label>
             <select name="maDonViTaiTro" class="form-select">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả đơn vị</option>
                 @foreach (var d in Model.DonViTaiTros)
                 {
                     <option value="@d.MaDonViTaiTro" selected="@(Model.MaDonViTaiTro == d.MaDonViTaiTro)">@d.TenDonViTaiTro</option>
                 }
             </select>
         </div>
-        <div class="col-lg-2 col-md-6">
-            <label class="form-label mb-1">Bậc đào tạo</label>
+        <div class="col-lg-2 col-md-4">
+            <label class="form-label">Bậc đào tạo</label>
             <select name="bacDaoTao" class="form-select">
-                <option value="">Tất cả</option>
+                <option value="">Tất cả bậc</option>
                 @foreach (var b in Model.BacDaoTaos)
                 {
                     <option value="@b" selected="@(Model.BacDaoTao == b)">@b</option>
                 }
             </select>
         </div>
-        <div class="col-lg-3 col-md-6">
-            <label class="form-label mb-1">Thời hạn</label>
+        <div class="col-lg-2 col-md-4">
+            <label class="form-label">Thời hạn</label>
             <select name="hanNop" class="form-select">
-                <option value="" selected="@string.IsNullOrEmpty(Model.HanNop)">Tất cả</option>
+                <option value="" selected="@string.IsNullOrEmpty(Model.HanNop)">Mọi thời hạn</option>
                 <option value="conhan" selected="@(Model.HanNop == "conhan")">Còn hạn nộp</option>
                 <option value="hethan" selected="@(Model.HanNop == "hethan")">Đã hết hạn</option>
             </select>
         </div>
-        <div class="col-lg-4 col-md-6">
-            <label class="form-label mb-1">Sắp xếp</label>
+        <div class="col-lg-2 col-md-4">
+            <label class="form-label">Sắp xếp</label>
             <select name="sort" class="form-select">
-                <option value="han_asc" selected="@(Model.Sort == "han_asc")">Hạn nộp: gần nhất trước</option>
-                <option value="han_desc" selected="@(Model.Sort == "han_desc")">Hạn nộp: xa nhất trước</option>
-                <option value="ten_asc" selected="@(Model.Sort == "ten_asc")">Tên A → Z</option>
-                <option value="ten_desc" selected="@(Model.Sort == "ten_desc")">Tên Z → A</option>
+                <option value="han_asc" selected="@(Model.Sort == "han_asc")">Hạn nộp gần nhất</option>
+                <option value="han_desc" selected="@(Model.Sort == "han_desc")">Hạn nộp xa nhất</option>
+                <option value="ten_asc" selected="@(Model.Sort == "ten_asc")">Tên A - Z</option>
+                <option value="ten_desc" selected="@(Model.Sort == "ten_desc")">Tên Z - A</option>
                 <option value="suat_desc" selected="@(Model.Sort == "suat_desc")">Số suất giảm dần</option>
                 <option value="suat_asc" selected="@(Model.Sort == "suat_asc")">Số suất tăng dần</option>
             </select>
         </div>
-        <div class="col-lg-4 col-md-6">
-            <div class="form-check mb-2">
-                <input class="form-check-input" type="checkbox" name="phuHop" value="true" id="phuHop" checked="@Model.PhuHop" />
-                <label class="form-check-label" for="phuHop">Chỉ hiện học bổng đủ điều kiện điểm của tôi</label>
-            </div>
-        </div>
-        <div class="col-lg-4 text-lg-end">
-            <button type="submit" class="btn btn-primary">Tìm kiếm / Lọc</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
-        </div>
     </div>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top">
+        <div class="form-check mb-0">
+            <input class="form-check-input" type="checkbox" name="phuHop" value="true" id="phuHop" checked="@Model.PhuHop" />
+            <label class="form-check-label small fw-medium" for="phuHop">Chỉ hiển thị chương trình đủ điều kiện GPA của tôi</label>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Index" class="btn btn-sm btn-outline-secondary">Đặt lại</a>
+            <button type="submit" class="btn btn-sm btn-primary px-3"><i class="bi bi-funnel me-1"></i> Lọc danh sách</button>
+        </div>
     </div>
 </form>
 
-<div class="text-muted mb-2">
+<div class="text-muted small mb-3">
     @if (Model.TotalItems == 0)
     {
-        <span>Không có học bổng nào phù hợp.</span>
+        <span>Không tìm thấy chương trình học bổng nào phù hợp.</span>
     }
     else
     {
-        <span>Hiển thị @(tu)–@(den) trong tổng số @Model.TotalItems học bổng (trang @Model.Page/@Model.TotalPages)</span>
+        <span>Hiển thị <strong>@(tu)–@(den)</strong> trên tổng số <strong>@Model.TotalItems</strong> chương trình học bổng</span>
     }
 </div>
 
@@ -115,32 +112,32 @@
         string? lyDo = null;
         if (hb.ChuaDenNgay) lyDo = "Chưa đến ngày nhận hồ sơ";
         else if (hb.HetHan) lyDo = "Đã hết hạn nộp hồ sơ";
-        else if (!hb.DangMo) lyDo = "Không nhận hồ sơ";
-        else if (hb.DaNop) lyDo = "Bạn đã nộp hồ sơ cho học bổng này";
-        else if (!hb.DuDiem) lyDo = "Điểm trung bình chưa đạt yêu cầu";
+        else if (!hb.DangMo) lyDo = "Tạm ngừng nhận hồ sơ";
+        else if (hb.DaNop) lyDo = "Đã nộp hồ sơ";
+        else if (!hb.DuDiem) lyDo = "Chưa đạt chuẩn GPA";
 
         <div class="col">
             <div class="ui-card scholarship-card h-100 @(hb.HetHan ? "card-expired" : "")">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <h5 class="card-title mb-1">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <h5 class="card-title mb-0">
                             <a asp-action="Details" asp-route-id="@hb.MaHocBong" class="text-decoration-none">@hb.TenHocBong</a>
                         </h5>
                         @if (hb.HetHan)
                         {
-                            <span class="badge text-bg-secondary flex-shrink-0">Hết hạn</span>
+                            <span class="st st-gray flex-shrink-0">Hết hạn</span>
                         }
                         else if (hb.ChuaDenNgay)
                         {
-                            <span class="badge text-bg-info flex-shrink-0">Sắp mở</span>
+                            <span class="st st-blue flex-shrink-0">Sắp mở</span>
                         }
                         else if (hb.SoNgayConLai <= 7)
                         {
-                            <span class="badge text-bg-warning flex-shrink-0">Còn @(hb.SoNgayConLai == 0 ? "hôm nay" : hb.SoNgayConLai + " ngày")</span>
+                            <span class="st st-yellow flex-shrink-0">Còn @(hb.SoNgayConLai == 0 ? "hôm nay" : hb.SoNgayConLai + " ngày")</span>
                         }
                         else
                         {
-                            <span class="badge text-bg-success flex-shrink-0">Còn hạn</span>
+                            <span class="st st-green flex-shrink-0">Còn hạn</span>
                         }
                     </div>
                     <div class="text-muted small mb-2">@hb.TenDonViTaiTro</div>
@@ -148,16 +145,29 @@
                         @hb.MoTaHocBong
                     </p>
                     <ul class="scholarship-meta small">
-                        <li><span class="text-muted">Bậc đào tạo:</span> @hb.BacDaoTao</li>
-                        <li><span class="text-muted">ĐTB tối thiểu:</span> @hb.DiemTrungBinhToiThieu.ToString("0.00")
-                            @if (Model.CoHoSoCaNhan)
-                            {
-                                if (hb.DuDiem) { <span class="text-success">(bạn đạt)</span> }
-                                else { <span class="text-danger">(bạn chưa đạt)</span> }
-                            }
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Bậc đào tạo:</span>
+                            <strong>@hb.BacDaoTao</strong>
                         </li>
-                        <li><span class="text-muted">Số suất:</span> @hb.SoSuat</li>
-                        <li><span class="text-muted">Nhận hồ sơ:</span> @hb.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy") – @hb.HanNopHoSo.ToString("dd/MM/yyyy")</li>
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">GPA tối thiểu:</span>
+                            <span>
+                                <strong>@hb.DiemTrungBinhToiThieu.ToString("0.00")</strong>
+                                @if (Model.CoHoSoCaNhan)
+                                {
+                                    if (hb.DuDiem) { <span class="text-success fw-semibold ms-1">(Đạt)</span> }
+                                    else { <span class="text-danger fw-semibold ms-1">(Chưa đạt)</span> }
+                                }
+                            </span>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Chỉ tiêu:</span>
+                            <strong>@hb.SoSuat suất</strong>
+                        </li>
+                        <li class="d-flex justify-content-between">
+                            <span class="text-muted">Thời hạn:</span>
+                            <span>@hb.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy") – <strong>@hb.HanNopHoSo.ToString("dd/MM/yyyy")</strong></span>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
@@ -168,7 +178,7 @@
                     }
                     else
                     {
-                        <span class="text-muted small">@lyDo</span>
+                        <span class="text-muted small fw-medium">@lyDo</span>
                     }
                 </div>
             </div>
@@ -181,7 +191,7 @@
     <nav class="mt-4" aria-label="Phân trang">
         <ul class="pagination justify-content-center flex-wrap">
             <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-all-route-data="@RouteTrang(Model.Page - 1)">&laquo; Trước</a>
+                <a class="page-link" asp-action="Index" asp-all-route-data="@RouteTrang(Model.Page - 1)">« Trước</a>
             </li>
             @for (var i = 1; i <= Model.TotalPages; i++)
             {
@@ -197,7 +207,7 @@
                 }
             }
             <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
-                <a class="page-link" asp-action="Index" asp-all-route-data="@RouteTrang(Model.Page + 1)">Sau &raquo;</a>
+                <a class="page-link" asp-action="Index" asp-all-route-data="@RouteTrang(Model.Page + 1)">Sau »</a>
             </li>
         </ul>
     </nav>
