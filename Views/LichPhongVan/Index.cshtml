@@ -12,76 +12,75 @@
     int totalItems = ViewBag.TotalItems ?? 0;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <div>
-        <h4 class="fw-bold mb-1 text-dark">
-            @(isStudent ? "Lịch phỏng vấn của tôi" : "Lịch phỏng vấn học bổng UNETI")
-        </h4>
-        <small class="text-muted">Tổng cộng @totalItems phiên phỏng vấn</small>
+<div class="page-hero">
+    <div class="page-hero-copy">
+        <h2>@(isStudent ? "Lịch phỏng vấn của tôi" : "Điều phối lịch phỏng vấn")</h2>
+        <p>Quản lý thời gian, hình thức và phân công hội đồng phỏng vấn cho các hồ sơ đã đạt sơ duyệt.</p>
     </div>
     @if (isCanBoOrAdmin)
     {
-        <a asp-action="Create" class="btn btn-primary fw-semibold">
-            <i class="bi bi-calendar-plus me-1"></i> Thiết lập lịch phỏng vấn mới
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-calendar-plus me-1"></i> Thiết lập lịch phỏng vấn
         </a>
     }
 </div>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show small" role="alert">
-        <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger alert-dismissible fade show small" role="alert">
-        <i class="bi bi-exclamation-triangle me-1"></i> @TempData["ErrorMessage"]
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
 
 <!-- Bộ lọc tìm kiếm lịch -->
-<div class="card border-0 shadow-sm mb-4 rounded-3">
-    <div class="card-body p-3">
-        <form method="get" class="row g-2 align-items-center">
-            <div class="col-md-6">
-                <div class="input-group">
-                    <span class="input-group-text bg-light border-end-0 text-muted"><i class="bi bi-search"></i></span>
-                    <input type="text" name="searchString" value="@currentSearch" class="form-control border-start-0" placeholder="Tìm theo tên SV, học bổng, người PV hoặc địa điểm..." />
-                </div>
-            </div>
-            <div class="col-md-3">
-                <select name="trangThaiFilter" class="form-select">
-                    <option value="">-- Trạng thái lịch hẹn --</option>
-                    <option value="Đã lên lịch" selected="@(currentTrangThai == "Đã lên lịch")">Đã lên lịch</option>
-                    <option value="Đã hoàn thành" selected="@(currentTrangThai == "Đã hoàn thành")">Đã hoàn thành</option>
-                    <option value="Đã hủy" selected="@(currentTrangThai == "Đã hủy")">Đã hủy</option>
-                </select>
-            </div>
-            <div class="col-md-3 d-flex gap-2">
-                <button type="submit" class="btn btn-primary px-3"><i class="bi bi-funnel me-1"></i> Lọc</button>
-                <a asp-action="Index" class="btn btn-light border px-3">Đặt lại</a>
-            </div>
-        </form>
+<form method="get" class="uneti-filter-card">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-6">
+            <label class="form-label">Từ khóa tìm kiếm</label>
+            <input type="text" name="searchString" value="@currentSearch" class="form-control" placeholder="Tìm theo tên sinh viên, học bổng, người phỏng vấn hoặc địa điểm..." />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái lịch hẹn</label>
+            <select name="trangThaiFilter" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                <option value="Đã lên lịch" selected="@(currentTrangThai == "Đã lên lịch")">Đã lên lịch</option>
+                <option value="Đã hoàn thành" selected="@(currentTrangThai == "Đã hoàn thành")">Đã hoàn thành</option>
+                <option value="Đã hủy" selected="@(currentTrangThai == "Đã hủy")">Đã hủy</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Lọc</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Đặt lại</a>
+        </div>
     </div>
-</div>
+</form>
 
 <!-- Danh sách lịch phỏng vấn -->
-<div class="card border-0 shadow-sm rounded-3">
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
+<div class="ui-card">
+    <div class="ui-card-head">
+        <h5>Danh sách phiên phỏng vấn</h5>
+        <span class="text-muted small">Tổng cộng <strong>@totalItems</strong> phiên</span>
+    </div>
+    <div class="table-responsive border-0">
+        <table class="ui-table">
+            <thead>
                 <tr>
-                    <th class="ps-4">Thời gian</th>
-                    <th>Sinh viên ứng tuyển</th>
-                    <th>Chương trình học bổng</th>
-                    <th>Hình thức & Địa điểm</th>
-                    <th>Hội đồng phỏng vấn</th>
-                    <th>Trạng thái</th>
-                    <th class="text-end pe-4">Thao tác</th>
+                    <th style="width: 130px;">Thời gian</th>
+                    <th style="min-width: 155px;">Sinh viên ứng tuyển</th>
+                    <th style="min-width: 220px;">Chương trình học bổng</th>
+                    <th style="min-width: 190px;">Hình thức &amp; Địa điểm</th>
+                    <th style="min-width: 170px;">Hội đồng phỏng vấn</th>
+                    <th style="width: 130px;">Trạng thái</th>
+                    <th class="text-end" style="width: 210px;">Thao tác</th>
                 </tr>
             </thead>
             <tbody>
@@ -91,64 +90,64 @@
                     {
                         var statusBadge = item.TrangThai switch
                         {
-                            "Đã lên lịch" => "badge-purple",
-                            "Đã hoàn thành" => "badge-success",
-                            "Đã hủy" => "badge-secondary",
-                            _ => "badge-secondary"
+                            "Đã lên lịch" => "st-blue",
+                            "Đã hoàn thành" => "st-green",
+                            "Đã hủy" => "st-gray",
+                            _ => "st-gray"
                         };
 
                         <tr>
-                            <td class="ps-4">
+                            <td class="text-nowrap" style="font-variant-numeric: tabular-nums;">
                                 <strong class="d-block text-dark">@item.ThoiGianBatDau.ToString("dd/MM/yyyy")</strong>
-                                <span class="badge bg-light text-primary border">
-                                    <i class="bi bi-clock me-1"></i>@item.ThoiGianBatDau.ToString("HH:mm") - @item.ThoiGianKetThuc.ToString("HH:mm")
+                                <span class="small text-muted">
+                                    @item.ThoiGianBatDau.ToString("HH:mm") – @item.ThoiGianKetThuc.ToString("HH:mm")
                                 </span>
                             </td>
-                            <td>
+                            <td class="text-nowrap">
                                 <strong class="text-dark d-block">@(item.HoSoHocBong?.SinhVien?.HoTen ?? "N/A")</strong>
                                 <small class="text-muted">@(item.HoSoHocBong?.SinhVien?.SoDienThoai)</small>
                             </td>
                             <td>
                                 <span class="fw-semibold text-dark d-block">@(item.HoSoHocBong?.HocBong?.TenHocBong ?? "N/A")</span>
-                                <small class="text-muted">Mã hồ sơ: #@item.MaHoSoHocBong</small>
+                                <small class="text-muted">Hồ sơ #@item.MaHoSoHocBong</small>
                             </td>
                             <td>
-                                <span class="badge @(item.HinhThucPhongVan == "Trực tuyến" ? "bg-info-subtle text-info" : "bg-light text-dark") border mb-1 d-inline-block">
+                                <span class="st @(item.HinhThucPhongVan == "Trực tuyến" ? "st-blue" : "st-gray") mb-1">
                                     @(item.HinhThucPhongVan)
                                 </span>
                                 <div class="small text-muted text-truncate" style="max-width: 220px;" title="@item.DiaDiemHoacLienKet">
                                     @(item.DiaDiemHoacLienKet ?? "Tại trường")
                                 </div>
                             </td>
-                            <td>@item.NguoiPhongVan</td>
-                            <td><span class="status-badge @statusBadge">@item.TrangThai</span></td>
-                            <td class="text-end pe-4">
+                            <td class="fw-medium">@item.NguoiPhongVan</td>
+                            <td class="text-nowrap"><span class="st @statusBadge">@item.TrangThai</span></td>
+                            <td class="text-end text-nowrap">
                                 @if (isCanBoOrAdmin)
                                 {
                                     @if (item.TrangThai == "Đã lên lịch")
                                     {
                                         <form asp-action="HoanThanh" asp-route-id="@item.MaLichPhongVan" method="post" class="d-inline" onsubmit="return confirm('Xác nhận hoàn thành buổi phỏng vấn này để chuyển sang bước nhập điểm kết quả?');">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-success" title="Xác nhận hoàn thành buổi PV">
-                                                <i class="bi bi-check2-circle me-1"></i> Hoàn thành
+                                            <button type="submit" class="btn btn-sm btn-primary" title="Xác nhận hoàn thành buổi PV">
+                                                Hoàn thành
                                             </button>
                                         </form>
                                         <form asp-action="HuyLich" asp-route-id="@item.MaLichPhongVan" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch này?');">
                                             @Html.AntiForgeryToken()
                                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Hủy lịch">
-                                                <i class="bi bi-x-circle"></i>
+                                                Hủy
                                             </button>
                                         </form>
                                     }
                                     else if (item.TrangThai == "Đã hoàn thành")
                                     {
                                         <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-primary" title="Nhập kết quả học bổng">
-                                            <i class="bi bi-clipboard2-check me-1"></i> Nhập kết quả
+                                            Nhập kết quả
                                         </a>
                                     }
                                 }
                                 <a asp-controller="HoSoHocBong" asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary" title="Chi tiết hồ sơ">
-                                    <i class="bi bi-eye"></i>
+                                    Hồ sơ
                                 </a>
                             </td>
                         </tr>
@@ -157,8 +156,7 @@
                 else
                 {
                     <tr>
-                        <td colspan="7" class="text-center py-5 text-muted">
-                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                        <td colspan="7" class="empty-state">
                             Chưa có phiên phỏng vấn nào phù hợp.
                         </td>
                     </tr>
@@ -166,26 +164,24 @@
             </tbody>
         </table>
     </div>
-
-    @if (totalPages > 1)
-    {
-        <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
-            <span class="small text-muted">Trang @currentPage / @totalPages</span>
-            <ul class="pagination pagination-sm mb-0">
-                <li class="page-item @(currentPage == 1 ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">&laquo;</a>
-                </li>
-                @for (int p = 1; p <= totalPages; p++)
-                {
-                    <li class="page-item @(p == currentPage ? "active" : "")">
-                        <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">@p</a>
-                    </li>
-                }
-                <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
-                    <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">&raquo;</a>
-                </li>
-            </ul>
-        </div>
-    }
 </div>
 
+@if (totalPages > 1)
+{
+    <nav class="mt-4" aria-label="Phân trang lịch phỏng vấn">
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">« Trước</a>
+            </li>
+            @for (int p = 1; p <= totalPages; p++)
+            {
+                <li class="page-item @(p == currentPage ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-page="@p" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">@p</a>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-searchString="@currentSearch" asp-route-trangThaiFilter="@currentTrangThai">Sau »</a>
+            </li>
+        </ul>
+    </nav>
+}

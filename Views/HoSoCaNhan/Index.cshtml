@@ -1,5 +1,6 @@
 @* Họ và tên: Nguyễn Phi Hùng - Mã sinh viên: 23103100148
    Nội dung thực hiện: Module 3 - trang hồ sơ cá nhân của sinh viên (mức hoàn thiện, thông tin, thành tích). *@
+@using Microsoft.AspNetCore.Http
 @model SinhVien
 @{
     ViewData["Title"] = "Thông tin cá nhân";
@@ -8,13 +9,14 @@
     const int tongTruong = 7;
     var daCo = tongTruong - thieu.Count;
     string Hien(string? v) => string.IsNullOrWhiteSpace(v) ? "Chưa cập nhật" : v;
-    var chuCai = Model.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
+    var chuCai = string.IsNullOrWhiteSpace(Model.HoTen) ? "S" : Model.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
+    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : Context.Session.GetString("AnhDaiDien");
 }
 
 <div class="page-hero">
     <div class="page-hero-copy">
         <h2>Thông tin cá nhân</h2>
-        <p>Thông tin được đồng bộ với hồ sơ sinh viên UNETI.</p>
+        <p>Thông tin định danh, ảnh đại diện và kết quả học tập đồng bộ với hồ sơ sinh viên UNETI.</p>
     </div>
     <a asp-action="Edit" class="btn btn-primary btn-edit">
         <i class="bi bi-pencil"></i> Chỉnh sửa thông tin
@@ -25,6 +27,13 @@
 {
     <div class="alert alert-success alert-dismissible fade show">
         @TempData["ThongBao"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["Loi"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["Loi"]
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 }
@@ -39,17 +48,38 @@
 
 <div class="profile-layout">
     <div class="ui-card profile-side">
-        <div class="avatar-lg">@chuCai</div>
-        <h3>@Model.HoTen</h3>
-        <div class="profile-meta">@Model.MaSinhVien · @Hien(Model.Nganh)</div>
-        @if (!thieu.Any())
+        @if (!string.IsNullOrEmpty(avatarUrl))
         {
-            <span class="badge-verified">Hồ sơ đã xác thực</span>
+            <div class="avatar-lg p-0">
+                <img src="@avatarUrl" alt="@Model.HoTen" style="width: 100%; height: 100%; object-fit: cover;" />
+            </div>
         }
         else
         {
-            <span class="st st-yellow">Cần bổ sung thông tin</span>
+            <div class="avatar-lg">@chuCai</div>
         }
+
+        <h3>@Model.HoTen</h3>
+        <div class="profile-meta">#@Model.MaSinhVien · @Hien(Model.Nganh)</div>
+        <div class="mb-3">
+            @if (!thieu.Any())
+            {
+                <span class="badge-verified"><i class="bi bi-patch-check-fill"></i> Hồ sơ đã xác thực</span>
+            }
+            else
+            {
+                <span class="st st-yellow">Cần bổ sung thông tin</span>
+            }
+        </div>
+
+        <form asp-action="CapNhatAnhDaiDien" method="post" enctype="multipart/form-data" id="quickAvatarForm" class="pt-3 border-top">
+            @Html.AntiForgeryToken()
+            <input type="file" name="AnhDaiDienUpload" id="quickAvatarInput" class="d-none" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="document.getElementById('quickAvatarForm').submit();" />
+            <label for="quickAvatarInput" class="btn btn-sm btn-outline-primary w-100 mb-1" style="cursor: pointer;">
+                <i class="bi bi-camera me-1"></i> Cập nhật ảnh đại diện
+            </label>
+            <small class="text-muted d-block" style="font-size: 11px;">Hỗ trợ JPG, PNG, WEBP</small>
+        </form>
     </div>
 
     <div class="info-stack">

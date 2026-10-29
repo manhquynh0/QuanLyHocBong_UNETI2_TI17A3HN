@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - xem và cập nhật hồ sơ cá nhân của sinh viên đang đăng nhập.
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
@@ -13,14 +14,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
     public class HoSoCaNhanController : SinhVienBaseController
     {
-        // Chữ cái (kể cả tiếng Việt, dấu rời), khoảng trắng, dấu chấm, nháy đơn, gạch nối.
         private static readonly Regex HoTenRegex = new(@"^[\p{L}][\p{L}\p{M} .'\-]*$", RegexOptions.Compiled);
         private const int TuoiToiThieu = 15;
+        private readonly ISupabaseStorageService _storageService;
 
-        public HoSoCaNhanController(QuanLyHocBong_UNETI2_TI17A3HNContext context) : base(context) { }
+        public HoSoCaNhanController(
+            QuanLyHocBong_UNETI2_TI17A3HNContext context,
+            ISupabaseStorageService storageService) : base(context)
+        {
+            _storageService = storageService;
+        }
 
-        // GET: /HoSoCaNhan  -> hồ sơ cá nhân.
-        // Không nhận mã sinh viên từ URL: luôn lấy theo tài khoản trong Session, nên đổi tham số trên URL vô tác dụng.
+        // GET: /HoSoCaNhan
         public async Task<IActionResult> Index()
         {
             var sv = await LaySinhVienHienTaiAsync();
@@ -32,7 +37,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             return View(sv);
         }
 
-        // GET: /HoSoCaNhan/Edit[?returnUrl=...]
+        // GET: /HoSoCaNhan/Edit
         public async Task<IActionResult> Edit(string? returnUrl = null)
         {
             var sv = await LaySinhVienHienTaiAsync();
@@ -59,16 +64,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /HoSoCaNhan/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(HoSoCaNhanViewModel model)
+        public async Task<IActionResult> Edit(HoSoCaNhanViewModel model, IFormFile? AnhDaiDienUpload)
         {
-            // Đối tượng được cập nhật luôn là sinh viên của tài khoản đang đăng nhập.
-            // Form không có (và server không đọc) MaSinhVien/MaTaiKhoan/TrangThai -> không thể sửa hồ sơ người khác.
             var sv = await LaySinhVienHienTaiAsync(theoDoi: true);
             if (sv == null) return View("ChuaCoHoSo");
 
-            if (!Url.IsLocalUrl(model.ReturnUrl)) model.ReturnUrl = null;   // chống open redirect
+            if (!Url.IsLocalUrl(model.ReturnUrl)) model.ReturnUrl = null;
 
-            // ---- Kiểm tra bổ sung ngoài Data Annotation ----
             if (!string.IsNullOrEmpty(model.HoTen) && !HoTenRegex.IsMatch(model.HoTen))
                 ModelState.AddModelError(nameof(model.HoTen), "Họ tên chỉ gồm chữ cái, khoảng trắng, dấu chấm, dấu nháy đơn hoặc gạch nối");
 
@@ -83,10 +85,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     ModelState.AddModelError(nameof(model.NgaySinh), $"Sinh viên phải từ {TuoiToiThieu} tuổi trở lên");
             }
 
-            // Cột DB là decimal(4,2): chỉ nhận tối đa 2 chữ số thập phân thay vì âm thầm làm tròn.
             if (model.DiemTrungBinhTichLuy.HasValue &&
                 decimal.Round(model.DiemTrungBinhTichLuy.Value, 2) != model.DiemTrungBinhTichLuy.Value)
                 ModelState.AddModelError(nameof(model.DiemTrungBinhTichLuy), "Điểm trung bình chỉ nhập tối đa 2 chữ số thập phân (ví dụ 3.25)");
+
+            // Kiểm tra ảnh đại diện nếu có chọn tệp
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    ModelState.AddModelError(string.Empty, loiAnh);
+                }
+            }
 
             if (!ModelState.IsValid)
             {
@@ -94,23 +105,45 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
-            // ---- Ghi dữ liệu ----
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+                if (!string.IsNullOrEmpty(avatarUrl))
+                {
+                    sv.AnhDaiDien = avatarUrl;
+                    var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+                    if (tk != null)
+                    {
+                        tk.AnhDaiDien = avatarUrl;
+                    }
+                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                }
+            }
+
             var soDienThoai = model.SoDienThoai.StartsWith("+84") ? "0" + model.SoDienThoai[3..] : model.SoDienThoai;
 
             sv.HoTen = model.HoTen;
             sv.NgaySinh = model.NgaySinh!.Value.Date;
             sv.GioiTinh = model.GioiTinh;
-            sv.SoDienThoai = soDienThoai;                                        // luôn lưu dạng 0xxxxxxxxx
+            sv.SoDienThoai = soDienThoai;
             sv.Email = model.Email;
-            sv.DiaChi = model.DiaChi?.Trim() ?? string.Empty;                    // cột DB là NOT NULL
+            sv.DiaChi = model.DiaChi?.Trim() ?? string.Empty;
             sv.BacDaoTao = model.BacDaoTao;
             sv.Nganh = model.Nganh.Trim();
             sv.DiemTrungBinhTichLuy = model.DiemTrungBinhTichLuy!.Value;
-            sv.ThanhTichHocTap = model.ThanhTichHocTap?.Trim() ?? string.Empty;  // cột DB là NOT NULL
+            sv.ThanhTichHocTap = model.ThanhTichHocTap?.Trim() ?? string.Empty;
+
+            var taiKhoan = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+            if (taiKhoan != null)
+            {
+                taiKhoan.HoTen = sv.HoTen;
+                taiKhoan.Email = sv.Email;
+            }
 
             try
             {
                 await _context.SaveChangesAsync();
+                HttpContext.Session.SetString("HoTen", sv.HoTen);
             }
             catch (DbUpdateException)
             {
@@ -124,11 +157,49 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CapNhatAnhDaiDien(IFormFile? AnhDaiDienUpload)
+        {
+            var sv = await LaySinhVienHienTaiAsync(theoDoi: true);
+            if (sv == null) return View("ChuaCoHoSo");
+
+            if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
+            {
+                var loiAnh = TaiLieuHoSoStorage.KiemTraAnhDaiDien(AnhDaiDienUpload);
+                if (loiAnh != null)
+                {
+                    TempData["Loi"] = loiAnh;
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
+                if (!string.IsNullOrEmpty(avatarUrl))
+                {
+                    sv.AnhDaiDien = avatarUrl;
+                    var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
+                    if (tk != null) tk.AnhDaiDien = avatarUrl;
+                    await _context.SaveChangesAsync();
+                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                    TempData["ThongBao"] = "Đã cập nhật ảnh đại diện thành công.";
+                }
+                else
+                {
+                    TempData["Loi"] = "Không thể tải lên ảnh đại diện lúc này. Vui lòng thử lại sau.";
+                }
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private void NapThongTinHoSo(SinhVien sv)
         {
             ViewBag.MaSinhVien = sv.MaSinhVien;
             ViewBag.TrangThaiHocTap = sv.TrangThai;
             ViewBag.HoTenHoSo = sv.HoTen;
+            ViewBag.AnhDaiDien = !string.IsNullOrEmpty(sv.AnhDaiDien)
+                ? sv.AnhDaiDien
+                : HttpContext.Session.GetString("AnhDaiDien");
         }
     }
 }

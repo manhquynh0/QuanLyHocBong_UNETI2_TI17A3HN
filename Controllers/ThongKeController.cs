@@ -1,8 +1,5 @@
-// ============================================================================
-// ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
-// NHÓM 2 - LỚP TI17A3HN - UNETI
-// MODULE 5: BÁO CÁO THỐNG KÊ 10 CHỈ TIÊU BẰNG LINQ & XUẤT DỮ LIỆU EXCEL/CSV
-// ============================================================================
+// Họ và tên: Vũ Mạnh Quỳnh
+// Nội dung thực hiện: Module 5 - Báo cáo thống kê 10 chỉ tiêu bằng LINQ và xuất dữ liệu CSV an toàn.
 
 using System;
 using System.Collections.Generic;
@@ -37,6 +34,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             // 1. Số học bổng theo đơn vị tài trợ (LINQ GroupBy)
             vm.HocBongTheoDonVi = await _context.HocBong
+                .Where(h => !h.DaXoa)
                 .GroupBy(h => h.DonViTaiTro!.TenDonViTaiTro)
                 .Select(g => new ThongKeItem
                 {
@@ -136,7 +134,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 .ToList();
 
             // 9. Tỷ lệ hồ sơ qua xét duyệt sơ bộ theo từng học bổng
-            var allHocBongs = await _context.HocBong.Include(h => h.HoSoHocBongs).ToListAsync();
+            var allHocBongs = await _context.HocBong.Where(h => !h.DaXoa).Include(h => h.HoSoHocBongs).ToListAsync();
             vm.TyLeDatSoBoTheoHocBong = allHocBongs
                 .Where(h => h.HoSoHocBongs.Any())
                 .Select(h =>
@@ -180,9 +178,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Header
             sb.AppendLine("MaHoSo,SinhVien,Email,Nganh,GPA,HocBong,DonViTaiTro,NgayNop,TrangThai,DiemDanhGia,KetQua");
 
+            static string CsvSafe(string? val)
+            {
+                if (string.IsNullOrEmpty(val)) return string.Empty;
+                var escaped = val.Replace("\"", "\"\"");
+                if (escaped.Length > 0 && (escaped[0] == '=' || escaped[0] == '+' || escaped[0] == '-' || escaped[0] == '@'))
+                {
+                    escaped = "'" + escaped;
+                }
+                return escaped;
+            }
+
             foreach (var a in apps)
             {
-                var row = $"\"{a.MaHoSoHocBong}\",\"{a.SinhVien?.HoTen}\",\"{a.SinhVien?.Email}\",\"{a.SinhVien?.Nganh}\",\"{a.SinhVien?.DiemTrungBinhTichLuy}\",\"{a.HocBong?.TenHocBong}\",\"{a.HocBong?.DonViTaiTro?.TenDonViTaiTro}\",\"{a.NgayNop:yyyy-MM-dd}\",\"{a.TrangThai}\",\"{a.KetQuaHocBong?.DiemDanhGia}\",\"{a.KetQuaHocBong?.KetQua}\"";
+                var row = $"\"{a.MaHoSoHocBong}\",\"{CsvSafe(a.SinhVien?.HoTen)}\",\"{CsvSafe(a.SinhVien?.Email)}\",\"{CsvSafe(a.SinhVien?.Nganh)}\",\"{a.SinhVien?.DiemTrungBinhTichLuy:0.00}\",\"{CsvSafe(a.HocBong?.TenHocBong)}\",\"{CsvSafe(a.HocBong?.DonViTaiTro?.TenDonViTaiTro)}\",\"{a.NgayNop:yyyy-MM-dd}\",\"{CsvSafe(a.TrangThai)}\",\"{a.KetQuaHocBong?.DiemDanhGia:0.##}\",\"{CsvSafe(a.KetQuaHocBong?.KetQua)}\"";
                 sb.AppendLine(row);
             }
 
@@ -191,4 +200,3 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         }
     }
 }
-

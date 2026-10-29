@@ -1,3 +1,7 @@
+// Họ và tên: Nguyễn Văn Tình
+// Mã sinh viên: 23103100142
+// Nội dung thực hiện: Module 2 - Xử lý nghiệp vụ quản lý học bổng, tìm kiếm, lọc, sắp xếp và phân trang bằng LINQ.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,23 +50,29 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             }
 
             var today = DateTime.Today;
-            filters.TrangThai = filters.TrangThai is TrangThaiHocBong.SapMo
+            filters.TrangThai = filters.TrangThai is TrangThaiHocBong.ChuaMo
+                or TrangThaiHocBong.SapMo
                 or TrangThaiHocBong.DangNhanHoSo
+                or TrangThaiHocBong.TamDung
                 or TrangThaiHocBong.DaDong
                     ? filters.TrangThai
                     : null;
 
-            if (filters.TrangThai == TrangThaiHocBong.SapMo)
+            if (filters.TrangThai is TrangThaiHocBong.ChuaMo or TrangThaiHocBong.SapMo)
             {
-                query = query.Where(h => h.NgayBatDauNhanHoSo > today);
+                query = query.Where(h => h.TrangThai == TrangThaiHocBong.ChuaMo || h.TrangThai == TrangThaiHocBong.SapMo || h.NgayBatDauNhanHoSo > today);
             }
             else if (filters.TrangThai == TrangThaiHocBong.DangNhanHoSo)
             {
-                query = query.Where(h => h.NgayBatDauNhanHoSo <= today && h.HanNopHoSo >= today);
+                query = query.Where(h => h.TrangThai == TrangThaiHocBong.DangNhanHoSo && h.NgayBatDauNhanHoSo <= today && h.HanNopHoSo >= today);
+            }
+            else if (filters.TrangThai == TrangThaiHocBong.TamDung)
+            {
+                query = query.Where(h => h.TrangThai == TrangThaiHocBong.TamDung);
             }
             else if (filters.TrangThai == TrangThaiHocBong.DaDong)
             {
-                query = query.Where(h => h.HanNopHoSo < today);
+                query = query.Where(h => h.TrangThai == TrangThaiHocBong.DaDong || h.HanNopHoSo < today);
             }
 
             if (filters.DiemToiThieu is >= 0 and <= 4)
@@ -110,7 +120,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 hocBong.TrangThai = TrangThaiHocBong.TinhTrang(
                     hocBong.NgayBatDauNhanHoSo,
                     hocBong.HanNopHoSo,
-                    today);
+                    today,
+                    hocBong.TrangThai);
             }
 
             await PopulateFilterOptionsAsync(filters);
@@ -131,7 +142,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             {
                 hocBong.TrangThai = TrangThaiHocBong.TinhTrang(
                     hocBong.NgayBatDauNhanHoSo,
-                    hocBong.HanNopHoSo);
+                    hocBong.HanNopHoSo,
+                    DateTime.Today,
+                    hocBong.TrangThai);
             }
 
             return hocBong;
@@ -152,7 +165,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
             hocBong.TrangThai = TrangThaiHocBong.TinhTrang(
                 hocBong.NgayBatDauNhanHoSo,
-                hocBong.HanNopHoSo);
+                hocBong.HanNopHoSo,
+                DateTime.Today,
+                hocBong.TrangThai);
             await _unitOfWork.HocBongs.AddAsync(hocBong);
             await _unitOfWork.SaveChangesAsync();
             return (true, null);
@@ -197,7 +212,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             hocBongHienTai.DieuKienXetHocBong = hocBong.DieuKienXetHocBong;
             hocBongHienTai.TrangThai = TrangThaiHocBong.TinhTrang(
                 hocBong.NgayBatDauNhanHoSo,
-                hocBong.HanNopHoSo);
+                hocBong.HanNopHoSo,
+                DateTime.Today,
+                hocBong.TrangThai);
 
             await _unitOfWork.SaveChangesAsync();
             return (true, null);
@@ -228,6 +245,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
                 return "Đơn vị tài trợ đã chọn không tồn tại.";
             }
 
+            // Mục 6.2: Không cho chuyển học bổng sang Đang nhận hồ sơ nếu dữ liệu bắt buộc chưa hợp lệ hoặc đã quá hạn
+            if (hocBong.TrangThai == TrangThaiHocBong.DangNhanHoSo)
+            {
+                if (string.IsNullOrWhiteSpace(hocBong.TenHocBong)
+                    || hocBong.SoSuat <= 0
+                    || hocBong.DiemTrungBinhToiThieu is < 0 or > 4
+                    || hocBong.HanNopHoSo.Date < DateTime.Today)
+                {
+                    return "Không thể chuyển học bổng sang trạng thái 'Đang nhận hồ sơ' khi hạn nộp đã qua hoặc dữ liệu bắt buộc chưa hợp lệ.";
+                }
+            }
+
             return null;
         }
 
@@ -249,8 +278,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
 
             model.TrangThaiOptions = new[]
                 {
-                    TrangThaiHocBong.SapMo,
+                    TrangThaiHocBong.ChuaMo,
                     TrangThaiHocBong.DangNhanHoSo,
+                    TrangThaiHocBong.TamDung,
                     TrangThaiHocBong.DaDong
                 }
                 .Select(value => new SelectListItem { Value = value, Text = value })

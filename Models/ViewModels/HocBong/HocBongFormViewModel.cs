@@ -1,3 +1,7 @@
+// Họ và tên: Nguyễn Văn Tình
+// Mã sinh viên: 23103100142
+// Nội dung thực hiện: Module 2 - ViewModel biểu mẫu tạo và cập nhật học bổng.
+
 using System.ComponentModel.DataAnnotations;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong
@@ -38,5 +42,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels.HocBong
         [StringLength(2000)]
         public string? DieuKienXetHocBong { get; set; }
 
+        [StringLength(50)]
+        public string? TrangThai { get; set; }
     }
 }

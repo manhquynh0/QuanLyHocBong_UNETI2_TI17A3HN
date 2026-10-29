@@ -1,5 +1,75 @@
 @model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan>
-@{ ViewData["Title"] = "Quản lý tài khoản"; }
-<div class="d-flex justify-content-between align-items-center mb-3"><h1 class="h3">Quản lý tài khoản</h1><a asp-action="Create" class="btn btn-primary">Thêm tài khoản</a></div>
-@if (TempData["Error"] is not null) { <div class="alert alert-danger">@TempData["Error"]</div> }
-<div class="table-responsive"><table class="table table-striped"><thead><tr><th>Mã</th><th>Tên đăng nhập</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th></th></tr></thead><tbody>@foreach (var a in Model) { <tr><td>@a.MaTaiKhoan</td><td>@a.TenDangNhap</td><td>@a.HoTen</td><td>@a.Email</td><td>@a.VaiTro</td><td>@(a.TrangThai ? "Hoạt động" : "Đã khóa")</td><td><a asp-action="Edit" asp-route-id="@a.MaTaiKhoan">Sửa</a> <form asp-action="Delete" asp-route-id="@a.MaTaiKhoan" method="post" class="d-inline" onsubmit="return confirm('Xóa tài khoản này?')"><button class="btn btn-link text-danger p-0">Xóa</button></form></td></tr> }</tbody></table></div>
+@{
+    ViewData["Title"] = "Quản lý tài khoản hệ thống";
+}
+
+<div class="sponsor-page">
+    <div class="page-hero">
+        <div class="page-hero-copy">
+            <h2>Tài khoản hệ thống</h2>
+            <p>Quản lý phân quyền truy cập cho Quản trị viên, Cán bộ học bổng và Sinh viên.</p>
+        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-person-plus me-1"></i> Thêm tài khoản mới
+        </a>
+    </div>
+
+    @if (TempData["Error"] is not null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="ui-card">
+        <div class="ui-card-head">
+            <h5>Danh sách tài khoản</h5>
+            <span class="text-muted small">Tổng cộng <strong>@Model.Count()</strong> tài khoản</span>
+        </div>
+        <div class="table-responsive border-0">
+            <table class="ui-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Mã TK</th>
+                        <th style="width: 140px;">Tên đăng nhập</th>
+                        <th style="min-width: 180px;">Họ và tên</th>
+                        <th style="min-width: 210px;">Email</th>
+                        <th style="width: 150px;">Vai trò</th>
+                        <th style="width: 130px;">Trạng thái</th>
+                        <th class="text-end" style="width: 150px;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model)
+                    {
+                        var roleClass = a.VaiTro switch
+                        {
+                            "Admin" => "st-purple",
+                            "Cán bộ học bổng" => "st-blue",
+                            _ => "st-gray"
+                        };
+                        <tr>
+                            <td class="fw-bold text-primary text-nowrap" style="font-variant-numeric: tabular-nums;">#@a.MaTaiKhoan</td>
+                            <td class="text-nowrap"><code>@a.TenDangNhap</code></td>
+                            <td class="fw-semibold text-nowrap">@a.HoTen</td>
+                            <td class="text-muted text-nowrap">@a.Email</td>
+                            <td class="text-nowrap"><span class="st @roleClass">@a.VaiTro</span></td>
+                            <td class="text-nowrap">
+                                <span class="st @(a.TrangThai ? "st-green" : "st-red")">
+                                    @(a.TrangThai ? "Hoạt động" : "Đã khóa")
+                                </span>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@a.MaTaiKhoan" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                                <form asp-action="Delete" asp-route-id="@a.MaTaiKhoan" method="post" class="d-inline" onsubmit="return confirm('Xóa tài khoản này?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

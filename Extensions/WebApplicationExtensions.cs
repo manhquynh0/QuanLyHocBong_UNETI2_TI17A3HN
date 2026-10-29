@@ -19,12 +19,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             try
             {
                 var context = services.GetRequiredService<QuanLyHocBong_UNETI2_TI17A3HNContext>();
-                context.Database.Migrate();
+                DbInitializer.Seed(context);
             }
             catch (Exception ex)
             {
                 var logger = services.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
-                logger.LogError(ex, "Lỗi xảy ra trong quá trình tự động cập nhật Database Migration.");
+                logger.LogError(ex, "Lỗi xảy ra trong quá trình tự động cập nhật Database Migration và Seed Data.");
             }
             return app;
         }

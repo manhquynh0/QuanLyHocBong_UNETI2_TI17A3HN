@@ -1,8 +1,5 @@
-// ============================================================================
-// ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
-// NHÓM 2 - LỚP TI17A3HN - UNETI
-// MODULE 5: KẾT QUẢ HỌC BỔNG, NHẬP ĐIỂM, KIỂM SOÁT SỐ SUẤT & CÔNG BỐ
-// ============================================================================
+// Họ và tên: Vũ Mạnh Quỳnh
+// Nội dung thực hiện: Module 5 - Quản lý kết quả xét học bổng, kiểm tra điều kiện Đã phỏng vấn và kiểm soát số suất bằng LINQ.
 
 using System;
 using System.Linq;
@@ -104,7 +101,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         }
 
         // ====================================================================
-        // GET: KetQuaHocBong/NhapKetQua (Module 5: Nhập kết quả xét học bổng)
+        // GET: KetQuaHocBong/NhapKetQua (Mục 9.4: Chỉ hồ sơ Đã phỏng vấn mới được nhập kết quả)
         // ====================================================================
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
         public async Task<IActionResult> NhapKetQua(int maHoSo)
@@ -118,13 +115,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             if (hoSo == null) return NotFound();
 
-            if (hoSo.TrangThai == "Chờ duyệt" && hoSo.KetQuaHocBong == null)
+            // Mục 9.4 & 22.6: Chỉ hồ sơ Đã phỏng vấn (hoặc đã có kết quả trước đó cần cập nhật) mới được ghi nhận kết quả cuối cùng
+            if (hoSo.KetQuaHocBong == null && hoSo.TrangThai != "Đã phỏng vấn")
             {
-                TempData["ErrorMessage"] = "Hồ sơ đang ở trạng thái 'Chờ duyệt'. Vui lòng xét duyệt sơ bộ hồ sơ trước khi công bố kết quả xét học bổng.";
-                return RedirectToAction("XetDuyetSoBo", "HoSoHocBong", new { id = maHoSo });
+                TempData["Error"] = $"Hồ sơ #{maHoSo} hiện ở trạng thái '{hoSo.TrangThai}'. Theo quy định nghiệp vụ, chỉ hồ sơ ở trạng thái 'Đã phỏng vấn' mới được ghi nhận kết quả cuối cùng.";
+                return RedirectToAction("Details", "HoSoHocBong", new { id = maHoSo });
             }
 
-            // Kiểm soát số suất học bổng bằng LINQ
+            // Kiểm soát số suất học bổng bằng LINQ (Mục 8.5)
             if (hoSo.HocBong != null)
             {
                 int soDaCap = await _context.HoSoHocBong.CountAsync(h => h.MaHocBong == hoSo.MaHocBong && h.TrangThai == "Được cấp học bổng");
@@ -159,9 +157,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     .ThenInclude(sv => sv.TaiKhoan)
                 .Include(hs => hs.HocBong)
                     .ThenInclude(hb => hb.DonViTaiTro)
+                .Include(hs => hs.KetQuaHocBong)
                 .FirstOrDefaultAsync(hs => hs.MaHoSoHocBong == MaHoSoHocBong);
 
             if (hoSo == null) return NotFound();
+
+            // Kiểm tra trạng thái hợp lệ (Mục 8.4 & 9.4)
+            if (hoSo.KetQuaHocBong == null
+                && hoSo.TrangThai != "Đã phỏng vấn"
+                && hoSo.TrangThai != "Được cấp học bổng"
+                && hoSo.TrangThai != "Không được cấp học bổng")
+            {
+                ModelState.AddModelError("", $"Hồ sơ #{MaHoSoHocBong} đang ở trạng thái '{hoSo.TrangThai}'. Chỉ hồ sơ 'Đã phỏng vấn' mới được cập nhật kết quả cuối cùng.");
+            }
 
             if (DiemDanhGia.HasValue && (DiemDanhGia.Value < 0 || DiemDanhGia.Value > 100))
             {
@@ -173,10 +181,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 ModelState.AddModelError("KetQua", "Kết quả phải là 'Được cấp học bổng' hoặc 'Không được cấp học bổng'.");
             }
 
+            // Kiểm soát số suất bằng LINQ (Mục 8.5 & 22.6)
+            int soDaCapKhac = 0;
+            if (hoSo.HocBong != null)
+            {
+                soDaCapKhac = await _context.HoSoHocBong.CountAsync(h =>
+                    h.MaHocBong == hoSo.MaHocBong &&
+                    h.MaHoSoHocBong != MaHoSoHocBong &&
+                    h.TrangThai == "Được cấp học bổng");
+
+                if (KetQua == "Được cấp học bổng" && soDaCapKhac >= hoSo.HocBong.SoSuat)
+                {
+                    ModelState.AddModelError("KetQua", $"Học bổng '{hoSo.HocBong.TenHocBong}' đã cấp đủ {hoSo.HocBong.SoSuat}/{hoSo.HocBong.SoSuat} suất. Không thể cấp vượt số suất quy định.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 var safeNhanXet = NhanXet ?? string.Empty;
-                var existingKq = await _context.KetQuaHocBong.FirstOrDefaultAsync(k => k.MaHoSoHocBong == MaHoSoHocBong);
+                var existingKq = hoSo.KetQuaHocBong ?? await _context.KetQuaHocBong.FirstOrDefaultAsync(k => k.MaHoSoHocBong == MaHoSoHocBong);
                 if (existingKq == null)
                 {
                     existingKq = new KetQuaHocBong
@@ -199,6 +222,14 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 // Cập nhật trạng thái của hồ sơ tương ứng theo State Machine (Mục 9.4)
                 hoSo.TrangThai = KetQua;
+
+                // Mục 8.5: Khi đạt đủ số suất, cảnh báo và đóng học bổng
+                string canhBaoHetSuatMsg = string.Empty;
+                if (KetQua == "Được cấp học bổng" && hoSo.HocBong != null && (soDaCapKhac + 1) >= hoSo.HocBong.SoSuat)
+                {
+                    hoSo.HocBong.TrangThai = "Đã đóng";
+                    canhBaoHetSuatMsg = $" [CẢNH BÁO: Học bổng '{hoSo.HocBong.TenHocBong}' đã đạt đủ {hoSo.HocBong.SoSuat}/{hoSo.HocBong.SoSuat} suất và được chuyển sang trạng thái 'Đã đóng'].";
+                }
 
                 await _context.SaveChangesAsync();
 
@@ -232,13 +263,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     await _emailService.SendEmailAsync(studentEmail, subject, message);
                 }
 
-                TempData["SuccessMessage"] = $"Đã công bố kết quả: '{KetQua}' cho hồ sơ #{MaHoSoHocBong}!";
+                TempData["SuccessMessage"] = $"Đã công bố kết quả: '{KetQua}' cho hồ sơ #{MaHoSoHocBong}!{canhBaoHetSuatMsg}";
                 return RedirectToAction(nameof(Index));
             }
 
+            if (hoSo.HocBong != null)
+            {
+                ViewBag.SoDaCap = soDaCapKhac;
+                ViewBag.TongSoSuat = hoSo.HocBong.SoSuat;
+                ViewBag.CanhBaoHetSuat = soDaCapKhac >= hoSo.HocBong.SoSuat;
+            }
             ViewBag.HoSo = hoSo;
             return View(new KetQuaHocBong { MaHoSoHocBong = MaHoSoHocBong, KetQua = KetQua, DiemDanhGia = DiemDanhGia, NhanXet = NhanXet ?? string.Empty });
         }
     }
 }
-

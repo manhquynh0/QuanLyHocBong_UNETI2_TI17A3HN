@@ -6,119 +6,86 @@
 }
 
 <div class="dashboard-container admin-dashboard">
-    <!-- Welcome Banner matching Figma -->
-    <div class="welcome-banner">
-        <div class="welcome-content">
-            <h1 class="welcome-title">Chào mừng trở lại, @userName! 👋</h1>
-            <p class="welcome-desc">Dưới đây là báo cáo tổng hợp tiến độ xét duyệt hồ sơ học bổng UNETI ngày hôm nay.</p>
+    <header class="portal-masthead">
+        <div>
+            <div class="portal-masthead-kicker">
+                <i class="bi bi-shield-check"></i> Hội đồng Xét duyệt Học bổng UNETI · @DateTime.Now.ToString("dd/MM/yyyy")
+            </div>
+            <h1>Tổng quan điều hành học bổng</h1>
+            <p>Theo dõi tiến độ tiếp nhận, thẩm định sơ bộ, lịch phỏng vấn và chỉ tiêu cấp phát trên toàn hệ thống.</p>
         </div>
-        <div class="welcome-actions">
-            <span class="badge-date">
-                <i class="bi bi-calendar3 me-1"></i> @DateTime.Now.ToString("dd/MM/yyyy")
-            </span>
-            <a asp-controller="HocBong" asp-action="Index" class="btn btn-light btn-sm fw-semibold">
-                <i class="bi bi-plus-circle me-1"></i> Quản lý học bổng
+        <div class="portal-masthead-actions">
+            <a asp-controller="HoSoHocBong" asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-check me-1"></i> Duyệt hồ sơ (@Model.HoSoChoDuyet)
+            </a>
+            <a asp-controller="HocBong" asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Tạo chương trình học bổng
             </a>
         </div>
-    </div>
+    </header>
 
-    <!-- Stats Grid matching Figma frame 3:687 + 9 chỉ số doc.docx -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon icon-blue">
-                <i class="bi bi-award-fill"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Tổng học bổng</span>
-                <h3 class="stat-value">@Model.TongHocBong <small>Chương trình</small></h3>
-                <span class="stat-meta text-success"><i class="bi bi-check-circle me-1"></i>@Model.HocBongDangNhanHoSo đang nhận hồ sơ</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon icon-indigo">
-                <i class="bi bi-file-earmark-text-fill"></i>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Hồ sơ đã nộp</span>
-                <h3 class="stat-value">@Model.TongHoSo <small>Hồ sơ</small></h3>
-                <span class="stat-meta text-primary"><i class="bi bi-clock-history me-1"></i>Toàn thời gian</span>
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-icon icon-amber">
+    <!-- Dải chỉ số học thuật (Metric Ledger) thay cho các hộp màu rời rạc -->
+    <section class="metric-ledger" aria-label="Chỉ số điều hành trọng tâm">
+        <div class="metric-cell @(Model.HoSoChoDuyet > 0 ? "is-priority" : "")">
+            <div class="metric-cell-head">
+                <span>Hồ sơ chờ sơ duyệt</span>
                 <i class="bi bi-hourglass-split"></i>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Hồ sơ chờ duyệt</span>
-                <h3 class="stat-value">@Model.HoSoChoDuyet <small>Hồ sơ</small></h3>
-                <span class="stat-meta text-warning"><i class="bi bi-exclamation-circle me-1"></i>Cần xử lý sơ bộ</span>
+            <div class="metric-cell-num">@Model.HoSoChoDuyet <small>hồ sơ</small></div>
+            <div class="metric-cell-foot">
+                <a asp-controller="HoSoHocBong" asp-action="Index" asp-route-TrangThai="Chờ duyệt">Xử lý sơ bộ ngay</a>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon icon-purple">
-                <i class="bi bi-calendar-event-fill"></i>
+        <div class="metric-cell">
+            <div class="metric-cell-head">
+                <span>Tổng hồ sơ tiếp nhận</span>
+                <i class="bi bi-folder2-open"></i>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Lịch phỏng vấn</span>
-                <h3 class="stat-value">@Model.LichPhongVanSapToi <small>Phiên</small></h3>
-                <span class="stat-meta text-info"><i class="bi bi-calendar2-check me-1"></i>Đã lên lịch hẹn</span>
+            <div class="metric-cell-num">@Model.TongHoSo <small>hồ sơ</small></div>
+            <div class="metric-cell-foot">@Model.HoSoDatSoBo hồ sơ đã đạt sơ bộ</div>
+        </div>
+
+        <div class="metric-cell">
+            <div class="metric-cell-head">
+                <span>Chương trình học bổng</span>
+                <i class="bi bi-journal-bookmark"></i>
+            </div>
+            <div class="metric-cell-num">@Model.TongHocBong <small>quỹ</small></div>
+            <div class="metric-cell-foot">@Model.HocBongDangNhanHoSo chương trình đang mở nhận</div>
+        </div>
+
+        <div class="metric-cell">
+            <div class="metric-cell-head">
+                <span>Lịch phỏng vấn sắp tới</span>
+                <i class="bi bi-calendar-event"></i>
+            </div>
+            <div class="metric-cell-num">@Model.LichPhongVanSapToi <small>phiên</small></div>
+            <div class="metric-cell-foot">
+                <a asp-controller="LichPhongVan" asp-action="Index">Quản lý lịch hẹn</a>
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-icon icon-emerald">
-                <i class="bi bi-patch-check-fill"></i>
+        <div class="metric-cell">
+            <div class="metric-cell-head">
+                <span>Đã duyệt cấp học bổng</span>
+                <i class="bi bi-award"></i>
             </div>
-            <div class="stat-info">
-                <span class="stat-label">Đã duyệt cấp học bổng</span>
-                <h3 class="stat-value">@Model.HoSoDuocCapHocBong <small>Sinh viên</small></h3>
-                <span class="stat-meta text-success"><i class="bi bi-trophy-fill me-1"></i>Trúng tuyển</span>
-            </div>
+            <div class="metric-cell-num">@Model.HoSoDuocCapHocBong <small>suất</small></div>
+            <div class="metric-cell-foot">@Model.TongDonViTaiTro đối tác · @Model.TongSinhVien sinh viên</div>
         </div>
-    </div>
+    </section>
 
-    <!-- Secondary Metrics Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-4">
-            <div class="mini-stat-card">
-                <div class="mini-stat-icon text-primary"><i class="bi bi-building"></i></div>
-                <div>
-                    <span class="mini-stat-label">Đơn vị tài trợ</span>
-                    <strong class="mini-stat-val">@Model.TongDonViTaiTro đối tác</strong>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="mini-stat-card">
-                <div class="mini-stat-icon text-info"><i class="bi bi-people-fill"></i></div>
-                <div>
-                    <span class="mini-stat-label">Sinh viên đăng ký</span>
-                    <strong class="mini-stat-val">@Model.TongSinhVien sinh viên</strong>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="mini-stat-card">
-                <div class="mini-stat-icon text-success"><i class="bi bi-check2-all"></i></div>
-                <div>
-                    <span class="mini-stat-label">Đạt sơ bộ</span>
-                    <strong class="mini-stat-val">@Model.HoSoDatSoBo hồ sơ</strong>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts Row -->
+    <!-- Biểu đồ trực quan -->
     <div class="dashboard-charts">
-        <!-- Monthly Applications Bar Chart -->
         <div class="dashboard-chart-monthly">
             <div class="chart-card">
                 <div class="chart-header">
-                    <h5 class="chart-title">Hồ sơ tiếp nhận theo tháng</h5>
-                    <span class="badge bg-light text-secondary border">Thống kê kỳ học</span>
+                    <div>
+                        <h5 class="chart-title">Lưu lượng hồ sơ nộp theo tháng</h5>
+                        <p class="chart-sub">Biến động số lượng hồ sơ ứng tuyển qua các kỳ xét duyệt</p>
+                    </div>
+                    <a asp-controller="ThongKe" asp-action="Index" class="btn btn-sm btn-outline-secondary">Báo cáo chi tiết</a>
                 </div>
                 <div class="bar-chart-container">
                     @{
@@ -141,17 +108,18 @@
             </div>
         </div>
 
-        <!-- Status Distribution Donut Chart -->
         <div class="dashboard-chart-status">
             <div class="chart-card">
                 <div class="chart-header">
-                    <h5 class="chart-title">Phân bổ trạng thái hồ sơ</h5>
-                    <span class="badge bg-light text-secondary border">Tỷ lệ %</span>
+                    <div>
+                        <h5 class="chart-title">Cơ cấu trạng thái hồ sơ</h5>
+                        <p class="chart-sub">Tỷ lệ phân bổ theo giai đoạn xét duyệt</p>
+                    </div>
                 </div>
                 <div class="status-chart-body">
                     <div class="donut-chart-wrapper">
                         <svg viewBox="0 0 160 160" class="donut-svg" role="img" aria-label="Biểu đồ phân bổ trạng thái hồ sơ">
-                            <circle cx="80" cy="80" r="58" fill="transparent" stroke="#f1f5f9" stroke-width="30" />
+                            <circle cx="80" cy="80" r="58" fill="transparent" stroke="#f1f5f9" stroke-width="28" />
                             @{
                                 double offset = 0;
                                 double radius = 58;
@@ -163,7 +131,7 @@
                                     var labelX = 80 + Math.Cos(midAngle) * radius;
                                     var labelY = 80 + Math.Sin(midAngle) * radius;
                                     <circle cx="80" cy="80" r="@radius" fill="transparent"
-                                            stroke="@s.MauSac" stroke-width="30"
+                                            stroke="@s.MauSac" stroke-width="28"
                                             stroke-dasharray="@(dash.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)) @((circumference - dash).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
                                             stroke-dashoffset="@((-offset).ToString("F2", System.Globalization.CultureInfo.InvariantCulture))"
                                             transform="rotate(-90 80 80)" />
@@ -174,7 +142,7 @@
                         </svg>
                         <div class="donut-center-text">
                             <strong>@Model.TongHoSo</strong>
-                            <small>Hồ sơ</small>
+                            <small>Tổng hồ sơ</small>
                         </div>
                     </div>
                     <div class="legend-list">
@@ -182,7 +150,7 @@
                         {
                             <div class="legend-item">
                                 <span class="legend-dot" style="background-color: @s.MauSac"></span>
-                                <span class="legend-name">@s.TenTrangThai</span>
+                                <span class="legend-name">@s.TenTrangThai (@s.SoLuong)</span>
                             </div>
                         }
                     </div>
@@ -191,25 +159,25 @@
         </div>
     </div>
 
-    <!-- Recent Applications Table Section -->
+    <!-- Hồ sơ ứng tuyển gần đây -->
     <section class="dashboard-recent-card">
         <div class="dashboard-recent-header">
             <div>
-                <h2 class="dashboard-recent-title">Hồ sơ ứng tuyển gần đây</h2>
-                <p class="dashboard-recent-subtitle">Cập nhật hồ sơ sinh viên vừa gửi lên hệ thống</p>
+                <h2 class="dashboard-recent-title">Hồ sơ ứng tuyển mới tiếp nhận</h2>
+                <p class="dashboard-recent-subtitle">Danh sách hồ sơ sinh viên gửi lên gần nhất cần kiểm tra</p>
             </div>
-            <a asp-controller="HoSoHocBong" asp-action="Index" class="btn btn-sm btn-primary">
-                Xem tất cả hồ sơ <i class="bi bi-arrow-right ms-1"></i>
+            <a asp-controller="HoSoHocBong" asp-action="Index" class="btn btn-sm btn-outline-primary">
+                Mở toàn bộ danh sách hồ sơ
             </a>
         </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 dashboard-recent-table">
-                <thead class="table-light">
+        <div class="table-responsive border-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
                     <tr>
                         <th class="ps-4">Mã hồ sơ</th>
-                        <th>Sinh viên</th>
+                        <th>Sinh viên ứng tuyển</th>
                         <th>Chương trình học bổng</th>
-                        <th>Ngày nộp</th>
+                        <th>Thời gian nộp</th>
                         <th>Trạng thái</th>
                         <th class="text-end pe-4">Thao tác</th>
                     </tr>
@@ -233,19 +201,19 @@
                             };
 
                             <tr>
-                                <td class="ps-4 fw-semibold">#@item.MaHoSo</td>
-                                <td>
+                                <td class="ps-4 fw-bold text-primary text-nowrap" style="font-variant-numeric: tabular-nums;">#@item.MaHoSo</td>
+                                <td class="text-nowrap">
                                     <div class="d-flex align-items-center gap-2">
                                         <div class="table-avatar">@(!string.IsNullOrEmpty(item.TenSinhVien) ? item.TenSinhVien.Substring(0, 1) : "S")</div>
-                                        <span class="fw-bold text-dark">@item.TenSinhVien</span>
+                                        <span class="fw-semibold text-dark">@item.TenSinhVien</span>
                                     </div>
                                 </td>
-                                <td>@item.TenHocBong</td>
-                                <td>@item.NgayNop.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td><span class="status-badge @badgeClass">@item.TrangThai</span></td>
-                                <td class="text-end pe-4">
+                                <td class="fw-medium">@item.TenHocBong</td>
+                                <td class="text-muted small text-nowrap" style="font-variant-numeric: tabular-nums;">@item.NgayNop.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-nowrap"><span class="status-badge @badgeClass">@item.TrangThai</span></td>
+                                <td class="text-end pe-4 text-nowrap">
                                     <a asp-controller="HoSoHocBong" asp-action="Details" asp-route-id="@item.MaHoSo" class="btn btn-sm btn-outline-secondary">
-                                        <i class="bi bi-eye"></i> Xem
+                                        Thẩm định
                                     </a>
                                 </td>
                             </tr>
@@ -254,9 +222,8 @@
                     else
                     {
                         <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">
-                                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                                Chưa có hồ sơ học bổng nào trong hệ thống.
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                Chưa có hồ sơ học bổng nào được nộp lên hệ thống.
                             </td>
                         </tr>
                     }
