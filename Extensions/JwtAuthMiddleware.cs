@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
@@ -21,6 +22,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             JwtService jwtService,
             QuanLyHocBong_UNETI2_TI17A3HNContext db)
         {
+            // 1. Lấy AccessToken từ Cookie hoặc Header Authorization
             var accessToken = context.Request.Cookies["AccessToken"];
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -31,40 +33,53 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
                 }
             }
 
-            var payload = jwtService.XacMinhAccessToken(accessToken);
+            // 2. Xác minh AccessToken
+            var payload = jwtService.ValidateAccessToken(accessToken);
 
+            // 3. Nếu AccessToken hết hạn -> Dùng bảng RefreshToken trong Database để làm mới
             if (payload == null)
             {
                 var refreshToken = context.Request.Cookies["RefreshToken"];
                 if (!string.IsNullOrWhiteSpace(refreshToken))
                 {
-                    var account = await db.TaiKhoan.FirstOrDefaultAsync(t =>
-                        t.RefreshToken == refreshToken &&
-                        t.TrangThai == true);
+                    var tokenRecord = await db.RefreshToken
+                        .Include(r => r.TaiKhoan)
+                        .FirstOrDefaultAsync(r => r.Token == refreshToken && !r.IsRevoked);
 
-                    if (account != null && account.RefreshTokenExpiryTime > DateTime.Now)
+                    if (tokenRecord != null && tokenRecord.ExpiryDate > DateTime.Now && tokenRecord.TaiKhoan != null && tokenRecord.TaiKhoan.TrangThai)
                     {
+                        var account = tokenRecord.TaiKhoan;
                         var avatar = account.AnhDaiDien;
                         if (string.IsNullOrEmpty(avatar))
                         {
-                            var sv = await db.SinhVien.AsNoTracking()
+                            var student = await db.SinhVien.AsNoTracking()
                                 .FirstOrDefaultAsync(s => s.MaTaiKhoan == account.MaTaiKhoan);
-                            avatar = sv?.AnhDaiDien;
+                            avatar = student?.AnhDaiDien;
                         }
 
-                        var newAccessToken = jwtService.TaoAccessToken(account, avatar);
-                        var newRefreshToken = jwtService.TaoRefreshToken();
+                        // Thu hồi token cũ (Cơ chế Token Rotation)
+                        tokenRecord.IsRevoked = true;
 
-                        account.RefreshToken = newRefreshToken;
-                        account.RefreshTokenExpiryTime = DateTime.Now.AddDays(JwtService.ThoiGianRefreshTokenNgay);
+                        // Tạo cặp token mới
+                        var newAccessToken = jwtService.GenerateAccessToken(account, avatar);
+                        var newRefreshToken = jwtService.GenerateRefreshToken();
+
+                        db.RefreshToken.Add(new RefreshToken
+                        {
+                            MaTaiKhoan = account.MaTaiKhoan,
+                            Token = newRefreshToken,
+                            ExpiryDate = DateTime.Now.AddDays(JwtService.RefreshTokenExpireDays),
+                            CreatedAt = DateTime.Now,
+                            IsRevoked = false
+                        });
                         await db.SaveChangesAsync();
 
-                        LuuTokenVaoCookie(context, newAccessToken, newRefreshToken);
-                        payload = jwtService.XacMinhAccessToken(newAccessToken);
+                        SaveTokenCookies(context, newAccessToken, newRefreshToken);
+                        payload = jwtService.ValidateAccessToken(newAccessToken);
                     }
                     else
                     {
-                        XoaTokenCookie(context);
+                        ClearTokenCookies(context);
                         context.Session.Clear();
                     }
                 }
@@ -74,45 +89,48 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
                 }
             }
 
+            // 4. Gắn thông tin người dùng đã xác thực vào Session và Request Context
             if (payload != null)
             {
                 var currentAccountId = context.Session.GetInt32("MaTaiKhoan");
                 context.Items["JwtUser"] = payload;
-                context.Session.SetInt32("MaTaiKhoan", payload.MaTaiKhoan);
-                context.Session.SetString("VaiTro", payload.VaiTro);
+                context.Session.SetInt32("MaTaiKhoan", payload.AccountId);
+                context.Session.SetString("VaiTro", payload.Role);
 
-                if (currentAccountId != payload.MaTaiKhoan || string.IsNullOrEmpty(context.Session.GetString("HoTen")))
+                if (currentAccountId != payload.AccountId || string.IsNullOrEmpty(context.Session.GetString("HoTen")))
                 {
-                    context.Session.SetString("HoTen", payload.HoTen);
+                    context.Session.SetString("HoTen", payload.FullName);
                 }
-                if ((currentAccountId != payload.MaTaiKhoan || string.IsNullOrEmpty(context.Session.GetString("AnhDaiDien")))
-                    && !string.IsNullOrEmpty(payload.AnhDaiDien))
+                if ((currentAccountId != payload.AccountId || string.IsNullOrEmpty(context.Session.GetString("AnhDaiDien")))
+                    && !string.IsNullOrEmpty(payload.Avatar))
                 {
-                    context.Session.SetString("AnhDaiDien", payload.AnhDaiDien);
+                    context.Session.SetString("AnhDaiDien", payload.Avatar);
                 }
             }
 
             await _next(context);
         }
 
-        public static void LuuTokenVaoCookie(HttpContext context, string accessToken, string refreshToken)
+        // Lưu AccessToken & RefreshToken vào HttpOnly Cookie
+        public static void SaveTokenCookies(HttpContext context, string accessToken, string refreshToken)
         {
             context.Response.Cookies.Append("AccessToken", accessToken, new CookieOptions
             {
                 HttpOnly = true,
                 SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(JwtService.ThoiGianAccessTokenPhut)
+                Expires = DateTimeOffset.UtcNow.AddMinutes(JwtService.AccessTokenExpireMinutes)
             });
 
             context.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddDays(JwtService.ThoiGianRefreshTokenNgay)
+                Expires = DateTimeOffset.UtcNow.AddDays(JwtService.RefreshTokenExpireDays)
             });
         }
 
-        public static void XoaTokenCookie(HttpContext context)
+        // Xóa Cookie chứa token khi đăng xuất hoặc token không hợp lệ
+        public static void ClearTokenCookies(HttpContext context)
         {
             context.Response.Cookies.Delete("AccessToken");
             context.Response.Cookies.Delete("RefreshToken");

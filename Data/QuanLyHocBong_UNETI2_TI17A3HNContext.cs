@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,7 +14,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
         {
         }
 
-
         public DbSet<TaiKhoan> TaiKhoan { get; set; } = default!;
         public DbSet<DonViTaiTro> DonViTaiTro { get; set; } = default!;
         public DbSet<HocBong> HocBong { get; set; } = default!;
@@ -23,6 +22,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
         public DbSet<LichPhongVan> LichPhongVan { get; set; } = default!;
         public DbSet<KetQuaHocBong> KetQuaHocBong { get; set; } = default!;
         public DbSet<TaiLieuHoSo> TaiLieuHoSo { get; set; }
+        public DbSet<RefreshToken> RefreshToken { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -37,11 +37,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
 
             modelBuilder.Entity<KetQuaHocBong>().HasIndex(k => k.MaHoSoHocBong).IsUnique();
 
+            modelBuilder.Entity<RefreshToken>()
+                .HasIndex(r => r.Token);
+
+            modelBuilder.Entity<RefreshToken>()
+                .HasOne(r => r.TaiKhoan)
+                .WithMany(t => t.RefreshTokens)
+                .HasForeignKey(r => r.MaTaiKhoan)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<HocBong>().HasOne(h => h.DonViTaiTro)
                 .WithMany(d => d.HocBongs)
                 .HasForeignKey(h => h.MaDonViTaiTro)
                 .OnDelete(DeleteBehavior.Restrict);
+
             modelBuilder.Entity<HoSoHocBong>()
                 .HasOne(hs => hs.SinhVien)
                 .WithMany(s => s.HoSoHocBongs)

@@ -16,6 +16,38 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
         {
             context.Database.Migrate();
 
+            // Tự động kiểm tra và khởi tạo bảng RefreshToken nếu chưa chuẩn trong SQL Server
+            context.Database.ExecuteSqlRaw(@"
+                IF OBJECT_ID('RefreshToken', 'U') IS NOT NULL AND COL_LENGTH('RefreshToken', 'MaTaiKhoan') IS NULL
+                BEGIN
+                    DROP TABLE [RefreshToken];
+                END
+
+                IF OBJECT_ID('RefreshToken', 'U') IS NULL
+                BEGIN
+                    CREATE TABLE [RefreshToken] (
+                        [Id] int IDENTITY(1,1) NOT NULL,
+                        [MaTaiKhoan] int NOT NULL,
+                        [Token] varchar(255) NOT NULL,
+                        [ExpiryDate] datetime2 NOT NULL,
+                        [CreatedAt] datetime2 NOT NULL DEFAULT GETDATE(),
+                        [IsRevoked] bit NOT NULL DEFAULT 0,
+                        CONSTRAINT [PK_RefreshToken] PRIMARY KEY ([Id]),
+                        CONSTRAINT [FK_RefreshToken_TaiKhoan_MaTaiKhoan] FOREIGN KEY ([MaTaiKhoan]) REFERENCES [TaiKhoan] ([MaTaiKhoan]) ON DELETE CASCADE
+                    );
+                    CREATE INDEX [IX_RefreshToken_Token] ON [RefreshToken] ([Token]);
+                END
+                ELSE
+                BEGIN
+                    IF COL_LENGTH('RefreshToken', 'ExpiryDate') IS NULL AND COL_LENGTH('RefreshToken', 'NgayHetHan') IS NOT NULL
+                    BEGIN
+                        EXEC sp_rename 'RefreshToken.NgayHetHan', 'ExpiryDate', 'COLUMN';
+                        EXEC sp_rename 'RefreshToken.NgayTao', 'CreatedAt', 'COLUMN';
+                        EXEC sp_rename 'RefreshToken.DaThuHoi', 'IsRevoked', 'COLUMN';
+                    END
+                END
+            ");
+
             // Nếu đã có đủ dữ liệu mẫu theo Mục 16 thì không seed lặp lại
             if (context.DonViTaiTro.Count() >= 5 && context.HocBong.Count(h => !h.DaXoa) >= 15 && context.SinhVien.Count() >= 30)
             {
