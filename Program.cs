@@ -3,7 +3,11 @@ using Microsoft.Extensions.DependencyInjection;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Validators;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
+using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Interfaces;
+using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Implementations;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,11 +28,16 @@ builder.Services.AddSession(options =>
 });
 
 // ===== Đăng ký các Service (Dependency Injection) =====
+builder.Services.AddScoped<ITaiKhoanService, TaiKhoanService>();
+builder.Services.AddScoped<ITaiKhoanRepository, TaiKhoanRepository>();
+
 // Module 3 - Học bổng (sinh viên xem)
 builder.Services.AddScoped<IHocBongService, HocBongService>();
 
 // Module 4 - Hồ sơ học bổng
 builder.Services.AddScoped<IHoSoHocBongService, HoSoHocBongService>();
+builder.Services.AddScoped<IHoSoHocBongRepository, HoSoHocBongRepository>();
+builder.Services.AddScoped<HoSoHocBongValidator>();
 
 // Module Email (dùng bởi KetQuaHocBong & LichPhongVan)
 builder.Services.AddScoped<IEmailService, EmailService>();
