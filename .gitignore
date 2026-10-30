@@ -9,6 +9,7 @@ publish/
 artifacts/
 *.cache
 .project.assets.json
+App_Data/TaiLieuHoSo/
 
 ## ==========================================
 ## 2. BẢO MẬT & MẬT KHẨU CÁ NHÂN (SECRETS)
