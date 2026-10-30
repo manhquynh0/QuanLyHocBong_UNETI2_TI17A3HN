@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -43,13 +44,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         [Column(TypeName = "nvarchar(1000)")]
         public string? AnhDaiDien { get; set; }
 
-        // Lưu Refresh Token và thời gian hết hạn trong Database
-        [StringLength(255)]
-        [Column(TypeName = "varchar(255)")]
-        public string? RefreshToken { get; set; }
-
-        public DateTime? RefreshTokenExpiryTime { get; set; }
-
         public virtual SinhVien? SinhVien { get; set; }
+
+        // Quan hệ 1 - N: Một tài khoản có thể có nhiều Refresh Token (hỗ trợ nhiều thiết bị)
+        public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     }
 }

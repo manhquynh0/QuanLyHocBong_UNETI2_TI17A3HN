@@ -79,16 +79,23 @@ public class TaiKhoanController(
         }
 
         // 1. Tạo JWT AccessToken (15 phút) và RefreshToken (7 ngày)
-        var accessToken = jwtService.TaoAccessToken(account, avatar);
-        var refreshToken = jwtService.TaoRefreshToken();
+        var accessToken = jwtService.GenerateAccessToken(account, avatar);
+        var refreshToken = jwtService.GenerateRefreshToken();
 
-        // 2. Lưu RefreshToken và thời hạn vào Database (bảng TaiKhoan)
-        account.RefreshToken = refreshToken;
-        account.RefreshTokenExpiryTime = DateTime.Now.AddDays(JwtService.ThoiGianRefreshTokenNgay);
+        // 2. Lưu bản ghi RefreshToken vào bảng riêng RefreshToken trong Database
+        var tokenEntity = new RefreshToken
+        {
+            MaTaiKhoan = account.MaTaiKhoan,
+            Token = refreshToken,
+            ExpiryDate = DateTime.Now.AddDays(JwtService.RefreshTokenExpireDays),
+            CreatedAt = DateTime.Now,
+            IsRevoked = false
+        };
+        db.RefreshToken.Add(tokenEntity);
         await db.SaveChangesAsync();
 
         // 3. Lưu AccessToken & RefreshToken vào HttpOnly Cookie
-        JwtAuthMiddleware.LuuTokenVaoCookie(HttpContext, accessToken, refreshToken);
+        JwtAuthMiddleware.SaveTokenCookies(HttpContext, accessToken, refreshToken);
 
         // Đồng bộ ngữ cảnh hiện tại cho giao diện
         HttpContext.Session.Clear();
@@ -104,68 +111,69 @@ public class TaiKhoanController(
         return RedirectToAction("Index", "Home");
     }
 
-    // Endpoint làm mới AccessToken từ RefreshToken lưu trong Database
+    // Endpoint làm mới AccessToken từ bảng RefreshToken trong Database
     [HttpPost]
     public async Task<IActionResult> LamMoiToken(string? refreshToken = null)
     {
-        var tokenCanKiemTra = refreshToken ?? Request.Cookies["RefreshToken"];
-        if (string.IsNullOrWhiteSpace(tokenCanKiemTra))
+        var tokenToCheck = refreshToken ?? Request.Cookies["RefreshToken"];
+        if (string.IsNullOrWhiteSpace(tokenToCheck))
         {
             return Unauthorized(new { message = "Không tìm thấy Refresh Token." });
         }
 
-        var account = await db.TaiKhoan.FirstOrDefaultAsync(t =>
-            t.RefreshToken == tokenCanKiemTra &&
-            t.TrangThai == true);
+        var tokenRecord = await db.RefreshToken
+            .Include(r => r.TaiKhoan)
+            .FirstOrDefaultAsync(r => r.Token == tokenToCheck && !r.IsRevoked);
 
-        if (account == null || account.RefreshTokenExpiryTime <= DateTime.Now)
+        if (tokenRecord == null || tokenRecord.ExpiryDate <= DateTime.Now || tokenRecord.TaiKhoan == null || !tokenRecord.TaiKhoan.TrangThai)
         {
-            JwtAuthMiddleware.XoaTokenCookie(HttpContext);
+            JwtAuthMiddleware.ClearTokenCookies(HttpContext);
             return Unauthorized(new { message = "Refresh Token không hợp lệ hoặc đã hết hạn." });
         }
 
-        var newAccessToken = jwtService.TaoAccessToken(account);
-        var newRefreshToken = jwtService.TaoRefreshToken();
+        // Thu hồi token cũ (Cơ chế Token Rotation)
+        tokenRecord.IsRevoked = true;
 
-        account.RefreshToken = newRefreshToken;
-        account.RefreshTokenExpiryTime = DateTime.Now.AddDays(JwtService.ThoiGianRefreshTokenNgay);
+        var newAccessToken = jwtService.GenerateAccessToken(tokenRecord.TaiKhoan);
+        var newRefreshToken = jwtService.GenerateRefreshToken();
+
+        // Tạo bản ghi token mới trong bảng RefreshToken
+        db.RefreshToken.Add(new RefreshToken
+        {
+            MaTaiKhoan = tokenRecord.MaTaiKhoan,
+            Token = newRefreshToken,
+            ExpiryDate = DateTime.Now.AddDays(JwtService.RefreshTokenExpireDays),
+            CreatedAt = DateTime.Now,
+            IsRevoked = false
+        });
         await db.SaveChangesAsync();
 
-        JwtAuthMiddleware.LuuTokenVaoCookie(HttpContext, newAccessToken, newRefreshToken);
+        JwtAuthMiddleware.SaveTokenCookies(HttpContext, newAccessToken, newRefreshToken);
 
         return Ok(new
         {
             accessToken = newAccessToken,
             refreshToken = newRefreshToken,
-            expiresInMinutes = JwtService.ThoiGianAccessTokenPhut
+            expiresInMinutes = JwtService.AccessTokenExpireMinutes
         });
     }
 
     [HttpGet, HttpPost]
     public async Task<IActionResult> DangXuat()
     {
-        // Xóa RefreshToken trong Database khi đăng xuất
+        // Thu hồi RefreshToken trong bảng RefreshToken khi đăng xuất
         var refreshToken = Request.Cookies["RefreshToken"];
-        var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
-
-        TaiKhoan? account = null;
         if (!string.IsNullOrEmpty(refreshToken))
         {
-            account = await db.TaiKhoan.FirstOrDefaultAsync(t => t.RefreshToken == refreshToken);
-        }
-        else if (maTaiKhoan.HasValue)
-        {
-            account = await db.TaiKhoan.FindAsync(maTaiKhoan.Value);
-        }
-
-        if (account != null)
-        {
-            account.RefreshToken = null;
-            account.RefreshTokenExpiryTime = null;
-            await db.SaveChangesAsync();
+            var tokenRecord = await db.RefreshToken.FirstOrDefaultAsync(r => r.Token == refreshToken);
+            if (tokenRecord != null)
+            {
+                tokenRecord.IsRevoked = true;
+                await db.SaveChangesAsync();
+            }
         }
 
-        JwtAuthMiddleware.XoaTokenCookie(HttpContext);
+        JwtAuthMiddleware.ClearTokenCookies(HttpContext);
         HttpContext.Session.Clear();
         return RedirectToAction(nameof(DangNhap));
     }

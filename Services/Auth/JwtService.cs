@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -7,22 +7,22 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 {
-    public class JwtPayloadData
+    public class JwtPayload
     {
-        public int MaTaiKhoan { get; set; }
-        public string TenDangNhap { get; set; } = string.Empty;
-        public string HoTen { get; set; } = string.Empty;
-        public string VaiTro { get; set; } = string.Empty;
-        public string? AnhDaiDien { get; set; }
-        public long exp { get; set; }
+        public int AccountId { get; set; }
+        public string Username { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string? Avatar { get; set; }
+        public long Exp { get; set; }
     }
 
     public class JwtService
     {
         private readonly string _secretKey;
 
-        public const int ThoiGianAccessTokenPhut = 15;
-        public const int ThoiGianRefreshTokenNgay = 7;
+        public const int AccessTokenExpireMinutes = 15;
+        public const int RefreshTokenExpireDays = 7;
 
         public JwtService(IConfiguration configuration)
         {
@@ -30,59 +30,72 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 ?? "KhoaBiMat_QuanLyHocBong_UNETI2_TI17A3HN_2026_SecretKey!@#";
         }
 
-        public string TaoAccessToken(TaiKhoan taiKhoan, string? anhDaiDien = null)
+        // Tạo AccessToken (thời hạn 15 phút)
+        public string GenerateAccessToken(TaiKhoan account, string? avatar = null)
         {
             var header = new { alg = "HS256", typ = "JWT" };
-            var payload = new JwtPayloadData
+            var payload = new JwtPayload
             {
-                MaTaiKhoan = taiKhoan.MaTaiKhoan,
-                TenDangNhap = taiKhoan.TenDangNhap,
-                HoTen = taiKhoan.HoTen,
-                VaiTro = taiKhoan.VaiTro,
-                AnhDaiDien = anhDaiDien ?? taiKhoan.AnhDaiDien,
-                exp = DateTimeOffset.UtcNow.AddMinutes(ThoiGianAccessTokenPhut).ToUnixTimeSeconds()
+                AccountId = account.MaTaiKhoan,
+                Username = account.TenDangNhap,
+                FullName = account.HoTen,
+                Role = account.VaiTro,
+                Avatar = avatar ?? account.AnhDaiDien,
+                Exp = DateTimeOffset.UtcNow.AddMinutes(AccessTokenExpireMinutes).ToUnixTimeSeconds()
             };
 
             string headerBase64 = Base64UrlEncode(JsonSerializer.Serialize(header));
             string payloadBase64 = Base64UrlEncode(JsonSerializer.Serialize(payload));
-            string duLieuCanKy = $"{headerBase64}.{payloadBase64}";
-            string chuKy = TaoChuKyHmacSha256(duLieuCanKy);
+            string dataToSign = $"{headerBase64}.{payloadBase64}";
+            string signature = CreateHmacSignature(dataToSign);
 
-            return $"{duLieuCanKy}.{chuKy}";
+            return $"{dataToSign}.{signature}";
         }
 
-        public string TaoRefreshToken()
+        // Tạo chuỗi RefreshToken ngẫu nhiên
+        public string GenerateRefreshToken()
         {
             var randomBytes = RandomNumberGenerator.GetBytes(32);
             return Convert.ToBase64String(randomBytes);
         }
 
-        public JwtPayloadData? XacMinhAccessToken(string? token)
+        // Kiểm tra và giải mã AccessToken
+        public JwtPayload? ValidateAccessToken(string? token)
         {
             if (string.IsNullOrWhiteSpace(token))
+            {
                 return null;
+            }
 
             var parts = token.Split('.');
             if (parts.Length != 3)
+            {
                 return null;
+            }
 
-            string duLieuCanKy = $"{parts[0]}.{parts[1]}";
-            string chuKyGuiLen = parts[2];
-            string chuKyHopLe = TaoChuKyHmacSha256(duLieuCanKy);
+            string dataToSign = $"{parts[0]}.{parts[1]}";
+            string providedSignature = parts[2];
+            string validSignature = CreateHmacSignature(dataToSign);
 
-            if (!string.Equals(chuKyGuiLen, chuKyHopLe, StringComparison.Ordinal))
+            if (!string.Equals(providedSignature, validSignature, StringComparison.Ordinal))
+            {
                 return null;
+            }
 
             try
             {
                 string payloadJson = Base64UrlDecode(parts[1]);
-                var payload = JsonSerializer.Deserialize<JwtPayloadData>(payloadJson);
+                var payload = JsonSerializer.Deserialize<JwtPayload>(payloadJson);
                 if (payload == null)
+                {
                     return null;
+                }
 
-                long bayGio = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                if (payload.exp <= bayGio)
+                long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                if (payload.Exp <= currentTime)
+                {
                     return null;
+                }
 
                 return payload;
             }
@@ -92,7 +105,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             }
         }
 
-        private string TaoChuKyHmacSha256(string input)
+        private string CreateHmacSignature(string input)
         {
             var keyBytes = Encoding.UTF8.GetBytes(_secretKey);
             var inputBytes = Encoding.UTF8.GetBytes(input);
