@@ -7,257 +7,396 @@
 
 @{
     ViewData["Title"] = "Chi tiết hồ sơ #" + Model.MaHoSoHocBong;
+
+    // Tỷ lệ suất đã cấp (0–100)
+    double tyLeDaCap = Model.SoSuat > 0
+        ? Math.Min(100, Math.Round(Model.SoDaCap * 100.0 / Model.SoSuat))
+        : 0;
+
+    // Màu trạng thái (đồng bộ với trang danh sách)
+    string StatusClass(string? tt) => tt switch
+    {
+        "Chờ duyệt" => "status-warning",
+        "Đạt xét duyệt sơ bộ" => "status-success",
+        "Không đạt xét duyệt sơ bộ" => "status-danger",
+        "Đã hủy" => "status-secondary",
+        "Được cấp học bổng" => "status-primary",
+        _ => "status-info"
+    };
+
+    // Hiển thị giá trị trống bằng chữ mờ
+    Microsoft.AspNetCore.Html.IHtmlContent Empty(string text) =>
+        new Microsoft.AspNetCore.Html.HtmlString($"<span class=\"value-empty\">{text}</span>");
 }
 
-<h2 class="mb-3">@ViewData["Title"]</h2>
-
-@* Thông báo *@
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["Success"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show">
-        @TempData["Error"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+@section Styles {
+    <link rel="stylesheet" href="~/css/HoSoHocBong/details.css" asp-append-version="true" />
 }
 
-<div class="row">
-    @* Cột trái: Thông tin hồ sơ + sinh viên + học bổng *@
-    <div class="col-md-8">
-        @* Thông tin hồ sơ *@
-        <div class="card mb-3">
-            <div class="card-header bg-primary text-white">
-                <strong>Thông tin hồ sơ</strong>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Mã hồ sơ</dt>
-                    <dd class="col-sm-8">@Model.MaHoSoHocBong</dd>
+<div class="container-fluid py-0 ui-font detail-page">
 
-                    <dt class="col-sm-4">Ngày nộp</dt>
-                    <dd class="col-sm-8">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</dd>
-
-                    <dt class="col-sm-4">Trạng thái</dt>
-                    <dd class="col-sm-8">
-                        <span class="badge bg-info text-dark">@Model.TrangThai</span>
-                    </dd>
-
-                    <dt class="col-sm-4">Ngày xử lý</dt>
-                    <dd class="col-sm-8">
-                        @(Model.NgayXuLy?.ToString("dd/MM/yyyy HH:mm") ?? "Chưa xử lý")
-                    </dd>
-
-                    <dt class="col-sm-4">Nhận xét xét duyệt</dt>
-                    <dd class="col-sm-8">@(Model.NhanXetXetDuyet ?? "Chưa có")</dd>
-
-                    <dt class="col-sm-4">Thư xin học bổng</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrEmpty(Model.ThuXinHocBong))
-                        {
-                            <div class="border p-2 bg-light">@Model.ThuXinHocBong</div>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Không có</span>
-                        }
-                    </dd>
-
-                    <dt class="col-sm-4">Ghi chú</dt>
-                    <dd class="col-sm-8">@(Model.GhiChu ?? "Không có")</dd>
-
-                    <dt class="col-sm-4">Tài liệu đính kèm</dt>
-                    <dd class="col-sm-8">
-                        @if (!string.IsNullOrEmpty(Model.FileMinhChung))
-                        {
-                            <a href="@Model.FileMinhChung" target="_blank" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-file-earmark-arrow-down me-1"></i> Xem tài liệu minh chứng
-                            </a>
-                        }
-                        else
-                        {
-                            <span class="text-muted">Không có tệp đính kèm</span>
-                        }
-                    </dd>
-                </dl>
+    <!-- ===== TIÊU ĐỀ TRANG ===== -->
+    <div class="page-head">
+        <div class="page-head-main">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a asp-action="Index">Danh sách hồ sơ</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Chi tiết</li>
+                </ol>
+            </nav>
+            <div class="page-title-row">
+                <h1 class="page-title">@ViewData["Title"]</h1>
+                <span class="status-text @StatusClass(Model.TrangThai)">
+                    <span class="status-dot"></span>@Model.TrangThai
+                </span>
             </div>
         </div>
-
-        @* Thông tin sinh viên *@
-        <div class="card mb-3">
-            <div class="card-header bg-success text-white">
-                <strong>Thông tin sinh viên</strong>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Họ tên</dt>
-                    <dd class="col-sm-8">@Model.HoTenSinhVien</dd>
-
-                    <dt class="col-sm-4">Ngày sinh</dt>
-                    <dd class="col-sm-8">@Model.NgaySinh.ToString("dd/MM/yyyy")</dd>
-
-                    <dt class="col-sm-4">Giới tính</dt>
-                    <dd class="col-sm-8">@Model.GioiTinh</dd>
-
-                    <dt class="col-sm-4">SĐT</dt>
-                    <dd class="col-sm-8">@Model.SoDienThoai</dd>
-
-                    <dt class="col-sm-4">Email</dt>
-                    <dd class="col-sm-8">@Model.EmailSinhVien</dd>
-
-                    <dt class="col-sm-4">Địa chỉ</dt>
-                    <dd class="col-sm-8">@(Model.DiaChi ?? "Không có")</dd>
-
-                    <dt class="col-sm-4">Bậc đào tạo</dt>
-                    <dd class="col-sm-8">@Model.BacDaoTaoSinhVien</dd>
-
-                    <dt class="col-sm-4">Ngành</dt>
-                    <dd class="col-sm-8">@Model.Nganh</dd>
-
-                    <dt class="col-sm-4">Điểm TB tích lũy</dt>
-                    <dd class="col-sm-8">
-                        <strong>@Model.DiemTrungBinhTichLuy.ToString("0.00")</strong>
-                    </dd>
-
-                    <dt class="col-sm-4">Thành tích</dt>
-                    <dd class="col-sm-8">@(Model.ThanhTichHocTap ?? "Không có")</dd>
-                </dl>
-            </div>
-        </div>
-
-        @* Thông tin học bổng *@
-        <div class="card mb-3">
-            <div class="card-header bg-warning text-dark">
-                <strong>Thông tin học bổng</strong>
-            </div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Tên học bổng</dt>
-                    <dd class="col-sm-8">@Model.TenHocBong</dd>
-
-                    <dt class="col-sm-4">Đơn vị tài trợ</dt>
-                    <dd class="col-sm-8">@Model.TenDonViTaiTro</dd>
-
-                    <dt class="col-sm-4">Số suất</dt>
-                    <dd class="col-sm-8">@Model.SoSuat</dd>
-
-                    <dt class="col-sm-4">Bậc đào tạo</dt>
-                    <dd class="col-sm-8">@Model.BacDaoTaoHocBong</dd>
-
-                    <dt class="col-sm-4">Điểm TB tối thiểu</dt>
-                    <dd class="col-sm-8">@Model.DiemTrungBinhToiThieu.ToString("0.00")</dd>
-
-                    <dt class="col-sm-4">Ngày bắt đầu nhận</dt>
-                    <dd class="col-sm-8">@Model.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy")</dd>
-
-                    <dt class="col-sm-4">Hạn nộp</dt>
-                    <dd class="col-sm-8">@Model.HanNopHoSo.ToString("dd/MM/yyyy")</dd>
-
-                    <dt class="col-sm-4">Điều kiện xét</dt>
-                    <dd class="col-sm-8">@(Model.DieuKienXetHocBong ?? "Không có")</dd>
-                </dl>
-            </div>
-        </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Quay lại
+        </a>
     </div>
 
-    @* Cột phải: So sánh điều kiện + số suất + thao tác *@
-    <div class="col-md-4">
-        @* So sánh điều kiện *@
-        <div class="card mb-3">
-            <div class="card-header">
-                <strong>Kiểm tra điều kiện</strong>
-            </div>
-            <div class="card-body">
-                <p>
-                    <strong>Điểm TB:</strong>
-                    @if (Model.DuDiem)
-                    {
-                        <span class="badge bg-success">Đủ</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Không đủ</span>
-                    }
-                    <br />
-                    <small class="text-muted">
-                        SV: @Model.DiemTrungBinhTichLuy.ToString("0.00") /
-                        Yêu cầu: @Model.DiemTrungBinhToiThieu.ToString("0.00")
-                    </small>
-                </p>
-                <p>
-                    <strong>Bậc đào tạo:</strong>
-                    @if (Model.DungBacDaoTao)
-                    {
-                        <span class="badge bg-success">Khớp</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger">Không khớp</span>
-                    }
-                    <br />
-                    <small class="text-muted">
-                        SV: @Model.BacDaoTaoSinhVien / HB: @Model.BacDaoTaoHocBong
-                    </small>
-                </p>
-                <div class="alert alert-info mb-0">
-                    <small>
-                        <strong>Lưu ý:</strong> Việc đạt hay không do Cán bộ học bổng quyết định.
-                        Hệ thống không tự suy diễn kết quả.
-                    </small>
-                </div>
-            </div>
+    <!-- ===== THÔNG BÁO ===== -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible border-start border-success border-4 mb-3">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible border-start border-danger border-4 mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
 
-        @* Số suất *@
-        <div class="card mb-3">
-            <div class="card-header">
-                <strong>Số suất học bổng</strong>
-            </div>
-            <div class="card-body">
-                <p><strong>Tổng số suất:</strong> @Model.SoSuat</p>
-                <p><strong>Đã cấp:</strong> @Model.SoDaCap</p>
-                <p>
-                    <strong>Còn lại:</strong>
-                    <span class="badge @(Model.SoSuatConLai > 0 ? "bg-success" : "bg-danger")">
-                        @Model.SoSuatConLai
-                    </span>
-                </p>
-                @if (Model.DaDatSuat)
-                {
-                    <div class="alert alert-warning mb-0">
-                        <strong>Cảnh báo:</strong> Học bổng đã đạt số suất tối đa!
+    <div class="row g-4">
+
+        <!-- ================= CỘT TRÁI ================= -->
+        <div class="col-lg-8">
+
+            <!-- Thông tin hồ sơ -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-primary"><i class="bi bi-file-earmark-text"></i></span>
+                    Thông tin hồ sơ
+                </header>
+                <div class="data-group">
+                    <div class="data-row">
+                        <div class="data-label">Mã hồ sơ</div>
+                        <div class="data-value fw-semibold">#@Model.MaHoSoHocBong</div>
                     </div>
-                }
-            </div>
+                    <div class="data-row">
+                        <div class="data-label">Ngày nộp</div>
+                        <div class="data-value">@Model.NgayNop.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Ngày xử lý</div>
+                        <div class="data-value">
+                            @if (Model.NgayXuLy.HasValue)
+                            {
+                                @Model.NgayXuLy.Value.ToString("dd/MM/yyyy HH:mm")
+                            }
+                            else
+                            {
+                                @Empty("Chưa xử lý")
+                            }
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Nhận xét xét duyệt</div>
+                        <div class="data-value">
+                            @if (!string.IsNullOrWhiteSpace(Model.NhanXetXetDuyet))
+                            {
+                                @Model.NhanXetXetDuyet
+                            }
+                            else
+                            {
+                                @Empty("Chưa có")
+                            }
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Tài liệu đính kèm</div>
+                        <div class="data-value">
+                            @if (!string.IsNullOrEmpty(Model.FileMinhChung))
+                            {
+                                <a href="@Model.FileMinhChung" target="_blank" rel="noopener" class="file-link">
+                                    <i class="bi bi-paperclip"></i> Xem tài liệu minh chứng
+                                </a>
+                            }
+                            else
+                            {
+                                @Empty("Không có tệp đính kèm")
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Thông tin sinh viên -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-success"><i class="bi bi-person-vcard"></i></span>
+                    Thông tin sinh viên
+                </header>
+                <div class="data-group">
+                    <div class="data-row">
+                        <div class="data-label">Họ tên</div>
+                        <div class="data-value fw-semibold">@Model.HoTenSinhVien</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Ngày sinh / Giới tính</div>
+                        <div class="data-value">@Model.NgaySinh.ToString("dd/MM/yyyy") &nbsp;·&nbsp; @Model.GioiTinh
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Số điện thoại</div>
+                        <div class="data-value">@Model.SoDienThoai</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Email</div>
+                        <div class="data-value">@Model.EmailSinhVien</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Địa chỉ</div>
+                        <div class="data-value">
+                            @if (!string.IsNullOrWhiteSpace(Model.DiaChi))
+                            {
+                                @Model.DiaChi
+                            }
+                            else
+                            {
+
+                                @Empty("Không có")
+                            }
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Bậc đào tạo / Ngành</div>
+                        <div class="data-value">@Model.BacDaoTaoSinhVien &nbsp;·&nbsp; @Model.Nganh</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Điểm TB tích lũy</div>
+                        <div class="data-value">
+                            <span class="score-value @(Model.DuDiem ? "text-success" : "text-danger")">
+                                @Model.DiemTrungBinhTichLuy.ToString("0.00")
+                            </span>
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Thành tích</div>
+                        <div class="data-value">
+                            @if (!string.IsNullOrWhiteSpace(Model.ThanhTichHocTap))
+                            {
+                                @Model.ThanhTichHocTap
+                            }
+                            else
+                            {
+                                @Empty("Không có")
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Thông tin học bổng -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-warning"><i class="bi bi-award"></i></span>
+                    Thông tin học bổng
+                </header>
+                <div class="data-group">
+                    <div class="data-row">
+                        <div class="data-label">Tên học bổng</div>
+                        <div class="data-value fw-semibold">@Model.TenHocBong</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Đơn vị tài trợ</div>
+                        <div class="data-value">@Model.TenDonViTaiTro</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Số suất / Bậc đào tạo</div>
+                        <div class="data-value">@Model.SoSuat suất &nbsp;·&nbsp; @Model.BacDaoTaoHocBong</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Điểm TB tối thiểu</div>
+                        <div class="data-value">@Model.DiemTrungBinhToiThieu.ToString("0.00")</div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Thời gian nhận hồ sơ</div>
+                        <div class="data-value">
+                            @Model.NgayBatDauNhanHoSo.ToString("dd/MM/yyyy") – @Model.HanNopHoSo.ToString("dd/MM/yyyy")
+                        </div>
+                    </div>
+                    <div class="data-row">
+                        <div class="data-label">Điều kiện xét</div>
+                        <div class="data-value">
+                            @if (!string.IsNullOrWhiteSpace(Model.DieuKienXetHocBong))
+                            {
+                                @Model.DieuKienXetHocBong
+                            }
+                            else
+                            {
+
+                                @Empty("Không có")
+                            }
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Nội dung sinh viên gửi -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-primary"><i class="bi bi-journal-text"></i></span>
+                    Nội dung sinh viên gửi
+                </header>
+                <div class="content-body">
+                    <div class="content-block">
+                        <div class="content-label">Thư xin học bổng</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.ThuXinHocBong))
+                        {
+                            <div class="letter-box">@Model.ThuXinHocBong</div>
+                        }
+                        else
+                        {
+                            @Empty("Không có")
+                        }
+                    </div>
+                    <div class="content-block">
+                        <div class="content-label">Ghi chú</div>
+                        @if (!string.IsNullOrWhiteSpace(Model.GhiChu))
+                        {
+                            <div class="note-text">@Model.GhiChu</div>
+                        }
+                        else
+                        {
+                            @Empty("Không có ghi chú")
+                        }
+                    </div>
+                </div>
+            </section>
         </div>
 
-        @* Thao tác *@
-        <div class="card">
-            <div class="card-header">
-                <strong>Thao tác</strong>
-            </div>
-            <div class="card-body d-grid gap-2">
-                @if (Model.CoTheXetDuyet)
-                {
-                    <a asp-action="XetDuyetSoBo" asp-route-id="@Model.MaHoSoHocBong" class="btn btn-success">
-                        <i class="bi bi-check-circle"></i> Xét duyệt sơ bộ
-                    </a>
-                }
-                else if (Model.TrangThai == "Đạt xét duyệt sơ bộ") { <a asp-controller="LichPhongVan" asp-action="Create" asp-route-maHoSo="@Model.MaHoSoHocBong" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Lập lịch phỏng vấn</a> } else if (Model.TrangThai == "Đã phỏng vấn") { <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@Model.MaHoSoHocBong" class="btn btn-warning"><i class="bi bi-award"></i> Nhập kết quả cuối cùng</a> } else {
-                    <button class="btn btn-secondary" disabled>
-                        Không thể xét duyệt (trạng thái: @Model.TrangThai)
-                    </button>
-                }
+        <!-- ================= CỘT PHẢI ================= -->
+        <div class="col-lg-4">
 
-                <a asp-action="Index" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left"></i> Quay lại danh sách
-                </a>
+            <!-- Thao tác -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-primary"><i class="bi bi-lightning-charge"></i></span>
+                    Thao tác
+                </header>
+                <div class="side-body d-grid gap-2">
+                    @if (Model.CoTheXetDuyet)
+                    {
+                        <a asp-action="XetDuyetSoBo" asp-route-id="@Model.MaHoSoHocBong" class="btn btn-success btn-action">
+                            <i class="bi bi-check-circle me-2"></i>Xét duyệt sơ bộ
+                        </a>
+                    }
+                    else if (Model.TrangThai == "Đạt xét duyệt sơ bộ")
+                    {
+                        <a asp-controller="LichPhongVan" asp-action="Create" asp-route-maHoSo="@Model.MaHoSoHocBong"
+                           class="btn btn-primary btn-action">
+                            <i class="bi bi-calendar-plus me-2"></i>Lập lịch phỏng vấn
+                        </a>
+                    }
+                    else if (Model.TrangThai == "Đã phỏng vấn")
+                    {
+                        <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@Model.MaHoSoHocBong"
+                           class="btn btn-warning btn-action">
+                            <i class="bi bi-award me-2"></i>Nhập kết quả cuối
+                        </a>
+                    }
+                    else
+                    {
+                        <button class="btn btn-secondary btn-action" disabled>
+                            Không có thao tác khả dụng
+                        </button>
+                    }
+                </div>
+            </section>
+
+            <!-- Đối chiếu điều kiện -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-primary"><i class="bi bi-shield-check"></i></span>
+                    Đối chiếu điều kiện
+                </header>
+                <div class="side-body">
+                    <div class="check-row">
+                        <span class="check-icon @(Model.DuDiem ? "ok" : "fail")">
+                            <i class="bi @(Model.DuDiem ? "bi-check-lg" : "bi-x-lg")"></i>
+                        </span>
+                        <div class="check-info">
+                            <div class="check-title">Điểm TB tích lũy</div>
+                            <div class="check-sub">
+                                @Model.DiemTrungBinhTichLuy.ToString("0.00") / yêu cầu ≥
+                                @Model.DiemTrungBinhToiThieu.ToString("0.00")
+                            </div>
+                        </div>
+                        <span class="check-result @(Model.DuDiem ? "ok" : "fail")">@(Model.DuDiem ? "Đạt" : "Không đạt")</span>
+                    </div>
+
+                    <div class="check-row">
+                        <span class="check-icon @(Model.DungBacDaoTao ? "ok" : "fail")">
+                            <i class="bi @(Model.DungBacDaoTao ? "bi-check-lg" : "bi-x-lg")"></i>
+                        </span>
+                        <div class="check-info">
+                            <div class="check-title">Bậc đào tạo</div>
+                            <div class="check-sub">@Model.BacDaoTaoSinhVien / yêu cầu @Model.BacDaoTaoHocBong</div>
+                        </div>
+                        <span class="check-result @(Model.DungBacDaoTao ? "ok" : "fail")">@(Model.DungBacDaoTao ? "Khớp"            : "Sai bậc")</span>
+                    </div>
+
+                    <div class="note-box">
+                        Việc đạt hay không do cán bộ học bổng quyết định. Hệ thống không tự suy diễn kết quả.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tiến độ cấp suất -->
+            <section class="custom-card">
+                <header class="custom-card-header">
+                    <span class="icon-chip chip-primary"><i class="bi bi-pie-chart"></i></span>
+                    Tiến độ cấp suất
+                </header>
+                <div class="side-body">
+                    <div class="quota-grid">
+                        <div class="quota-item">
+                            <div class="quota-label">Tổng</div>
+                            <div class="quota-number">@Model.SoSuat</div>
+                        </div>
+                        <div class="quota-item">
+                            <div class="quota-label">Đã cấp</div>
+                            <div class="quota-number text-primary">@Model.SoDaCap</div>
+                        </div>
+                        <div class="quota-item">
+                            <div class="quota-label">Còn lại</div>
+                            <div class="quota-number @(Model.SoSuatConLai > 0 ? "text-success" : "text-danger")">
+                                @Model.SoSuatConLai</div>
+                            </div>
+                        </div>
+
+                        <div class="quota-bar" role="progressbar" aria-valuenow="@tyLeDaCap" aria-valuemin="0"
+                             aria-valuemax="100">
+                            <div class="quota-bar-fill @(Model.DaDatSuat ? "is-full" : "")"
+                                 style="width: @(tyLeDaCap.ToString("0", System.Globalization.CultureInfo.InvariantCulture))%">
+                            </div>
+                        </div>
+                        <div class="quota-caption">Đã cấp @tyLeDaCap.ToString("0")% số suất</div>
+
+                        @if (Model.DaDatSuat)
+                        {
+                            <div class="alert alert-danger border-start border-danger border-4 mb-0 mt-3">
+                                <strong>Cảnh báo:</strong> học bổng đã đạt số suất tối đa.
+                            </div>
+                        }
+                    </div>
+                </section>
             </div>
         </div>
     </div>
-</div>

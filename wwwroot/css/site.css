@@ -243,7 +243,7 @@ a.notification-button:focus-visible {
 
 .page-content {
     flex: 1 1 auto;
-    padding: 24px;
+    padding: 5px 5px 5px 0px;
     background: var(--page-bg);
 }
 

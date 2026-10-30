@@ -5,10 +5,7 @@
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
-using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
-using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
@@ -16,137 +13,119 @@ using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
+    [RoleAuthorize("Admin", "Cán bộ học bổng")]
     public class HoSoHocBongController : Controller
     {
         private readonly IHoSoHocBongService _hoSoService;
-        private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
+        private readonly ITaiKhoanService _taiKhoanService;
         private readonly ISupabaseStorageService _storageService;
 
         public HoSoHocBongController(
             IHoSoHocBongService hoSoService,
-            QuanLyHocBong_UNETI2_TI17A3HNContext context,
-            ISupabaseStorageService storageService)
+            ISupabaseStorageService storageService,
+            ITaiKhoanService taiKhoanService)
         {
             _hoSoService = hoSoService;
-            _context = context;
             _storageService = storageService;
+            _taiKhoanService = taiKhoanService;
         }
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
-        // GET: /HoSoHocBong
         public async Task<IActionResult> Index(HoSoFilterViewModel filter)
         {
-            var model = await _hoSoService.LayDanhSachAsync(filter);
+            var response = await _hoSoService.LayDanhSachAsync(filter);
+            var pagedData = response.Data;
 
-            // Load dropdown Đơn vị tài trợ 
+            ViewBag.DanhSach = pagedData!.Items;
+            ViewBag.TongSoBanGhi = pagedData.TotalItems;
+            ViewBag.Trang = pagedData.PageNumber;
+            ViewBag.TongSoTrang = pagedData.TotalPages;
+
             var dsDonVi = await _hoSoService.LayDanhSachDonViTaiTroAsync();
             ViewBag.DonViTaiTro = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(
                 dsDonVi, "MaDonViTaiTro", "TenDonViTaiTro", filter.MaDonViTaiTro);
 
-            return View(model);
+            return View(filter);
         }
 
         // 2. CHI TIẾT HỒ SƠ
-        // GET: /HoSoHocBong/Details/5
         public async Task<IActionResult> Details(int id)
         {
             var model = await _hoSoService.LayChiTietAsync(id);
-
             if (model == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
-
             return View(model);
         }
 
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
-        // GET: /HoSoHocBong/XetDuyetSoBo/5
         public async Task<IActionResult> XetDuyetSoBo(int id)
         {
             var model = await _hoSoService.LayFormXetDuyetAsync(id);
-
             if (model == null)
             {
                 TempData["Error"] = "Không tìm thấy hồ sơ.";
                 return RedirectToAction(nameof(Index));
             }
-
             return View(model);
         }
 
         // 4. XỬ LÝ XÉT DUYỆT SƠ BỘ (POST)
-        // POST: /HoSoHocBong/XetDuyetSoBo
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> XetDuyetSoBo(XetDuyetSoBoViewModel model)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == model.MaHoSoHocBong);
-            ViewBag.HoSo = hoSo;
-
-            // Kiểm tra validation từ Data Annotation
             if (!ModelState.IsValid)
             {
                 await LoadThongTinHienThiAsync(model);
                 return View(model);
             }
 
-            // Gọi service xử lý nghiệp vụ
-            var (thanhCong, loi) = await _hoSoService.XetDuyetSoBoAsync(model);
-
-            if (!thanhCong)
+            var response = await _hoSoService.XetDuyetSoBoAsync(model);
+            if (!response.Success)
             {
-                ModelState.AddModelError("", loi ?? "Có lỗi xảy ra khi xử lý.");
+                ModelState.AddModelError("", response.Message);
                 await LoadThongTinHienThiAsync(model);
                 return View(model);
             }
 
-            TempData["Success"] = "Xét duyệt sơ bộ thành công.";
+            TempData["Success"] = response.Message;
             return RedirectToAction(nameof(Index));
         }
 
         // 5. KIỂM TRA SỐ SUẤT ĐÃ CẤP (JSON - dùng cho AJAX)
-        // GET: /HoSoHocBong/KiemTraSoSuat/5
         [HttpGet]
         public async Task<IActionResult> KiemTraSoSuat(int maHocBong)
         {
             var soDaCap = await _hoSoService.DemSoDaCapAsync(maHocBong);
-            return Json(new { MaHocBong = maHocBong, SoDaCap = soDaCap });
+            var soSuat = await _hoSoService.LaySoSuatHocBongAsync(maHocBong);
+            return Json(new
+            {
+                soSuat = soSuat,
+                soDaCap = soDaCap,
+                conLai = Math.Max(0, soSuat - soDaCap),
+                daDatSuat = soDaCap >= soSuat
+            });
         }
 
         // 6. HỒ SƠ CỦA TÔI (SINH VIÊN)
-        // GET: /HoSoHocBong/HoSoCuaToi
         [RoleAuthorize]
         public async Task<IActionResult> HoSoCuaToi()
         {
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
-            var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
-            if (sv == null)
-            {
-                return View(new List<HoSoHocBong>());
-            }
+            // Lấy thông tin sinh viên từ Service (đã được xử lý trong Service)
+            var sv = await _taiKhoanService.GetSinhVienByTaiKhoanAsync(maTaiKhoan.Value);
+            if (sv == null) return View(new List<HoSoHocBong>());
 
-            var danhSach = await _context.HoSoHocBong
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .Include(h => h.LichPhongVans)
-                .Include(h => h.KetQuaHocBong)
-                .Where(h => h.MaSinhVien == sv.MaSinhVien)
-                .OrderByDescending(h => h.NgayNop)
-                .ToListAsync();
-
+            var danhSach = await _hoSoService.LayHoSoCuaSinhVienAsync(sv.MaSinhVien);
             return View(danhSach);
         }
 
         // 7. NỘP HỒ SƠ (SINH VIÊN - GET)
-        // GET: /HoSoHocBong/NopHoSo?maHocBong=1
         [RoleAuthorize]
         [HttpGet]
         public async Task<IActionResult> NopHoSo(int maHocBong)
@@ -154,12 +133,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
-            var hocBong = await _context.HocBong
-                .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong);
+            var hocBong = await _taiKhoanService.GetHocBongByIdAsync(maHocBong);
             if (hocBong == null) return NotFound();
 
-            var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
+            var sv = await _taiKhoanService.GetSinhVienByTaiKhoanAsync(maTaiKhoan.Value);
             if (sv == null)
             {
                 TempData["ErrorMessage"] = "Vui lòng cập nhật hồ sơ sinh viên trước khi nộp hồ sơ.";
@@ -168,7 +145,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             ViewBag.HocBong = hocBong;
             ViewBag.SinhVien = sv;
-
             return View(new HoSoHocBong { MaHocBong = maHocBong, MaSinhVien = sv.MaSinhVien });
         }
 
@@ -181,38 +157,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
-            var hocBong = await _context.HocBong
-                .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == MaHocBong);
-            if (hocBong == null) return NotFound();
-
-            var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
-            if (sv == null) return RedirectToAction("ThongTinCaNhan", "SinhVien");
-
-            ViewBag.HocBong = hocBong;
-            ViewBag.SinhVien = sv;
-
-            if (hocBong.TrangThai != "Đang nhận hồ sơ" || hocBong.HanNopHoSo < DateTime.Today)
-            {
-                TempData["ErrorMessage"] = "Học bổng này đã đóng hoặc hết hạn nhận hồ sơ.";
-                return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
-            }
-
-            if (sv.DiemTrungBinhTichLuy < hocBong.DiemTrungBinhToiThieu)
-            {
-                TempData["ErrorMessage"] = $"Điểm GPA của bạn ({sv.DiemTrungBinhTichLuy}) chưa đạt mức tối thiểu ({hocBong.DiemTrungBinhToiThieu}).";
-                return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
-            }
-
-            bool daNop = await _context.HoSoHocBong.AnyAsync(h =>
-                h.MaSinhVien == sv.MaSinhVien &&
-                h.MaHocBong == MaHocBong &&
-                h.TrangThai != "Đã hủy");
-            if (daNop)
-            {
-                TempData["ErrorMessage"] = "Bạn đã nộp hồ sơ cho chương trình học bổng này rồi.";
-                return RedirectToAction(nameof(HoSoCuaToi));
-            }
+            var hocBong = await _taiKhoanService.GetHocBongByIdAsync(MaHocBong);
+            var sv = await _taiKhoanService.GetSinhVienByTaiKhoanAsync(maTaiKhoan.Value);
+            if (hocBong == null || sv == null) return NotFound();
 
             string? fileUrl = null;
             if (FileMinhChungUpload != null && FileMinhChungUpload.Length > 0)
@@ -220,21 +167,17 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 fileUrl = await _storageService.UploadFileAsync(FileMinhChungUpload, "minhchung");
             }
 
-            var hoSo = new HoSoHocBong
+            var response = await _hoSoService.NopHoSoAsync(sv.MaSinhVien, MaHocBong, ThuXinHocBong, GhiChu ?? "", fileUrl, hocBong, sv);
+
+            if (!response.Success)
             {
-                MaSinhVien = sv.MaSinhVien,
-                MaHocBong = MaHocBong,
-                NgayNop = DateTime.Now,
-                ThuXinHocBong = (ThuXinHocBong ?? "").Trim(),
-                GhiChu = (GhiChu ?? "Đã nộp đầy đủ hồ sơ").Trim(),
-                TrangThai = "Chờ duyệt",
-                FileMinhChung = fileUrl
-            };
+                ViewBag.HocBong = hocBong;
+                ViewBag.SinhVien = sv;
+                TempData["ErrorMessage"] = response.Message;
+                return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
+            }
 
-            _context.HoSoHocBong.Add(hoSo);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = "Nộp hồ sơ xét học bổng thành công!";
+            TempData["SuccessMessage"] = response.Message;
             return RedirectToAction(nameof(HoSoCuaToi));
         }
 
@@ -247,49 +190,32 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
-            var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
-            var hoSo = await _context.HoSoHocBong.FindAsync(id);
+            var sv = await _taiKhoanService.GetSinhVienByTaiKhoanAsync(maTaiKhoan.Value);
+            if (sv == null) return NotFound();
 
-            if (hoSo == null || sv == null || hoSo.MaSinhVien != sv.MaSinhVien)
-            {
-                return NotFound();
-            }
+            var response = await _hoSoService.HuyHoSoAsync(id, sv.MaSinhVien);
 
-            if (hoSo.TrangThai == "Chờ duyệt")
-            {
-                hoSo.TrangThai = "Đã hủy";
-                hoSo.NgayXuLy = DateTime.Now;
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Đã hủy hồ sơ #{id} thành công.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Chỉ có thể hủy hồ sơ khi đang ở trạng thái 'Chờ duyệt'.";
-            }
+            if (response.Success) TempData["SuccessMessage"] = response.Message;
+            else TempData["ErrorMessage"] = response.Message;
 
             return RedirectToAction(nameof(HoSoCuaToi));
         }
 
-        // Helper: Load lại thông tin readonly khi form bị lỗi
         private async Task LoadThongTinHienThiAsync(XetDuyetSoBoViewModel model)
         {
-            var hoSo = await _context.HoSoHocBong
-                .Include(h => h.SinhVien)
-                .Include(h => h.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHoSoHocBong == model.MaHoSoHocBong);
+            var hoSo = await _hoSoService.LayFormXetDuyetAsync(model.MaHoSoHocBong);
             if (hoSo == null) return;
 
-            model.TenSinhVien = hoSo.SinhVien?.HoTen ?? "";
-            model.TenHocBong = hoSo.HocBong?.TenHocBong ?? "";
-            model.TenDonViTaiTro = hoSo.HocBong?.DonViTaiTro?.TenDonViTaiTro ?? "";
-            model.DiemTrungBinh = hoSo.SinhVien?.DiemTrungBinhTichLuy ?? 0;
-            model.DiemYeuCau = hoSo.HocBong?.DiemTrungBinhToiThieu ?? 0;
-            model.BacDaoTaoSinhVien = hoSo.SinhVien?.BacDaoTao ?? "";
-            model.BacDaoTaoHocBong = hoSo.HocBong?.BacDaoTao ?? "";
+            model.TenSinhVien = hoSo.TenSinhVien;
+            model.TenHocBong = hoSo.TenHocBong;
+            model.TenDonViTaiTro = hoSo.TenDonViTaiTro;
+            model.DiemTrungBinh = hoSo.DiemTrungBinh;
+            model.DiemYeuCau = hoSo.DiemYeuCau;
+            model.BacDaoTaoSinhVien = hoSo.BacDaoTaoSinhVien;
+            model.BacDaoTaoHocBong = hoSo.BacDaoTaoHocBong;
             model.NgayNop = hoSo.NgayNop;
             model.ThuXinHocBong = hoSo.ThuXinHocBong;
-            model.ThanhTichHocTap = hoSo.SinhVien?.ThanhTichHocTap ?? "";
+            model.ThanhTichHocTap = hoSo.ThanhTichHocTap;
             model.FileMinhChung = hoSo.FileMinhChung;
         }
     }

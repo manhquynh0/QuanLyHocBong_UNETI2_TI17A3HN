@@ -16,6 +16,7 @@ window.unetiConfirm = function (options) {
     var bodyEl = document.getElementById("confirmModalBody");
     var okBtn = document.getElementById("confirmModalOk");
     var modalEl = document.getElementById("confirmModal");
+
     if (!modalEl || !window.bootstrap) {
         if (window.confirm(title + "\n" + body)) onOk && onOk();
         return;
@@ -32,9 +33,11 @@ window.unetiConfirm = function (options) {
         onOk && onOk();
     };
     okBtn.addEventListener("click", handler);
+
     modalEl.addEventListener("hidden.bs.modal", function () {
         okBtn.removeEventListener("click", handler);
     }, { once: true });
+
     modal.show();
 };
 
@@ -44,24 +47,22 @@ document.addEventListener("DOMContentLoaded", function () {
             if (form.checkValidity()) window.showLoading();
         });
     });
+    document.querySelectorAll(".side-nav .nav-item").forEach((item) => {
+        item.addEventListener("click", (event) => {
+            const currentItem = event.currentTarget;
+            const isPlaceholderLink = currentItem.getAttribute("href") === "#";
 
-// Write your JavaScript code.
+            if (isPlaceholderLink) {
+                event.preventDefault();
+            }
 
-document.querySelectorAll(".side-nav .nav-item").forEach((item) => {
-    item.addEventListener("click", (event) => {
-        const currentItem = event.currentTarget;
-        const isPlaceholderLink = currentItem.getAttribute("href") === "#";
+            document.querySelectorAll(".side-nav .nav-item").forEach((navItem) => {
+                navItem.classList.remove("active");
+                navItem.removeAttribute("aria-current");
+            });
 
-        if (isPlaceholderLink) {
-            event.preventDefault();
-        }
-
-        document.querySelectorAll(".side-nav .nav-item").forEach((navItem) => {
-            navItem.classList.remove("active");
-            navItem.removeAttribute("aria-current");
+            currentItem.classList.add("active");
+            currentItem.setAttribute("aria-current", "page");
         });
-
-        currentItem.classList.add("active");
-        currentItem.setAttribute("aria-current", "page");
     });
-});
+}); 

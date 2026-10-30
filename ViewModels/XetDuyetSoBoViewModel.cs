@@ -11,8 +11,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.ViewModels
     {
         [Required]
         public int MaHoSoHocBong { get; set; }
-
-        // Thông tin hiển thị (readonly)
+        public int MaHocBong { get; set; }
         public string TenSinhVien { get; set; } = string.Empty;
         public string TenHocBong { get; set; } = string.Empty;
         public string TenDonViTaiTro { get; set; } = string.Empty;
