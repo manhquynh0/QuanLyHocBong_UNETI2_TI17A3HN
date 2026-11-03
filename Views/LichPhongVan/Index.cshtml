@@ -1,4 +1,4 @@
-@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.LichPhongVan>
+﻿@model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.LichPhongVan>
 @{
     ViewData["Title"] = "Quản lý lịch phỏng vấn học bổng";
     var userRole = Context.Session.GetString("VaiTro") ?? "";
@@ -124,6 +124,9 @@
                             <td class="text-end text-nowrap">
                                 @if (isCanBoOrAdmin)
                                 {
+                                                                        bool daCoKq = (item.HoSoHocBong?.KetQuaHocBong != null) ||
+                                                  (item.HoSoHocBong != null && (item.HoSoHocBong.TrangThai == "Được cấp học bổng" || item.HoSoHocBong.TrangThai == "Không được cấp học bổng"));
+
                                     @if (item.TrangThai == "Đã lên lịch")
                                     {
                                         <form asp-action="HoanThanh" asp-route-id="@item.MaLichPhongVan" method="post" class="d-inline" onsubmit="return confirm('Xác nhận hoàn thành buổi phỏng vấn này để chuyển sang bước nhập điểm kết quả?');">
@@ -132,18 +135,34 @@
                                                 Hoàn thành
                                             </button>
                                         </form>
-                                        <form asp-action="HuyLich" asp-route-id="@item.MaLichPhongVan" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch này?');">
-                                            @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Hủy lịch">
-                                                Hủy
-                                            </button>
-                                        </form>
+                                        @if (!daCoKq)
+                                        {
+                                            <form asp-action="HuyLich" asp-route-id="@item.MaLichPhongVan" method="post" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn hủy lịch này?');">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hủy lịch">
+                                                    Hủy
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary text-white py-1 px-2" title="Đã có kết quả xét học bổng, khóa chức năng hủy">Đã có kết quả</span>
+                                        }
                                     }
                                     else if (item.TrangThai == "Đã hoàn thành")
                                     {
-                                        <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-primary" title="Nhập kết quả học bổng">
-                                            Nhập kết quả
-                                        </a>
+                                        @if (!daCoKq)
+                                        {
+                                            <a asp-controller="KetQuaHocBong" asp-action="NhapKetQua" asp-route-maHoSo="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-primary" title="Nhập kết quả học bổng">
+                                                Nhập kết quả
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="KetQuaHocBong" asp-action="Index" asp-route-searchString="@item.HoSoHocBong?.SinhVien?.HoTen" class="btn btn-sm btn-success" title="Xem kết quả đã công bố">
+                                                <i class="bi bi-check-circle me-1"></i>Xem kết quả
+                                            </a>
+                                        }
                                     }
                                 }
                                 <a asp-controller="HoSoHocBong" asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary" title="Chi tiết hồ sơ">

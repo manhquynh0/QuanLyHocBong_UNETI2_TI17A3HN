@@ -1,4 +1,4 @@
-// Họ và tên: Vũ Mạnh Quỳnh
+﻿// Họ và tên: Vũ Mạnh Quỳnh
 // Nội dung thực hiện: Module 5 - Báo cáo thống kê 10 chỉ tiêu bằng LINQ và xuất dữ liệu CSV an toàn.
 
 using System;
@@ -159,6 +159,103 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             vm.TyLeCapTrenPhongVan = vm.TongDaPhongVan > 0 ? Math.Round((double)vm.TongDuocCap / vm.TongDaPhongVan * 100, 1) : 0;
 
             return View(vm);
+        }
+        // ====================================================================
+        // GET: ThongKe/ExportExcel (Xuất báo cáo định dạng bảng tính Excel .xls chuẩn hóa)
+        // ====================================================================
+        public async Task<IActionResult> ExportExcel()
+        {
+            var apps = await _context.HoSoHocBong
+                .Include(hs => hs.SinhVien)
+                .Include(hs => hs.HocBong)
+                    .ThenInclude(hb => hb.DonViTaiTro)
+                .Include(hs => hs.KetQuaHocBong)
+                .OrderByDescending(hs => hs.NgayNop)
+                .ToListAsync();
+
+            var sb = new StringBuilder();
+            sb.Append(@"<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+<style>
+    body { font-family: 'Times New Roman', Times, serif; font-size: 13px; }
+    .header-uni { font-size: 14px; font-weight: bold; text-align: left; }
+    .title { font-size: 16px; font-weight: bold; text-align: center; color: #1e3a8a; padding: 10px; }
+    .table-data { border-collapse: collapse; width: 100%; }
+    .table-data th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; border: 1px solid #94a3b8; padding: 8px; text-align: center; }
+    .table-data td { border: 1px solid #cbd5e1; padding: 6px; font-size: 12px; }
+    .text-center { text-align: center; }
+    .text-success { color: #059669; font-weight: bold; }
+    .text-danger { color: #dc2626; font-weight: bold; }
+</style>
+</head>
+<body>
+    <div class='header-uni'>TRƯỜNG ĐẠI HỌC KINH TẾ - KỸ THUẬT CÔNG NGHIỆP (UNETI)</div>
+    <div>PHÒNG CÔNG TÁC SINH VIÊN - BAN QUẢN LÝ HỌC BỔNG</div>
+    <br/>
+    <div class='title'>BÁO CÁO THỐNG KÊ CHI TIẾT HỒ SƠ &amp; KẾT QUẢ XÉT HỌC BỔNG</div>
+    <div style='text-align: center; font-style: italic; margin-bottom: 15px;'>Thời điểm trích xuất dữ liệu: " + DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss") + @"</div>
+    
+    <table class='table-data'>
+        <thead>
+            <tr>
+                <th style='width: 70px;'>Mã hồ sơ</th>
+                <th style='width: 180px;'>Họ và tên sinh viên</th>
+                <th style='width: 180px;'>Email</th>
+                <th style='width: 150px;'>Ngành học</th>
+                <th style='width: 80px;'>GPA</th>
+                <th style='width: 220px;'>Tên học bổng</th>
+                <th style='width: 180px;'>Đơn vị tài trợ</th>
+                <th style='width: 100px;'>Ngày nộp</th>
+                <th style='width: 140px;'>Trạng thái hồ sơ</th>
+                <th style='width: 90px;'>Điểm ĐG</th>
+                <th style='width: 160px;'>Kết quả cuối cùng</th>
+            </tr>
+        </thead>
+        <tbody>");
+
+            foreach (var a in apps)
+            {
+                string statusColor = a.TrangThai == "Được cấp học bổng" ? "text-success" : (a.TrangThai == "Không được cấp học bổng" || a.TrangThai == "Không đạt xét duyệt sơ bộ" ? "text-danger" : "");
+                string diemDg = a.KetQuaHocBong?.DiemDanhGia.HasValue == true ? a.KetQuaHocBong.DiemDanhGia.Value.ToString("0.0") : "-";
+                string ketQua = a.KetQuaHocBong?.KetQua ?? (a.TrangThai == "Được cấp học bổng" || a.TrangThai == "Không được cấp học bổng" ? a.TrangThai : "Chưa có kết quả");
+
+                sb.Append($@"
+            <tr>
+                <td class='text-center'>#{a.MaHoSoHocBong}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(a.SinhVien?.HoTen ?? "")}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(a.SinhVien?.Email ?? "")}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(a.SinhVien?.Nganh ?? "")}</td>
+                <td class='text-center'>{a.SinhVien?.DiemTrungBinhTichLuy:0.00}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(a.HocBong?.TenHocBong ?? "")}</td>
+                <td>{System.Net.WebUtility.HtmlEncode(a.HocBong?.DonViTaiTro?.TenDonViTaiTro ?? "")}</td>
+                <td class='text-center'>{a.NgayNop:dd/MM/yyyy}</td>
+                <td class='text-center {statusColor}'>{System.Net.WebUtility.HtmlEncode(a.TrangThai)}</td>
+                <td class='text-center'>{diemDg}</td>
+                <td class='text-center {statusColor}'>{System.Net.WebUtility.HtmlEncode(ketQua)}</td>
+            </tr>");
+            }
+
+            sb.Append(@"
+        </tbody>
+    </table>
+    <br/>
+    <table style='width: 100%; margin-top: 20px;'>
+        <tr>
+            <td style='width: 60%;'></td>
+            <td style='text-align: center;'>
+                <em>Hà Nội, ngày " + DateTime.Now.Day + " tháng " + DateTime.Now.Month + " năm " + DateTime.Now.Year + @"</em><br/>
+                <strong>NGƯỜI LẬP BÁO CÁO</strong><br/>
+                <em>(Ký, ghi rõ họ tên)</em>
+                <br/><br/><br/><br/>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>");
+
+            var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
+            return File(bytes, "application/vnd.ms-excel", $"BaoCao_HocBong_UNETI_{DateTime.Now:yyyyMMdd_HHmm}.xls");
         }
 
         // ====================================================================

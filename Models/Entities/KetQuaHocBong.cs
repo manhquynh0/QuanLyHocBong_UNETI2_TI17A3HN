@@ -1,4 +1,4 @@
-// Họ và tên: Sinh viên phụ trách Module 5
+﻿// Họ và tên: Vũ Mạnh Quỳnh
 // Nội dung thực hiện: Module 5 - Entity Kết quả xét học bổng
 
 using System.ComponentModel.DataAnnotations;

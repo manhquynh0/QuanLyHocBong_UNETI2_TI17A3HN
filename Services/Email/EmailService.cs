@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -35,19 +36,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 
             try
             {
-                // 1. Lấy thông tin cấu hình Brevo API (ưu tiên .env, environment variable, sau đó appsettings.json)
-                var apiKey = _configuration["BREVO_API_KEY"] 
-                             ?? _configuration["Brevo:ApiKey"] 
-                             ?? Environment.GetEnvironmentVariable("BREVO_API_KEY");
-
-                var senderEmail = _configuration["BREVO_SENDER_EMAIL"] 
-                                  ?? _configuration["Brevo:SenderEmail"] 
-                                  ?? Environment.GetEnvironmentVariable("BREVO_SENDER_EMAIL") 
-                                  ?? "vumanhquynh2852005@gmail.com";
-
-                var senderName = _configuration["BREVO_SENDER_NAME"] 
+                var senderName = _configuration["EmailSettings:SenderName"]
+                                 ?? _configuration["BREVO_SENDER_NAME"] 
                                  ?? _configuration["Brevo:SenderName"] 
-                                 ?? Environment.GetEnvironmentVariable("BREVO_SENDER_NAME") 
                                  ?? "Học bổng UNETI";
 
                 // Định dạng giao diện Email thương hiệu UNETI chuẩn đẹp
@@ -63,11 +54,53 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                     <div style=""background: #f8fafc; padding: 18px 30px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;"">
                         <p style=""margin: 0 0 4px 0; font-weight: 600;"">Hệ thống Thông tin Quản lý Học bổng Trực tuyến UNETI</p>
                         <p style=""margin: 0;"">Cơ sở Hà Nội: 456 Minh Khai, Hai Bà Trưng | 218 Lĩnh Nam, Hoàng Mai, Hà Nội</p>
-                        <p style=""margin: 4px 0 0 0; font-style: italic; color: #94a3b8;"">Email này được gửi tự động qua Brevo API, vui lòng không phản hồi trực tiếp email này.</p>
+                        <p style=""margin: 4px 0 0 0; font-style: italic; color: #94a3b8;"">Email này được gửi tự động từ hệ thống xét học bổng UNETI, vui lòng không phản hồi trực tiếp email này.</p>
                     </div>
                 </div>";
 
-                // 2. Nếu có cấu hình Brevo API Key thì gửi trực tiếp qua Brevo REST API v3
+                // 1. Ưu tiên gửi qua Standard SMTP nếu cấu hình (Gmail, Outlook, Mail Server)
+                var smtpHost = _configuration["EmailSettings:SmtpHost"] ?? _configuration["SMTP_HOST"];
+                var smtpPortStr = _configuration["EmailSettings:SmtpPort"] ?? _configuration["SMTP_PORT"] ?? "587";
+                var smtpSenderEmail = _configuration["EmailSettings:SenderEmail"] ?? _configuration["SMTP_EMAIL"] ?? _configuration["BREVO_SENDER_EMAIL"] ?? "vumanhquynh2852005@gmail.com";
+                var smtpPassword = _configuration["EmailSettings:SenderPassword"] ?? _configuration["SMTP_PASSWORD"];
+                var enableSsl = !string.Equals(_configuration["EmailSettings:EnableSsl"], "false", StringComparison.OrdinalIgnoreCase);
+
+                if (!string.IsNullOrWhiteSpace(smtpHost) && !string.IsNullOrWhiteSpace(smtpPassword))
+                {
+                    int.TryParse(smtpPortStr, out int smtpPort);
+                    if (smtpPort == 0) smtpPort = 587;
+
+                    using var smtpClient = new SmtpClient(smtpHost, smtpPort)
+                    {
+                        EnableSsl = enableSsl,
+                        Credentials = new System.Net.NetworkCredential(smtpSenderEmail, smtpPassword),
+                        DeliveryMethod = SmtpDeliveryMethod.Network,
+                        Timeout = 10000
+                    };
+
+                    using var mailMsg = new MailMessage
+                    {
+                        From = new MailAddress(smtpSenderEmail, senderName),
+                        Subject = subject,
+                        Body = styledHtml,
+                        IsBodyHtml = true
+                    };
+                    mailMsg.To.Add(toEmail);
+
+                    await smtpClient.SendMailAsync(mailMsg);
+                    _logger.LogInformation("[Smtp Email] Đã gửi email thành công tới {ToEmail} qua máy chủ {Host}!", toEmail, smtpHost);
+                    return true;
+                }
+
+                // 2. Gửi qua Brevo API REST v3 nếu có API Key
+                var apiKey = _configuration["BREVO_API_KEY"] 
+                             ?? _configuration["Brevo:ApiKey"] 
+                             ?? Environment.GetEnvironmentVariable("BREVO_API_KEY");
+
+                var brevoSenderEmail = _configuration["BREVO_SENDER_EMAIL"] 
+                                  ?? _configuration["Brevo:SenderEmail"] 
+                                  ?? smtpSenderEmail;
+
                 if (!string.IsNullOrWhiteSpace(apiKey) && apiKey.StartsWith("xkeysib-"))
                 {
                     var client = _httpClientFactory.CreateClient();
@@ -75,28 +108,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                     client.DefaultRequestHeaders.Add("api-key", apiKey);
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                    object payload;
-                    if (!string.IsNullOrWhiteSpace(senderEmail) && !senderEmail.Equals(toEmail, StringComparison.OrdinalIgnoreCase))
+                    var payload = new
                     {
-                        payload = new
-                        {
-                            sender = new { name = senderName, email = senderEmail },
-                            to = new[] { new { email = toEmail } },
-                            bcc = new[] { new { email = senderEmail } },
-                            subject = subject,
-                            htmlContent = styledHtml
-                        };
-                    }
-                    else
-                    {
-                        payload = new
-                        {
-                            sender = new { name = senderName, email = senderEmail },
-                            to = new[] { new { email = toEmail } },
-                            subject = subject,
-                            htmlContent = styledHtml
-                        };
-                    }
+                        sender = new { name = senderName, email = brevoSenderEmail },
+                        to = new[] { new { email = toEmail } },
+                        subject = subject,
+                        htmlContent = styledHtml
+                    };
 
                     var jsonString = JsonSerializer.Serialize(payload);
                     var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
@@ -106,7 +124,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 
                     if (response.IsSuccessStatusCode)
                     {
-                        _logger.LogInformation("[Brevo Email] Gửi email thành công tới {ToEmail}! Tiêu đề: '{Subject}'. Phản hồi Brevo: {Response}", 
+                        _logger.LogInformation("[Brevo Email] Gửi email thành công tới {ToEmail}! Tiêu đề: '{Subject}'. Phản hồi: {Response}", 
                             toEmail, subject, responseBody);
                         return true;
                     }
@@ -118,7 +136,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 }
                 else
                 {
-                    _logger.LogInformation("[EmailService] Chưa cấu hình Brevo API Key hoặc key không hợp lệ. Đã ghi nhận email gửi tới {ToEmail}: {Subject}", 
+                    _logger.LogInformation("[EmailService] Chưa cấu hình SMTP Password hoặc Brevo API Key. Hệ thống đã mô phỏng gửi email thành công tới {ToEmail}: '{Subject}'", 
                         toEmail, subject);
                 }
 
