@@ -6,7 +6,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 
-namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
+namespace QuanLyHocBong_UNETI2_TI17A3HN.Middleware
 {
     public class JwtAuthMiddleware
     {
@@ -80,32 +80,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
                     else
                     {
                         ClearTokenCookies(context);
-                        context.Session.Clear();
                     }
-                }
-                else
-                {
-                    context.Session.Clear();
                 }
             }
 
-            // 4. Gắn thông tin người dùng đã xác thực vào Session và Request Context
+            // 4. Gắn thông tin người dùng từ JWT vào HttpContext.Items (Stateless, không dùng Session)
             if (payload != null)
             {
-                var currentAccountId = context.Session.GetInt32("MaTaiKhoan");
                 context.Items["JwtUser"] = payload;
-                context.Session.SetInt32("MaTaiKhoan", payload.AccountId);
-                context.Session.SetString("VaiTro", payload.Role);
-
-                if (currentAccountId != payload.AccountId || string.IsNullOrEmpty(context.Session.GetString("HoTen")))
-                {
-                    context.Session.SetString("HoTen", payload.FullName);
-                }
-                if ((currentAccountId != payload.AccountId || string.IsNullOrEmpty(context.Session.GetString("AnhDaiDien")))
-                    && !string.IsNullOrEmpty(payload.Avatar))
-                {
-                    context.Session.SetString("AnhDaiDien", payload.Avatar);
-                }
+                context.Items["MaTaiKhoan"] = payload.AccountId;
+                context.Items["HoTen"] = payload.FullName;
+                context.Items["VaiTro"] = payload.Role;
+                context.Items["AnhDaiDien"] = payload.Avatar;
             }
 
             await _next(context);
@@ -117,6 +103,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             context.Response.Cookies.Append("AccessToken", accessToken, new CookieOptions
             {
                 HttpOnly = true,
+                Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(JwtService.AccessTokenExpireMinutes)
             });
@@ -124,8 +111,21 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             context.Response.Cookies.Append("RefreshToken", refreshToken, new CookieOptions
             {
                 HttpOnly = true,
+                Secure = context.Request.IsHttps,
                 SameSite = SameSiteMode.Lax,
                 Expires = DateTimeOffset.UtcNow.AddDays(JwtService.RefreshTokenExpireDays)
+            });
+        }
+
+        // Cập nhật lại riêng AccessToken khi người dùng đổi Họ tên hoặc Ảnh đại diện
+        public static void UpdateAccessTokenCookie(HttpContext context, string accessToken)
+        {
+            context.Response.Cookies.Append("AccessToken", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = context.Request.IsHttps,
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(JwtService.AccessTokenExpireMinutes)
             });
         }
 
@@ -137,3 +137,4 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
         }
     }
 }
+

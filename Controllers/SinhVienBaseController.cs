@@ -19,17 +19,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             _context = context;
         }
 
-        // Module 1 lưu Session với 3 khóa: "MaTaiKhoan" (int), "HoTen", "VaiTro".
-        protected int? MaTaiKhoanHienTai => HttpContext.Session.GetInt32("MaTaiKhoan");
+        // Lấy MaTaiKhoan từ JWT Payload trong HttpContext.Items
+        protected int? MaTaiKhoanHienTai => HttpContext.Items["MaTaiKhoan"] as int?;
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            var maTaiKhoan = context.HttpContext.Session.GetInt32("MaTaiKhoan");
-            var vaiTro = context.HttpContext.Session.GetString("VaiTro");
+            var maTaiKhoan = context.HttpContext.Items["MaTaiKhoan"] as int?;
+            var vaiTro = context.HttpContext.Items["VaiTro"] as string;
 
             if (maTaiKhoan == null)
             {
-                // Chưa đăng nhập -> về trang đăng nhập của Module 1 (đổi tên action/controller nếu khác).
                 context.Result = RedirectToAction("DangNhap", "TaiKhoan");
                 return;
             }

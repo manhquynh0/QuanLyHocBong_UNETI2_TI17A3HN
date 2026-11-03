@@ -61,15 +61,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             // Đăng ký dịch vụ JWT (AccessToken + RefreshToken)
             services.AddSingleton<JwtService>();
 
-            // Giữ bộ nhớ đệm ngữ cảnh để đồng bộ hiển thị trên Razor Views
-            services.AddDistributedMemoryCache();
-            services.AddSession(options =>
-            {
-                options.IdleTimeout = TimeSpan.FromMinutes(30);
-                options.Cookie.HttpOnly = true;
-                options.Cookie.IsEssential = true;
-            });
-
             // Module 3 - Học bổng (Service gọi qua Repository & UnitOfWork)
             services.AddScoped<IHocBongService, HocBongService>();
 
