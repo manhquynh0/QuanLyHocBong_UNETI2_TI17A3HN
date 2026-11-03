@@ -1,4 +1,4 @@
-@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.ThongKeViewModel
+﻿@model QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels.ThongKeViewModel
 @{
     ViewData["Title"] = "Báo cáo & Thống kê tổng quan";
 }
@@ -8,9 +8,14 @@
         <h2>Báo cáo &amp; Thống kê học bổng</h2>
         <p>Phân tích số liệu tiếp nhận hồ sơ, tỷ lệ qua vòng sơ duyệt và kết quả cấp phát học bổng theo đơn vị tài trợ.</p>
     </div>
-    <a asp-action="ExportCsv" class="btn btn-primary">
-        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Xuất báo cáo CSV / Excel
-    </a>
+        <div class="d-flex flex-wrap gap-2">
+        <a asp-action="ExportExcel" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel me-1"></i> Xuất Excel (.xls)
+        </a>
+        <a asp-action="ExportCsv" class="btn btn-outline-primary">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Xuất CSV
+        </a>
+    </div>
 </div>
 
 <!-- Metric Ledger -->

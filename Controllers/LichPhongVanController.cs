@@ -1,3 +1,5 @@
+﻿// Họ và tên: Vũ Mạnh Quỳnh
+// Nội dung thực hiện: Module 5 - Quản lý lịch phỏng vấn & thuật toán LINQ kiểm tra chống trùng lịch.
 // ============================================================================
 // ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
 // NHÓM 2 - LỚP TI17A3HN - UNETI
@@ -44,6 +46,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     .ThenInclude(hs => hs.SinhVien)
                 .Include(l => l.HoSoHocBong)
                     .ThenInclude(hs => hs.HocBong)
+                .Include(l => l.HoSoHocBong)
+                    .ThenInclude(hs => hs.KetQuaHocBong)
                 .AsQueryable();
 
             // Nếu là sinh viên, chỉ xem lịch của chính mình
@@ -330,10 +334,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     .ThenInclude(hs => hs.SinhVien)
                 .Include(l => l.HoSoHocBong)
                     .ThenInclude(hs => hs.HocBong)
+                    .Include(l => l.HoSoHocBong)
+                        .ThenInclude(hs => hs.KetQuaHocBong)
                 .FirstOrDefaultAsync(l => l.MaLichPhongVan == id);
 
             if (lich != null)
             {
+                // Kiem tra nghiep vu: Khoa chuc nang huy neu ho so da co ket qua xet hoc bong
+                bool daCoKetQua = (lich.HoSoHocBong?.KetQuaHocBong != null) ||
+                                  (lich.HoSoHocBong != null && (lich.HoSoHocBong.TrangThai == "Được cấp học bổng" || lich.HoSoHocBong.TrangThai == "Không được cấp học bổng"));
+                if (daCoKetQua)
+                {
+                    TempData["ErrorMessage"] = "Không thể hủy lịch phỏng vấn này vì hồ sơ đã được công bố kết quả xét học bổng!";
+                    return RedirectToAction(nameof(Index));
+                }
                 lich.TrangThai = "Đã hủy";
                 if (lich.HoSoHocBong != null && lich.HoSoHocBong.TrangThai == "Chờ phỏng vấn")
                 {

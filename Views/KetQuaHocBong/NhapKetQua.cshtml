@@ -18,10 +18,22 @@
         </a>
     </div>
 
-    @if (canhBaoHetSuat)
+    @if (canhBaoHetSuat && hoSo?.TrangThai != "Được cấp học bổng")
     {
-        <div class="alert alert-warning mb-3">
-            <strong>Cảnh báo chỉ tiêu học bổng:</strong> Chương trình này đã cấp <strong>@soDaCap/@tongSoSuat</strong> suất. Nếu tiếp tục cấp thêm, số lượng sẽ vượt chỉ tiêu ban đầu.
+        <div class="alert alert-danger mb-3 d-flex align-items-center">
+            <i class="bi bi-exclamation-triangle-fill fs-4 me-2 text-danger"></i>
+            <div>
+                <strong>Cảnh báo chỉ tiêu học bổng:</strong> Chương trình học bổng này đã cấp <strong>@soDaCap/@tongSoSuat</strong> suất (đã đạt giới hạn tối đa). Không thể cấp thêm sinh viên mới theo quy định tại Mục 8.5!
+            </div>
+        </div>
+    }
+    else if (soDaCap + 1 >= tongSoSuat && hoSo?.TrangThai != "Được cấp học bổng")
+    {
+        <div class="alert alert-warning mb-3 d-flex align-items-center">
+            <i class="bi bi-info-circle-fill fs-5 me-2 text-warning"></i>
+            <div>
+                <strong>Lưu ý số suất còn lại:</strong> Hiện tại đã cấp <strong>@soDaCap/@tongSoSuat</strong> suất. Nếu hồ sơ này được cấp, học bổng sẽ đạt đủ chỉ tiêu và hệ thống sẽ tự động chuyển trạng thái học bổng thành <strong>"Đã đóng"</strong>.
+            </div>
         </div>
     }
 
@@ -65,13 +77,19 @@
                     <label class="form-label">Quyết định kết quả xét duyệt <span class="text-danger">*</span></label>
                     <div class="d-flex flex-wrap gap-4 p-3 bg-light rounded-3 border">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="KetQua" id="grantYes" value="Được cấp học bổng" checked="@(Model.KetQua == "Được cấp học bổng")" />
-                            <label class="form-check-label fw-bold text-success" for="grantYes">
-                                Được cấp học bổng (Trúng tuyển)
+                            @{
+                                bool daHetSuat = canhBaoHetSuat && hoSo?.TrangThai != "Được cấp học bổng";
+                            }
+                            <input class="form-check-input" type="radio" name="KetQua" id="grantYes" value="Được cấp học bổng" 
+                                   checked="@(Model.KetQua == "Được cấp học bổng" && !daHetSuat)" 
+                                   disabled="@daHetSuat" />
+                            <label class="form-check-label fw-bold @(daHetSuat ? "text-muted text-decoration-line-through" : "text-success")" for="grantYes">
+                                Được cấp học bổng (Trúng tuyển) @(daHetSuat ? "- [ĐÃ HẾT SUẤT]" : "")
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="KetQua" id="grantNo" value="Không được cấp học bổng" checked="@(Model.KetQua == "Không được cấp học bổng")" />
+                            <input class="form-check-input" type="radio" name="KetQua" id="grantNo" value="Không được cấp học bổng" 
+                                   checked="@(Model.KetQua == "Không được cấp học bổng" || daHetSuat)" />
                             <label class="form-check-label fw-bold text-danger" for="grantNo">
                                 Không được cấp học bổng
                             </label>
