@@ -9,7 +9,7 @@
     const int tongTruong = 7;
     var daCo = tongTruong - thieu.Count;
     string Hien(string? v) => string.IsNullOrWhiteSpace(v) ? "Chưa cập nhật" : v;
-    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : Context.Session.GetString("AnhDaiDien");
+    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : (Context.Items["AnhDaiDien"] as string);
     var chuCai = string.IsNullOrWhiteSpace(Model.HoTen)
         ? "S"
         : Model.HoTen.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();

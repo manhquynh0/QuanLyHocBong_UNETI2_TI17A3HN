@@ -15,14 +15,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly IWebHostEnvironment _env;
         private readonly ISupabaseStorageService _storageService;
+        private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
 
         public HoSoCuaToiController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
             IWebHostEnvironment env,
-            ISupabaseStorageService storageService) : base(context)
+            ISupabaseStorageService storageService,
+            INotificationService notificationService,
+            IEmailService emailService) : base(context)
         {
             _env = env;
             _storageService = storageService;
+            _notificationService = notificationService;
+            _emailService = emailService;
         }
 
         // Truy vấn hồ sơ của MỘT sinh viên -> mọi action đọc dữ liệu đều đi qua đây nên không lộ hồ sơ người khác.
@@ -198,6 +204,62 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 await tx.CommitAsync();
                 daLuuVaoDb = true;
+
+                // Gửi thông báo Realtime (SignalR) cho Cán bộ & Admin và cho Sinh viên
+                try
+                {
+                    await _notificationService.GuiThongBaoChoCanBoAsync(
+                        tieuDe: "Hồ sơ ứng tuyển mới",
+                        noiDung: $"Sinh viên {sv.HoTen} vừa nộp hồ sơ xin học bổng \"{hb.TenHocBong}\".",
+                        loaiThongBao: "HoSo",
+                        lienKet: $"/HoSoHocBong/Details/{hoSo.MaHoSoHocBong}",
+                        maHoSoHocBong: hoSo.MaHoSoHocBong
+                    );
+
+                    await _notificationService.GuiThongBaoAsync(
+                        maTaiKhoan: sv.MaTaiKhoan,
+                        tieuDe: "Nộp hồ sơ thành công",
+                        noiDung: $"Bạn đã nộp thành công hồ sơ xin học bổng \"{hb.TenHocBong}\". Trạng thái: Chờ duyệt.",
+                        loaiThongBao: "HoSo",
+                        lienKet: $"/HoSoCuaToi/Details/{hoSo.MaHoSoHocBong}",
+                        maHoSoHocBong: hoSo.MaHoSoHocBong
+                    );
+                }
+                catch
+                {
+                    // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                }
+
+                // Gửi email xác nhận nộp hồ sơ thành công tới sinh viên
+                try
+                {
+                    var studentEmail = !string.IsNullOrWhiteSpace(sv.Email) ? sv.Email : null;
+                    if (!string.IsNullOrWhiteSpace(studentEmail))
+                    {
+                        var subject = $"[UNETI] Xác nhận tiếp nhận hồ sơ xin học bổng #{hoSo.MaHoSoHocBong} - {hb.TenHocBong}";
+                        var message = $@"
+                            <div style='background: #1e3a8a; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
+                                <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>XÁC NHẬN TIẾP NHẬN HỒ SƠ ỨNG TUYỂN</h2>
+                            </div>
+                            <p>Kính gửi sinh viên <strong>{sv.HoTen}</strong>,</p>
+                            <p>Cổng thông tin Học bổng UNETI xác nhận đã tiếp nhận thành công hồ sơ xin học bổng của bạn với các thông tin sau:</p>
+                            <ul>
+                                <li><strong>Mã hồ sơ:</strong> #{hoSo.MaHoSoHocBong}</li>
+                                <li><strong>Chương trình:</strong> {hb.TenHocBong}</li>
+                                <li><strong>Đơn vị tài trợ:</strong> {hb.DonViTaiTro?.TenDonViTaiTro}</li>
+                                <li><strong>Thời gian nộp:</strong> {hoSo.NgayNop:HH:mm dd/MM/yyyy}</li>
+                                <li><strong>Trạng thái hồ sơ:</strong> Chờ xét duyệt sơ bộ</li>
+                            </ul>
+                            <p>Hội đồng xét duyệt sẽ tiến hành thẩm tra thông tin và minh chứng đính kèm. Vui lòng theo dõi email và cổng thông tin sinh viên thường xuyên để cập nhật kết quả sơ tuyển.</p>
+                            <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
+
+                        await _emailService.SendEmailAsync(studentEmail, subject, message);
+                    }
+                }
+                catch
+                {
+                    // Lỗi gửi email không làm ảnh hưởng nghiệp vụ chính
+                }
             }
             finally
             {

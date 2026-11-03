@@ -1,12 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
-using QuanLyHocBong_UNETI2_TI17A3HN.Infrastructure;
+using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers;
 
-[SessionRole("Admin", "Cán bộ học bổng")]
+[RoleAuthorize("Admin", "Cán bộ học bổng")]
 public class DonViTaiTroController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Controller
 {
     public async Task<IActionResult> Index() => View(await db.DonViTaiTro.Include(x => x.HocBongs).AsNoTracking().OrderBy(x => x.TenDonViTaiTro).ToListAsync());

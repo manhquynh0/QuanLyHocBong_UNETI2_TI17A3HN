@@ -8,6 +8,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Abstractions;
 using QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Implementations;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
+using QuanLyHocBong_UNETI2_TI17A3HN.Services.Business;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 
@@ -69,6 +70,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
 
             // Module Email (dùng bởi KetQuaHocBong & LichPhongVan)
             services.AddScoped<IEmailService, EmailService>();
+
+            // Module Thông báo Realtime (SignalR WebSocket)
+            services.AddSignalR();
+            services.AddScoped<INotificationService, NotificationService>();
 
             // HttpClient & Cloud Storage Service
             services.AddHttpClient();

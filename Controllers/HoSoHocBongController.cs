@@ -21,15 +21,21 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private readonly IHoSoHocBongService _hoSoService;
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly ISupabaseStorageService _storageService;
+        private readonly INotificationService _notificationService;
+        private readonly IEmailService _emailService;
 
         public HoSoHocBongController(
             IHoSoHocBongService hoSoService,
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
-            ISupabaseStorageService storageService)
+            ISupabaseStorageService storageService,
+            INotificationService notificationService,
+            IEmailService emailService)
         {
             _hoSoService = hoSoService;
             _context = context;
             _storageService = storageService;
+            _notificationService = notificationService;
+            _emailService = emailService;
         }
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
@@ -110,6 +116,69 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
+            // Gửi thông báo Realtime (SignalR) cho sinh viên về kết quả xét duyệt sơ bộ
+            if (hoSo?.SinhVien != null)
+            {
+                try
+                {
+                    var tieuDe = model.KetQua == "Đạt xét duyệt sơ bộ"
+                        ? "Hồ sơ đạt xét duyệt sơ bộ"
+                        : "Kết quả xét duyệt sơ bộ hồ sơ";
+                    var noiDung = $"Hồ sơ học bổng \"{hoSo.HocBong?.TenHocBong}\" của bạn: {model.KetQua}. {(string.IsNullOrWhiteSpace(model.NhanXetXetDuyet) ? "" : $"Nhận xét: {model.NhanXetXetDuyet}")}";
+
+                    await _notificationService.GuiThongBaoAsync(
+                        maTaiKhoan: hoSo.SinhVien.MaTaiKhoan,
+                        tieuDe: tieuDe,
+                        noiDung: noiDung,
+                        loaiThongBao: "HoSo",
+                        lienKet: $"/HoSoCuaToi/Details/{model.MaHoSoHocBong}",
+                        maHoSoHocBong: model.MaHoSoHocBong
+                    );
+                }
+                catch
+                {
+                    // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                }
+
+                // Gửi email kết quả xét duyệt sơ bộ cho sinh viên
+                try
+                {
+                    var studentEmail = !string.IsNullOrWhiteSpace(hoSo.SinhVien.Email)
+                        ? hoSo.SinhVien.Email
+                        : hoSo.SinhVien.TaiKhoan?.Email;
+
+                    if (!string.IsNullOrWhiteSpace(studentEmail))
+                    {
+                        bool isDat = model.KetQua == "Đạt xét duyệt sơ bộ" || model.KetQua == "Dat";
+                        var bannerColor = isDat ? "#059669" : "#dc2626";
+                        var bannerTitle = isDat ? "HỒ SƠ ĐÃ ĐẠT XÉT DUYỆT SƠ BỘ" : "KẾT QUẢ XÉT DUYỆT SƠ BỘ HỒ SƠ";
+                        var subject = isDat
+                            ? $"[UNETI] Chúc mừng: Hồ sơ #{model.MaHoSoHocBong} đã ĐẠT xét duyệt sơ bộ - {hoSo.HocBong?.TenHocBong}"
+                            : $"[UNETI] Thông báo kết quả xét duyệt sơ bộ hồ sơ #{model.MaHoSoHocBong} - {hoSo.HocBong?.TenHocBong}";
+
+                        var message = $@"
+                            <div style='background: {bannerColor}; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
+                                <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>{bannerTitle}</h2>
+                            </div>
+                            <p>Kính gửi sinh viên <strong>{hoSo.SinhVien.HoTen}</strong>,</p>
+                            <p>Hội đồng xét duyệt học bổng UNETI xin thông báo kết quả thẩm định sơ bộ cho hồ sơ <strong>#{model.MaHoSoHocBong}</strong> ({hoSo.HocBong?.TenHocBong}):</p>
+                            <ul>
+                                <li><strong>Kết quả sơ bộ:</strong> <strong style='color: {bannerColor};'>{model.KetQua}</strong></li>
+                                <li><strong>Thời gian xử lý:</strong> {DateTime.Now:HH:mm dd/MM/yyyy}</li>
+                                <li><strong>Nhận xét từ Hội đồng:</strong> {(string.IsNullOrWhiteSpace(model.NhanXetXetDuyet) ? "Không có" : model.NhanXetXetDuyet)}</li>
+                            </ul>
+                            {(isDat ? "<p>Hồ sơ của bạn đã đáp ứng yêu cầu sơ tuyển và được chuyển sang bước tiếp theo để sắp xếp lịch phỏng vấn. Bạn vui lòng theo dõi thông báo trên hệ thống và email để nắm thông tin lịch phỏng vấn.</p>" : "<p>Rất tiếc hồ sơ chưa đáp ứng tiêu chí đợt này. Chúc bạn tiếp tục nỗ lực và gặt hái thành công ở các cơ hội học bổng tiếp theo.</p>")}
+                            <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
+
+                        await _emailService.SendEmailAsync(studentEmail, subject, message);
+                    }
+                }
+                catch
+                {
+                    // Lỗi email không làm gián đoạn nghiệp vụ chính
+                }
+            }
+
             TempData["Success"] = "Xét duyệt sơ bộ thành công.";
             return RedirectToAction(nameof(Index));
         }
@@ -129,7 +198,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> HoSoCuaToi()
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
@@ -156,7 +225,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [HttpGet]
         public async Task<IActionResult> NopHoSo(int maHocBong)
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var hocBong = await _context.HocBong
@@ -183,7 +252,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> NopHoSo(int MaHocBong, string ThuXinHocBong, string? GhiChu, IFormFile? FileMinhChungUpload)
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var hocBong = await _context.HocBong
@@ -256,7 +325,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> HuyHoSo(int id)
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);

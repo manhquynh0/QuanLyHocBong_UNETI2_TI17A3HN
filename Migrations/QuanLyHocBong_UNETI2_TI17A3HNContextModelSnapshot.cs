@@ -309,6 +309,40 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         });
                 });
 
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.HasIndex("Token");
+
+                    b.ToTable("RefreshToken");
+                });
+
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien", b =>
                 {
                     b.Property<int>("MaSinhVien")
@@ -526,6 +560,54 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                     b.ToTable("TaiLieuHoSo");
                 });
 
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.ThongBao", b =>
+                {
+                    b.Property<int>("MaThongBao")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MaThongBao"));
+
+                    b.Property<bool>("DaDoc")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LienKet")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LoaiThongBao")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int?>("MaHoSoHocBong")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MaTaiKhoan")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("NgayTao")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NoiDung")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("TieuDe")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.HasKey("MaThongBao");
+
+                    b.HasIndex("MaHoSoHocBong");
+
+                    b.HasIndex("MaTaiKhoan");
+
+                    b.ToTable("ThongBao");
+                });
+
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong", b =>
                 {
                     b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.HocBong", "HocBong")
@@ -578,6 +660,17 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                     b.Navigation("HoSoHocBong");
                 });
 
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.RefreshToken", b =>
+                {
+                    b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("MaTaiKhoan")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TaiKhoan");
+                });
+
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien", b =>
                 {
                     b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan", "TaiKhoan")
@@ -598,6 +691,24 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
                         .IsRequired();
 
                     b.Navigation("HoSoHocBong");
+                });
+
+            modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.ThongBao", b =>
+                {
+                    b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.HoSoHocBong", "HoSoHocBong")
+                        .WithMany()
+                        .HasForeignKey("MaHoSoHocBong")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan", "TaiKhoan")
+                        .WithMany("ThongBaos")
+                        .HasForeignKey("MaTaiKhoan")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("HoSoHocBong");
+
+                    b.Navigation("TaiKhoan");
                 });
 
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.DonViTaiTro", b =>
@@ -624,7 +735,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Migrations
 
             modelBuilder.Entity("QuanLyHocBong_UNETI2_TI17A3HN.Models.TaiKhoan", b =>
                 {
+                    b.Navigation("RefreshTokens");
+
                     b.Navigation("SinhVien");
+
+                    b.Navigation("ThongBaos");
                 });
 #pragma warning restore 612, 618
         }

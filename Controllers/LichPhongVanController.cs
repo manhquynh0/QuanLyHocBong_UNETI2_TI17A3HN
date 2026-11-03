@@ -1,4 +1,4 @@
-﻿// Họ và tên: Vũ Mạnh Quỳnh
+// Họ và tên: Vũ Mạnh Quỳnh
 // Nội dung thực hiện: Module 5 - Quản lý lịch phỏng vấn & thuật toán LINQ kiểm tra chống trùng lịch.
 // ============================================================================
 // ĐỀ TÀI 22: XÂY DỰNG HỆ THỐNG QUẢN LÝ HỌC BỔNG VÀ HỒ SƠ XÉT HỌC BỔNG
@@ -22,13 +22,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly Services.IEmailService _emailService;
+        private readonly Services.INotificationService _notificationService;
 
         public LichPhongVanController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
-            Services.IEmailService emailService)
+            Services.IEmailService emailService,
+            Services.INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
+            _notificationService = notificationService;
         }
 
         // ====================================================================
@@ -37,7 +40,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> Index(string? searchString, string? trangThaiFilter, int page = 1)
         {
-            var userRole = HttpContext.Session.GetString("VaiTro") ?? "";
+            var userRole = (HttpContext.Items["VaiTro"] as string) ?? "";
             bool isStudent = userRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
                 || userRole.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
 
@@ -53,7 +56,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Nếu là sinh viên, chỉ xem lịch của chính mình
             if (isStudent)
             {
-                var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan")!.Value;
+                var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?)!.Value;
                 var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan);
                 if (sv != null)
                 {
@@ -267,6 +270,26 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     await _emailService.SendEmailAsync(hoSo.SinhVien.Email, subject, message);
                 }
 
+                // Gửi thông báo Realtime (SignalR) cho Sinh viên
+                if (hoSo?.SinhVien != null)
+                {
+                    try
+                    {
+                        await _notificationService.GuiThongBaoAsync(
+                            maTaiKhoan: hoSo.SinhVien.MaTaiKhoan,
+                            tieuDe: "Lịch phỏng vấn học bổng mới",
+                            noiDung: $"Bạn có lịch phỏng vấn học bổng #{lich.MaHoSoHocBong} vào lúc {lich.ThoiGianBatDau:HH:mm dd/MM/yyyy}. Hình thức: {lich.HinhThucPhongVan}. Địa điểm/Link: {lich.DiaDiemHoacLienKet}",
+                            loaiThongBao: "LichPhongVan",
+                            lienKet: "/HoSoCuaToi/LichPhongVan",
+                            maHoSoHocBong: lich.MaHoSoHocBong
+                        );
+                    }
+                    catch
+                    {
+                        // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                    }
+                }
+
                 TempData["SuccessMessage"] = $"Lập lịch phỏng vấn thành công cho hồ sơ #{lich.MaHoSoHocBong}!";
                 return RedirectToAction(nameof(Index));
             }
@@ -368,6 +391,26 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                         <p>Hồ sơ của bạn hiện được chuyển lại trạng thái <em>Đạt xét duyệt sơ bộ</em> để Hội đồng sắp xếp lịch phỏng vấn mới phù hợp hơn.</p>
                         <p>Trân trọng,<br/><strong>Phòng Công tác sinh viên - Trường ĐH Kinh tế - Kỹ thuật Công nghiệp (UNETI)</strong></p>";
                     await _emailService.SendEmailAsync(svEmail, subject, message);
+                }
+
+                // Gửi thông báo Realtime (SignalR) cho Sinh viên khi hủy lịch phỏng vấn
+                if (lich.HoSoHocBong?.SinhVien != null)
+                {
+                    try
+                    {
+                        await _notificationService.GuiThongBaoAsync(
+                            maTaiKhoan: lich.HoSoHocBong.SinhVien.MaTaiKhoan,
+                            tieuDe: "Hủy / Điều chỉnh lịch phỏng vấn",
+                            noiDung: $"Lịch phỏng vấn học bổng #{lich.MaHoSoHocBong} vào lúc {lich.ThoiGianBatDau:HH:mm dd/MM/yyyy} đã được hủy hoặc điều chỉnh kế hoạch.",
+                            loaiThongBao: "LichPhongVan",
+                            lienKet: "/HoSoCuaToi/LichPhongVan",
+                            maHoSoHocBong: lich.MaHoSoHocBong
+                        );
+                    }
+                    catch
+                    {
+                        // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                    }
                 }
 
                 TempData["SuccessMessage"] = "Đã hủy lịch phỏng vấn thành công.";

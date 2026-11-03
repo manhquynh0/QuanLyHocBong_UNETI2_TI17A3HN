@@ -23,14 +23,15 @@
         var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
         var isDashboard = currentController == "Home" && currentAction == "Index";
 
-        var userRole = Context.Session.GetString("VaiTro") ?? "";
+        var userRole = (Context.Items["VaiTro"] as string) ?? "";
         var isStudent = userRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
             || userRole.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
-        var avatarUrl = Context.Session.GetString("AnhDaiDien");
-        var fullName = Context.Session.GetString("HoTen") ?? "Khách";
+        var avatarUrl = (Context.Items["AnhDaiDien"] as string);
+        var fullName = (Context.Items["HoTen"] as string) ?? "Khách";
         var initials = string.IsNullOrWhiteSpace(fullName) ? "U"
             : string.Join("", fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                 .TakeLast(2).Select(w => w[0])).ToUpper();
+        var currentAccountId = Context.Items["MaTaiKhoan"] as int?;
     }
 
     <div class="app-shell">
@@ -135,7 +136,7 @@
                 }
             </nav>
 
-            @if (Context.Session.GetInt32("MaTaiKhoan") != null)
+            @if (currentAccountId != null)
             {
                 <a href="@Url.Action("DangXuat", "TaiKhoan")" class="nav-item logout-link text-decoration-none">
                     <i class="bi bi-box-arrow-left"></i>
@@ -152,9 +153,35 @@
                     <span class="topbar-current">@(ViewData["Title"] ?? "Tổng quan")</span>
                 </div>
                 <div class="topbar-user">
-                    <a href="@Url.Action("Index", isStudent ? "HocBongSinhVien" : "HoSoHocBong")" class="notification-button" title="Hồ sơ & Thông báo">
-                        <i class="bi bi-bell"></i>
-                    </a>
+                    @if (currentAccountId != null)
+                    {
+                        <!-- THÔNG BÁO REALTIME SIGNALR DROPDOWN -->
+                        <div class="dropdown notification-dropdown">
+                            <button class="notification-button position-relative" type="button" id="notificationDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo hệ thống">
+                                <i class="bi bi-bell"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notificationBadge">
+                                    0
+                                </span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg notification-menu p-0" aria-labelledby="notificationDropdownBtn" style="width: 360px; max-width: 90vw; z-index: 1050;">
+                                <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-light rounded-top">
+                                    <h6 class="m-0 fw-bold text-dark"><i class="bi bi-bell-fill text-primary me-2"></i>Thông báo</h6>
+                                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 text-muted" id="btnMarkAllRead" title="Đánh dấu tất cả đã đọc">
+                                        <i class="bi bi-check2-all me-1"></i>Đã đọc tất cả
+                                    </button>
+                                </div>
+                                <div class="notification-list" id="notificationList" style="max-height: 380px; overflow-y: auto;">
+                                    <div class="p-4 text-center text-muted" id="notificationLoading">
+                                        <span class="spinner-border spinner-border-sm me-2" role="status"></span>Đang tải thông báo...
+                                    </div>
+                                </div>
+                                <div class="p-2 border-top text-center bg-light rounded-bottom">
+                                    <small class="text-muted"><i class="bi bi-broadcast text-success me-1"></i>Đồng bộ thời gian thực (SignalR)</small>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
                     <div class="user-copy">
                         <strong>@fullName</strong>
                         <small>@(isStudent ? "Sinh viên" : (string.IsNullOrEmpty(userRole) ? "Chưa đăng nhập" : userRole))</small>
@@ -176,9 +203,14 @@
         </div>
     </div>
 
+    <!-- CONTAINER HIỂN THỊ TOAST THÔNG BÁO REALTIME -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1085;" id="notificationToastContainer"></div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/microsoft-signalr/signalr.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/notification.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

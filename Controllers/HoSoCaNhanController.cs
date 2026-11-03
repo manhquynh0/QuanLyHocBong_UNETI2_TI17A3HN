@@ -161,11 +161,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             try
             {
                 await _context.SaveChangesAsync();
-                if (!string.IsNullOrEmpty(sv.AnhDaiDien))
-                {
-                    HttpContext.Session.SetString("AnhDaiDien", sv.AnhDaiDien);
-                }
-                HttpContext.Session.SetString("HoTen", sv.HoTen);
+                CapNhatTokenHienThi(tk, sv.AnhDaiDien);
             }
             catch (DbUpdateException)
             {
@@ -212,11 +208,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
                 if (tk != null) tk.AnhDaiDien = avatarUrl;
                 await _context.SaveChangesAsync();
-                HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                CapNhatTokenHienThi(tk, avatarUrl);
                 TempData["ThongBao"] = "Đã cập nhật ảnh đại diện thành công.";
             }
 
             return RedirectToAction(nameof(Index));
+        }
+
+        // Cap nhat lai AccessToken de Ho ten / Anh dai dien moi hien thi ngay
+        private void CapNhatTokenHienThi(TaiKhoan? tk, string? avatar)
+        {
+            if (tk != null)
+                JwtAuthMiddleware.UpdateAccessTokenCookie(HttpContext, _jwtService.GenerateAccessToken(tk, avatar));
         }
 
         private void NapThongTinHoSo(SinhVien sv)
@@ -226,7 +229,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             ViewBag.HoTenHoSo = sv.HoTen;
             ViewBag.AnhDaiDien = !string.IsNullOrEmpty(sv.AnhDaiDien)
                 ? sv.AnhDaiDien
-                : HttpContext.Session.GetString("AnhDaiDien");
+                : (HttpContext.Items["AnhDaiDien"] as string);
         }
     }
 }

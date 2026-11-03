@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +24,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Middleware
             JwtService jwtService,
             QuanLyHocBong_UNETI2_TI17A3HNContext db)
         {
-            // 1. Lấy AccessToken từ Cookie hoặc Header Authorization
+            // 1. Lấy AccessToken từ Cookie, Header Authorization hoặc Query String (hỗ trợ WebSocket / SignalR)
             var accessToken = context.Request.Cookies["AccessToken"];
             if (string.IsNullOrEmpty(accessToken))
             {
@@ -30,6 +32,10 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Middleware
                 if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
                     accessToken = authHeader["Bearer ".Length..].Trim();
+                }
+                else if (context.Request.Query.TryGetValue("access_token", out var queryToken) && !string.IsNullOrWhiteSpace(queryToken))
+                {
+                    accessToken = queryToken.ToString();
                 }
             }
 
@@ -84,7 +90,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Middleware
                 }
             }
 
-            // 4. Gắn thông tin người dùng từ JWT vào HttpContext.Items (Stateless, không dùng Session)
+            // 4. Gắn thông tin người dùng từ JWT vào HttpContext.Items (Stateless, không dùng Session) & ClaimsPrincipal
             if (payload != null)
             {
                 context.Items["JwtUser"] = payload;
@@ -92,6 +98,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Middleware
                 context.Items["HoTen"] = payload.FullName;
                 context.Items["VaiTro"] = payload.Role;
                 context.Items["AnhDaiDien"] = payload.Avatar;
+
+                var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, payload.AccountId.ToString()),
+                    new(ClaimTypes.Name, payload.FullName ?? string.Empty),
+                    new(ClaimTypes.Role, payload.Role ?? string.Empty)
+                };
+                if (!string.IsNullOrEmpty(payload.Avatar))
+                {
+                    claims.Add(new Claim("AnhDaiDien", payload.Avatar));
+                }
+                var identity = new ClaimsIdentity(claims, "JwtAuth");
+                context.User = new ClaimsPrincipal(identity);
             }
 
             await _next(context);

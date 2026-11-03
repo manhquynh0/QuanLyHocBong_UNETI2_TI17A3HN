@@ -21,15 +21,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         public async Task<IActionResult> Index()
         {
-            var maTaiKhoanSession = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoanSession = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoanSession.HasValue)
             {
                 return RedirectToAction("DangNhap", "TaiKhoan");
             }
 
-            var role = HttpContext.Session.GetString("VaiTro") ?? "Sinh viên";
+            var role = (HttpContext.Items["VaiTro"] as string) ?? "Sinh viên";
             ViewBag.UserRole = role;
-            ViewBag.UserName = HttpContext.Session.GetString("HoTen") ?? "Người dùng";
+            ViewBag.UserName = (HttpContext.Items["HoTen"] as string) ?? "Người dùng";
 
             bool isStudent = role.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
                 || role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
@@ -63,7 +63,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     };
                     _context.SinhVien.Add(sinhVien);
                     await _context.SaveChangesAsync();
-                    HttpContext.Session.SetInt32("MaSinhVien", sinhVien.MaSinhVien);
                 }
 
                 var tongHoSoDaNop = await _context.HoSoHocBong.CountAsync(hs => hs.MaSinhVien == sinhVien.MaSinhVien);

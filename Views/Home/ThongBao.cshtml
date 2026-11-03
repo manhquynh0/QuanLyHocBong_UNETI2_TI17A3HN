@@ -1,7 +1,7 @@
 @{
     ViewData["Title"] = "Thông báo / gửi thông báo";
     ViewData["Nav"] = "ThongBao";
-    var laSinhVien = Context.Session.GetString("VaiTro") == "Sinh viên";
+    var laSinhVien = (Context.Items["VaiTro"] as string) == "Sinh viên";
 }
 
 <div class="page-hero">
