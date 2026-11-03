@@ -591,3 +591,72 @@ button.notification-button:hover {
     .page-content { padding: 16px 14px; }
     .stats-grid { grid-template-columns: 1fr; }
 }
+
+
+/* ==========================================================================
+   THÔNG BÁO REALTIME (SIGNALR) UI ENHANCEMENTS
+   ========================================================================== */
+.notification-menu {
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    animation: fadeInDown 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.notification-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notification-list::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.notification-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.notification-list .dropdown-item {
+    white-space: normal;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+}
+
+.notification-list .dropdown-item:hover {
+    background-color: #f8fafc;
+    border-left-color: var(--primary-blue, #0284c7);
+}
+
+.notification-list .dropdown-item.bg-light-subtle {
+    background-color: #f0fdf4 !important;
+    border-left-color: #10b981;
+}
+
+#notificationBadge {
+    font-size: 10px;
+    padding: 0.3em 0.55em;
+    box-shadow: 0 0 0 2px #fff;
+    animation: pulseBadge 2s infinite;
+}
+
+@keyframes pulseBadge {
+    0% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+.toast {
+    border-radius: 10px;
+    overflow: hidden;
+}

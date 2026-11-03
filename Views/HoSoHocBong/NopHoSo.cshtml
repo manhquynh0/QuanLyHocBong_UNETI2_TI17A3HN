@@ -32,7 +32,7 @@
             <div class="info-grid">
                 <div>
                     <span class="field-label">Họ và tên sinh viên</span>
-                    <div class="field-value">@(sinhVien?.HoTen ?? Context.Session.GetString("HoTen"))</div>
+                    <div class="field-value">@(sinhVien?.HoTen ?? (Context.Items["HoTen"] as string))</div>
                 </div>
                 <div>
                     <span class="field-label">Chuyên ngành & Bậc</span>

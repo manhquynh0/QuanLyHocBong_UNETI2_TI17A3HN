@@ -16,13 +16,16 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly Services.IEmailService _emailService;
+        private readonly Services.INotificationService _notificationService;
 
         public KetQuaHocBongController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
-            Services.IEmailService emailService)
+            Services.IEmailService emailService,
+            Services.INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
+            _notificationService = notificationService;
         }
 
         // ====================================================================
@@ -31,7 +34,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> Index(string? searchString, int? hocBongId, string? ketQuaFilter, int page = 1)
         {
-            var userRole = HttpContext.Session.GetString("VaiTro") ?? "";
+            var userRole = (HttpContext.Items["VaiTro"] as string) ?? "";
             bool isStudent = userRole.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
                 || userRole.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
 
@@ -45,7 +48,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Nếu là sinh viên, chỉ xem kết quả của chính mình
             if (isStudent)
             {
-                var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan")!.Value;
+                var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?)!.Value;
                 var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan);
                 if (sv != null)
                 {
@@ -261,6 +264,49 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                         <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
 
                     await _emailService.SendEmailAsync(studentEmail, subject, message);
+                }
+
+                // Gửi thông báo Realtime (SignalR) cho Sinh viên về kết quả xét học bổng
+                if (hoSo.SinhVien != null)
+                {
+                    try
+                    {
+                        var tieuDeKq = KetQua == "Được cấp học bổng"
+                            ? "Chúc mừng! Bạn đã được cấp học bổng"
+                            : "Thông báo kết quả xét học bổng";
+                        var noiDungKq = $"Hồ sơ #{hoSo.MaHoSoHocBong} ({hoSo.HocBong?.TenHocBong}) có kết quả: {KetQua}. Điểm: {(DiemDanhGia.HasValue ? DiemDanhGia.Value.ToString("0.0") : "N/A")}.";
+
+                        await _notificationService.GuiThongBaoAsync(
+                            maTaiKhoan: hoSo.SinhVien.MaTaiKhoan,
+                            tieuDe: tieuDeKq,
+                            noiDung: noiDungKq,
+                            loaiThongBao: "KetQua",
+                            lienKet: "/HoSoCuaToi/KetQua",
+                            maHoSoHocBong: hoSo.MaHoSoHocBong
+                        );
+                    }
+                    catch
+                    {
+                        // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                    }
+                }
+
+                // Nếu học bổng đã chuyển trạng thái 'Đã đóng' do đủ suất -> thông báo cho Cán bộ & Admin
+                if (hoSo.HocBong != null && hoSo.HocBong.TrangThai == "Đã đóng")
+                {
+                    try
+                    {
+                        await _notificationService.GuiThongBaoChoCanBoAsync(
+                            tieuDe: "Học bổng đã đủ suất trao thưởng",
+                            noiDung: $"Học bổng \"{hoSo.HocBong.TenHocBong}\" đã đạt đủ {hoSo.HocBong.SoSuat}/{hoSo.HocBong.SoSuat} suất và được tự động chuyển sang trạng thái 'Đã đóng'.",
+                            loaiThongBao: "HocBong",
+                            lienKet: $"/HocBong/Details/{hoSo.MaHocBong}"
+                        );
+                    }
+                    catch
+                    {
+                        // Lỗi thông báo không làm gián đoạn nghiệp vụ chính
+                    }
                 }
 
                 TempData["SuccessMessage"] = $"Đã công bố kết quả: '{KetQua}' cho hồ sơ #{MaHoSoHocBong}!{canhBaoHetSuatMsg}";

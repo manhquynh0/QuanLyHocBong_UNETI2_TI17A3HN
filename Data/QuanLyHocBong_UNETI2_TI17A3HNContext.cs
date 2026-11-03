@@ -23,6 +23,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
         public DbSet<KetQuaHocBong> KetQuaHocBong { get; set; } = default!;
         public DbSet<TaiLieuHoSo> TaiLieuHoSo { get; set; }
         public DbSet<RefreshToken> RefreshToken { get; set; } = default!;
+        public DbSet<ThongBao> ThongBao { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -45,6 +46,21 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
                 .WithMany(t => t.RefreshTokens)
                 .HasForeignKey(r => r.MaTaiKhoan)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ThongBao>()
+                .HasIndex(t => t.MaTaiKhoan);
+
+            modelBuilder.Entity<ThongBao>()
+                .HasOne(t => t.TaiKhoan)
+                .WithMany(u => u.ThongBaos)
+                .HasForeignKey(t => t.MaTaiKhoan)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ThongBao>()
+                .HasOne(t => t.HoSoHocBong)
+                .WithMany()
+                .HasForeignKey(t => t.MaHoSoHocBong)
+                .OnDelete(DeleteBehavior.SetNull);
 
             modelBuilder.Entity<HocBong>().HasOne(h => h.DonViTaiTro)
                 .WithMany(d => d.HocBongs)

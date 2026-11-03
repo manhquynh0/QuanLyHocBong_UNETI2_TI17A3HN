@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
-using QuanLyHocBong_UNETI2_TI17A3HN.Infrastructure;
+using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers;
 
-[SessionRole("Admin")]
+[RoleAuthorize("Admin")]
 public class QuanLyTaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Controller
 {
     public async Task<IActionResult> Index() => View(await db.TaiKhoan.AsNoTracking().OrderBy(x => x.MaTaiKhoan).ToListAsync());
@@ -42,7 +42,7 @@ public class QuanLyTaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) :
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
-        if (HttpContext.Session.GetInt32("MaTaiKhoan") == id) { TempData["Error"] = "Không thể xóa tài khoản đang đăng nhập."; return RedirectToAction(nameof(Index)); }
+        if ((HttpContext.Items["MaTaiKhoan"] as int?) == id) { TempData["Error"] = "Không thể xóa tài khoản đang đăng nhập."; return RedirectToAction(nameof(Index)); }
         var a = await db.TaiKhoan.FindAsync(id); if (a is null) return NotFound();
         if (await db.SinhVien.AnyAsync(s => s.MaTaiKhoan == id)) { TempData["Error"] = "Không thể xóa tài khoản đã liên kết hồ sơ sinh viên."; return RedirectToAction(nameof(Index)); }
         db.TaiKhoan.Remove(a); await db.SaveChangesAsync(); return RedirectToAction(nameof(Index));

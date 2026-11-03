@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models.ViewModels;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
@@ -17,11 +18,20 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
     {
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly ISupabaseStorageService _storageService;
+        private readonly JwtService _jwtService;
 
-        public SinhVienController(QuanLyHocBong_UNETI2_TI17A3HNContext context, ISupabaseStorageService storageService)
+        public SinhVienController(QuanLyHocBong_UNETI2_TI17A3HNContext context, ISupabaseStorageService storageService, JwtService jwtService)
         {
             _context = context;
             _storageService = storageService;
+            _jwtService = jwtService;
+        }
+
+        // Cap nhat lai AccessToken de Ho ten / Anh dai dien moi hien thi ngay
+        private void CapNhatTokenHienThi(TaiKhoan? tk, string? avatar)
+        {
+            if (tk != null)
+                JwtAuthMiddleware.UpdateAccessTokenCookie(HttpContext, _jwtService.GenerateAccessToken(tk, avatar));
         }
 
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
@@ -272,7 +282,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> ThongTinCaNhan()
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var sinhVien = await _context.SinhVien
@@ -309,7 +319,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> CapNhatHoSo(SinhVien model, IFormFile? AnhDaiDienUpload)
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             var sinhVien = await _context.SinhVien.Include(s => s.TaiKhoan).FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
@@ -342,7 +352,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                         {
                             sinhVien.TaiKhoan.AnhDaiDien = avatarUrl;
                         }
-                        HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
                     }
                 }
 
@@ -357,7 +366,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 sinhVien.ThanhTichHocTap = model.ThanhTichHocTap?.Trim() ?? "";
 
                 await _context.SaveChangesAsync();
-                HttpContext.Session.SetString("HoTen", sinhVien.HoTen);
+                if (sinhVien.TaiKhoan != null)
+                {
+                    sinhVien.TaiKhoan.HoTen = sinhVien.HoTen;
+                    await _context.SaveChangesAsync();
+                    CapNhatTokenHienThi(sinhVien.TaiKhoan, sinhVien.AnhDaiDien);
+                }
                 TempData["SuccessMessage"] = "Cập nhật hồ sơ cá nhân thành công!";
                 return RedirectToAction(nameof(ThongTinCaNhan));
             }
@@ -370,7 +384,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         [RoleAuthorize]
         public async Task<IActionResult> CapNhatAnhDaiDien(IFormFile? AnhDaiDienUpload)
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
             if (!maTaiKhoan.HasValue) return RedirectToAction("DangNhap", "TaiKhoan");
 
             if (AnhDaiDienUpload != null && AnhDaiDienUpload.Length > 0)
@@ -390,7 +404,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     var tk = await _context.TaiKhoan.FindAsync(maTaiKhoan.Value);
                     if (tk != null) tk.AnhDaiDien = avatarUrl;
                     await _context.SaveChangesAsync();
-                    HttpContext.Session.SetString("AnhDaiDien", avatarUrl);
+                    if (tk != null) CapNhatTokenHienThi(tk, avatarUrl);
                     TempData["SuccessMessage"] = "Cập nhật ảnh đại diện thành công!";
                 }
                 else

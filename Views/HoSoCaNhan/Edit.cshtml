@@ -9,7 +9,7 @@
     var huyUrl = !string.IsNullOrEmpty(Model.ReturnUrl) ? Model.ReturnUrl : Url.Action("Index", "HoSoCaNhan");
     var hoTen = ViewBag.HoTenHoSo as string ?? Model.HoTen;
     var chuCai = (hoTen ?? "S").Split(' ', StringSplitOptions.RemoveEmptyEntries).Last()[0].ToString().ToUpperInvariant();
-    var avatarUrl = ViewBag.AnhDaiDien as string ?? Context.Session.GetString("AnhDaiDien");
+    var avatarUrl = ViewBag.AnhDaiDien as string ?? (Context.Items["AnhDaiDien"] as string);
 }
 
 <div class="page-hero">

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Hubs;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
 {
@@ -32,6 +33,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
         public static WebApplication MapApplicationEndpoints(this WebApplication app)
         {
             app.MapStaticAssets();
+
+            // Ánh xạ SignalR Hub thông báo Realtime
+            app.MapHub<NotificationHub>("/hubs/notification");
 
             app.MapControllerRoute(
                 name: "default",

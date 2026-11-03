@@ -48,5 +48,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
 
         // Quan hệ 1 - N: Một tài khoản có thể có nhiều Refresh Token (hỗ trợ nhiều thiết bị)
         public virtual ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+
+        // Quan hệ 1 - N: Một tài khoản có nhiều thông báo hệ thống
+        public virtual ICollection<ThongBao> ThongBaos { get; set; } = new List<ThongBao>();
     }
 }

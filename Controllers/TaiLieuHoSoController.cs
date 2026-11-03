@@ -44,8 +44,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // Xác định người dùng từ Session (Module 1 lưu MaTaiKhoan, VaiTro). Trả về (người dùng, kết quả chặn).
         private async Task<(NguoiDung? NguoiDung, IActionResult? Chan)> XacDinhNguoiDungAsync()
         {
-            var maTaiKhoan = HttpContext.Session.GetInt32("MaTaiKhoan");
-            var quyen = HttpContext.Session.GetString("VaiTro");
+            var maTaiKhoan = (HttpContext.Items["MaTaiKhoan"] as int?);
+            var quyen = (HttpContext.Items["VaiTro"] as string);
             if (maTaiKhoan == null || string.IsNullOrEmpty(quyen))
                 return (null, RedirectToAction("DangNhap", "TaiKhoan"));
 

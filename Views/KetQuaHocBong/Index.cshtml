@@ -1,7 +1,7 @@
 @model IEnumerable<QuanLyHocBong_UNETI2_TI17A3HN.Models.KetQuaHocBong>
 @{
     ViewData["Title"] = "Kết quả xét học bổng";
-    var userRole = Context.Session.GetString("VaiTro") ?? "";
+    var userRole = (Context.Items["VaiTro"] as string) ?? "";
     bool isStudent = ViewBag.IsStudent ?? false;
     bool isCanBoOrAdmin = userRole == "Admin" || userRole == "Cán bộ học bổng";
 

@@ -1,6 +1,6 @@
 @using Microsoft.AspNetCore.Http
 @{
-    var role = Context.Session.GetString("VaiTro") ?? "";
+    var role = (Context.Items["VaiTro"] as string) ?? "";
     bool isStudent = role.Equals("Sinh viên", StringComparison.OrdinalIgnoreCase)
         || role.StartsWith("Sinh", StringComparison.OrdinalIgnoreCase);
 

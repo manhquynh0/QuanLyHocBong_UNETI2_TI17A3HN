@@ -1,7 +1,7 @@
 @model QuanLyHocBong_UNETI2_TI17A3HN.Models.SinhVien
 @{
     ViewData["Title"] = "Thông tin cá nhân sinh viên";
-    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : Context.Session.GetString("AnhDaiDien");
+    var avatarUrl = !string.IsNullOrEmpty(Model.AnhDaiDien) ? Model.AnhDaiDien : (Context.Items["AnhDaiDien"] as string);
 }
 
 <div class="sponsor-page" style="max-width: 840px;">
