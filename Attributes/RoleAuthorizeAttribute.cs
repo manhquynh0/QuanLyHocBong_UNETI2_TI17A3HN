@@ -27,8 +27,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Attributes
         {
             // Lấy thông tin người dùng đã được xác minh qua JWT AccessToken (hoặc làm mới bằng RefreshToken)
             var jwtUser = context.HttpContext.Items["JwtUser"] as JwtPayload;
-            int? maTaiKhoan = jwtUser?.AccountId ?? context.HttpContext.Session.GetInt32("MaTaiKhoan");
-            string? vaiTro = jwtUser?.Role ?? context.HttpContext.Session.GetString("VaiTro");
+            int? maTaiKhoan = jwtUser?.AccountId;
+            string? vaiTro = jwtUser?.Role;
 
             // 1. Kiểm tra đăng nhập (AccessToken hợp lệ)
             if (!maTaiKhoan.HasValue || string.IsNullOrEmpty(vaiTro))

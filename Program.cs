@@ -1,4 +1,5 @@
 using QuanLyHocBong_UNETI2_TI17A3HN.Extensions;
+using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,7 +35,6 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseSession();
 app.UseMiddleware<JwtAuthMiddleware>(); // Xác minh JWT AccessToken & tự động làm mới bằng RefreshToken trong DB
 app.UseAuthorization();
 

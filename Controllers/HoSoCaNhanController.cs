@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
@@ -23,14 +24,17 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private const int TuoiToiThieu = 15;
         private readonly ISupabaseStorageService _storageService;
         private readonly IWebHostEnvironment _env;
+        private readonly JwtService _jwtService;
 
         public HoSoCaNhanController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
             ISupabaseStorageService storageService,
-            IWebHostEnvironment env) : base(context)
+            IWebHostEnvironment env,
+            JwtService jwtService) : base(context)
         {
             _storageService = storageService;
             _env = env;
+            _jwtService = jwtService;
         }
 
         // GET: /HoSoCaNhan

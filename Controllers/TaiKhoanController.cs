@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
-using QuanLyHocBong_UNETI2_TI17A3HN.Extensions;
+using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 
@@ -97,16 +97,6 @@ public class TaiKhoanController(
         // 3. Lưu AccessToken & RefreshToken vào HttpOnly Cookie
         JwtAuthMiddleware.SaveTokenCookies(HttpContext, accessToken, refreshToken);
 
-        // Đồng bộ ngữ cảnh hiện tại cho giao diện
-        HttpContext.Session.Clear();
-        HttpContext.Session.SetInt32("MaTaiKhoan", account.MaTaiKhoan);
-        HttpContext.Session.SetString("HoTen", account.HoTen);
-        HttpContext.Session.SetString("VaiTro", role);
-        if (!string.IsNullOrEmpty(avatar))
-        {
-            HttpContext.Session.SetString("AnhDaiDien", avatar);
-        }
-
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)) return Redirect(returnUrl);
         return RedirectToAction("Index", "Home");
     }
@@ -134,7 +124,14 @@ public class TaiKhoanController(
         // Thu hồi token cũ (Cơ chế Token Rotation)
         tokenRecord.IsRevoked = true;
 
-        var newAccessToken = jwtService.GenerateAccessToken(tokenRecord.TaiKhoan);
+        var avatar = tokenRecord.TaiKhoan.AnhDaiDien;
+        if (string.IsNullOrEmpty(avatar))
+        {
+            var sv = await db.SinhVien.AsNoTracking().FirstOrDefaultAsync(s => s.MaTaiKhoan == tokenRecord.MaTaiKhoan);
+            avatar = sv?.AnhDaiDien;
+        }
+
+        var newAccessToken = jwtService.GenerateAccessToken(tokenRecord.TaiKhoan, avatar);
         var newRefreshToken = jwtService.GenerateRefreshToken();
 
         // Tạo bản ghi token mới trong bảng RefreshToken
@@ -174,7 +171,6 @@ public class TaiKhoanController(
         }
 
         JwtAuthMiddleware.ClearTokenCookies(HttpContext);
-        HttpContext.Session.Clear();
         return RedirectToAction(nameof(DangNhap));
     }
 
