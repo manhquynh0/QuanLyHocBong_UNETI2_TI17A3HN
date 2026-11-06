@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
@@ -25,6 +26,7 @@ public class TaiKhoanController(
     }
 
     [HttpPost, ValidateAntiForgeryToken]
+    [EnableRateLimiting("login_limit")]
     public async Task<IActionResult> DangNhap(DangNhapViewModel model, string? returnUrl = null)
     {
         ViewBag.ReturnUrl = returnUrl;

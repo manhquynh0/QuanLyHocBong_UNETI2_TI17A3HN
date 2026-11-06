@@ -1,6 +1,9 @@
 using System;
 using System.IO;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +14,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Business;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
+using StackExchange.Redis;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
 {
@@ -80,6 +84,65 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
 
             return services;
+        }
+
+        /// <summary>
+        /// Cấu hình kết nối Redis và Rate Limiting (Fixed Window Counter: INCR + EXPIRE).
+        /// - Đọc chuỗi kết nối từ REDIS_URL (.env) hoặc ConnectionStrings:Redis (appsettings.json).
+        /// - Tự động Fallback sang IMemoryCache nếu Redis chưa được bật hoặc mất kết nối.
+        /// </summary>
+        public static IServiceCollection AddRedisRateLimiting(this IServiceCollection services, IConfiguration configuration)
+        {
+            var rawConn = configuration["REDIS_URL"]
+                          ?? configuration.GetConnectionString("Redis")
+                          ?? "localhost:6379,abortConnect=false,connectTimeout=2000";
+
+            try
+            {
+                var options = ParseRedisConfiguration(rawConn);
+                var multiplexer = ConnectionMultiplexer.Connect(options);
+                services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Redis Warning] Không thể kết nối Redis lúc khởi động: {ex.Message}. Sẽ dùng In-Memory Fallback.");
+                var fallbackOptions = new ConfigurationOptions { AbortOnConnectFail = false };
+                fallbackOptions.EndPoints.Add("localhost", 6379);
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(fallbackOptions));
+            }
+
+            // Bộ nhớ đệm dự phòng khi không có Redis
+            services.AddMemoryCache();
+
+            return services;
+        }
+
+        private static ConfigurationOptions ParseRedisConfiguration(string raw)
+        {
+            if (raw.StartsWith("redis://", StringComparison.OrdinalIgnoreCase) ||
+                raw.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase))
+            {
+                var uri = new Uri(raw);
+                var parts = uri.UserInfo.Split(':', 2);
+                var password = parts.Length > 1 ? parts[1] : parts[0];
+                var user = parts.Length > 1 ? parts[0] : null;
+
+                var options = new ConfigurationOptions
+                {
+                    EndPoints = { { uri.Host, uri.Port > 0 ? uri.Port : 6379 } },
+                    Password = string.IsNullOrEmpty(password) ? null : password,
+                    User = string.IsNullOrEmpty(user) || user == "default" ? null : user,
+                    Ssl = raw.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase),
+                    AbortOnConnectFail = false,
+                    ConnectTimeout = 3000,
+                    SyncTimeout = 3000
+                };
+                return options;
+            }
+
+            var standard = ConfigurationOptions.Parse(raw);
+            standard.AbortOnConnectFail = false;
+            return standard;
         }
     }
 }

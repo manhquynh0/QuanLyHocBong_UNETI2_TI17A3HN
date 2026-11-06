@@ -262,11 +262,76 @@
             });
     }
 
-    // 8. TẢI DỮ LIỆU BAN ĐẦU KHI TRANG SẴN SÀNG
-    document.addEventListener('DOMContentLoaded', loadNotifications);
-    // Hoặc tải ngay nếu DOM đã sẵn sàng
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    // 8. TỰ ĐỘNG KÍCH HOẠT CÁC TOAST RENDER TỪ TEMPDATA
+    function initServerToasts() {
+        if (!toastContainer) return;
+        const serverToasts = toastContainer.querySelectorAll('.toast');
+        serverToasts.forEach(el => {
+            const bsToast = new bootstrap.Toast(el);
+            bsToast.show();
+            el.addEventListener('hidden.bs.toast', () => el.remove());
+        });
+    }
+
+    // 9. HÀM TOAST TOÀN CỤC CHO CLIENT-SIDE JAVASCRIPT
+    window.showToast = function (message, type = 'success', title = '') {
+        if (!toastContainer) return;
+
+        const isDanger = type === 'danger' || type === 'error';
+        const isWarning = type === 'warning';
+        const isInfo = type === 'info';
+
+        const bgClass = isDanger ? 'text-bg-danger'
+            : isWarning ? 'text-bg-warning text-dark'
+            : isInfo ? 'text-bg-primary'
+            : 'text-bg-success';
+
+        const iconClass = isDanger ? 'bi-exclamation-triangle-fill'
+            : isWarning ? 'bi-exclamation-circle-fill'
+            : isInfo ? 'bi-info-circle-fill'
+            : 'bi-check-circle-fill';
+
+        const defaultTitle = isDanger ? 'Thông báo lỗi'
+            : isWarning ? 'Cảnh báo'
+            : isInfo ? 'Thông tin'
+            : 'Thành công';
+
+        const closeBtnClass = isWarning ? '' : 'btn-close-white';
+
+        const toastEl = document.createElement('div');
+        toastEl.className = `toast align-items-center ${bgClass} border-0 shadow-lg mb-2`;
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+
+        toastEl.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center py-2 px-3">
+                    <i class="bi ${iconClass} fs-5 me-2 flex-shrink-0"></i>
+                    <div>
+                        <div class="fw-semibold">${escapeHtml(title || defaultTitle)}</div>
+                        <div class="small">${escapeHtml(message)}</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close ${closeBtnClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+            </div>
+        `;
+
+        toastContainer.appendChild(toastEl);
+        const bsToast = new bootstrap.Toast(toastEl, { delay: isDanger ? 6500 : 4500 });
+        bsToast.show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    };
+
+    // 10. TẢI DỮ LIỆU BAN ĐẦU KHI TRANG SẴN SÀNG
+    function initAll() {
         loadNotifications();
+        initServerToasts();
+    }
+
+    document.addEventListener('DOMContentLoaded', initAll);
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+        initAll();
     }
 })();
 
