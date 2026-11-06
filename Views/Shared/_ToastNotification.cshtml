@@ -1,0 +1,72 @@
+@* File: Views/Shared/_ToastNotification.cshtml
+   Hiển thị thông báo TempData dưới dạng Toast Notifications nổi thay vì Alert cố định *@
+@{
+    var successMsg = TempData["Success"] ?? TempData["SuccessMessage"] ?? TempData["ThongBao"];
+    var errorMsg = TempData["Error"] ?? TempData["ErrorMessage"] ?? TempData["Loi"];
+    var warningMsg = TempData["Warning"] ?? TempData["CanhBao"];
+    var infoMsg = TempData["Info"];
+}
+
+@if (successMsg != null)
+{
+    <div class="toast align-items-center text-bg-success border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center py-2 px-3">
+                <i class="bi bi-check-circle-fill fs-5 me-2 flex-shrink-0"></i>
+                <div>
+                    <div class="fw-semibold">Thành công</div>
+                    <div class="small" style="white-space: pre-line;">@successMsg</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+    </div>
+}
+
+@if (errorMsg != null)
+{
+    <div class="toast align-items-center text-bg-danger border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6500">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center py-2 px-3">
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2 flex-shrink-0"></i>
+                <div>
+                    <div class="fw-semibold">Thông báo lỗi</div>
+                    <div class="small" style="white-space: pre-line;">@errorMsg</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+    </div>
+}
+
+@if (warningMsg != null)
+{
+    <div class="toast align-items-center text-bg-warning text-dark border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center py-2 px-3">
+                <i class="bi bi-exclamation-circle-fill fs-5 me-2 flex-shrink-0 text-warning-emphasis"></i>
+                <div>
+                    <div class="fw-semibold">Cảnh báo</div>
+                    <div class="small" style="white-space: pre-line;">@warningMsg</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+    </div>
+}
+
+@if (infoMsg != null)
+{
+    <div class="toast align-items-center text-bg-primary border-0 shadow-lg mb-2" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4500">
+        <div class="d-flex">
+            <div class="toast-body d-flex align-items-center py-2 px-3">
+                <i class="bi bi-info-circle-fill fs-5 me-2 flex-shrink-0"></i>
+                <div>
+                    <div class="fw-semibold">Thông báo</div>
+                    <div class="small" style="white-space: pre-line;">@infoMsg</div>
+                </div>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+        </div>
+    </div>
+}

@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - xem, tải, thêm, xóa tệp đính kèm hồ sơ; phân quyền theo vai trò (Sinh viên / Cán bộ / Admin).
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
@@ -154,6 +155,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /TaiLieuHoSo/Them  -> sinh viên thêm tệp vào hồ sơ của mình (chỉ khi còn Chờ duyệt)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("upload_limit")]
         [RequestSizeLimit(TaiLieuHoSoRules.GioiHanRequest)]
         [RequestFormLimits(MultipartBodyLengthLimit = TaiLieuHoSoRules.GioiHanRequest)]
         public async Task<IActionResult> Them(int maHoSo, string? loai, List<IFormFile>? taiLieus)
@@ -219,6 +221,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /TaiLieuHoSo/Xoa/5  -> sinh viên xóa tệp của hồ sơ mình (chỉ khi còn Chờ duyệt)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("upload_limit")]
         public async Task<IActionResult> Xoa(int id)
         {
             var (nd, chan) = await XacDinhNguoiDungAsync();

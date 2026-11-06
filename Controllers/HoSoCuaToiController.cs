@@ -2,6 +2,7 @@
 // Mã sinh viên: 23103100148
 // Nội dung thực hiện: Module 3 - nộp hồ sơ xin học bổng, theo dõi hồ sơ đã nộp và hủy hồ sơ của chính sinh viên.
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Helpers;
@@ -123,6 +124,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /HoSoHocBong/Create  (multipart/form-data: có tệp đính kèm)
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("submit_limit")]
         [RequestSizeLimit(TaiLieuHoSoRules.GioiHanRequest)]
         [RequestFormLimits(MultipartBodyLengthLimit = TaiLieuHoSoRules.GioiHanRequest)]
         public async Task<IActionResult> Create(NopHoSoViewModel model)
@@ -274,6 +276,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /HoSoHocBong/Huy/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("submit_limit")]
         public async Task<IActionResult> Huy(int id)
         {
             var sv = await LaySinhVienHienTaiAsync();

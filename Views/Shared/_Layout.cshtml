@@ -203,8 +203,10 @@
         </div>
     </div>
 
-    <!-- CONTAINER HIỂN THỊ TOAST THÔNG BÁO REALTIME -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1085;" id="notificationToastContainer"></div>
+    <!-- CONTAINER HIỂN THỊ TOAST THÔNG BÁO REALTIME & HỆ THỐNG -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;" id="notificationToastContainer">
+        <partial name="_ToastNotification" />
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

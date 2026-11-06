@@ -53,20 +53,6 @@
     <partial name="_TrangThaiBadge" model="@Model.TrangThai" />
 </div>
 
-@if (TempData["ThongBao"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show">
-        @TempData["ThongBao"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-@if (TempData["Loi"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" style="white-space:pre-line;">
-        @TempData["Loi"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
 
 <div class="row g-3">
     <div class="col-lg-8">
