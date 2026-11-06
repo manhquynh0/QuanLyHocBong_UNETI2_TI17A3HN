@@ -14,6 +14,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Business;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
+using StackExchange.Redis;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
 {
@@ -86,101 +87,62 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
         }
 
         /// <summary>
-        /// Cấu hình Rate Limiting bảo vệ các điểm nóng (Đăng nhập, Nộp hồ sơ, Upload tệp) chống spam và dò mật khẩu.
-        /// Sử dụng thư viện có sẵn của .NET, hoàn toàn trong bộ nhớ (In-Memory), không cần Redis.
+        /// Cấu hình kết nối Redis và Rate Limiting (Fixed Window Counter: INCR + EXPIRE).
+        /// - Đọc chuỗi kết nối từ REDIS_URL (.env) hoặc ConnectionStrings:Redis (appsettings.json).
+        /// - Tự động Fallback sang IMemoryCache nếu Redis chưa được bật hoặc mất kết nối.
         /// </summary>
-        public static IServiceCollection AddAppRateLimiting(this IServiceCollection services)
+        public static IServiceCollection AddRedisRateLimiting(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddRateLimiter(options =>
+            var rawConn = configuration["REDIS_URL"]
+                          ?? configuration.GetConnectionString("Redis")
+                          ?? "localhost:6379,abortConnect=false,connectTimeout=2000";
+
+            try
             {
-                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                var options = ParseRedisConfiguration(rawConn);
+                var multiplexer = ConnectionMultiplexer.Connect(options);
+                services.AddSingleton<IConnectionMultiplexer>(multiplexer);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Redis Warning] Không thể kết nối Redis lúc khởi động: {ex.Message}. Sẽ dùng In-Memory Fallback.");
+                var fallbackOptions = new ConfigurationOptions { AbortOnConnectFail = false };
+                fallbackOptions.EndPoints.Add("localhost", 6379);
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(fallbackOptions));
+            }
 
-                // Xử lý phản hồi khi người dùng gửi quá số lượt cho phép
-                options.OnRejected = async (context, cancellationToken) =>
-                {
-                    context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-
-                    var isAjax = string.Equals(context.HttpContext.Request.Headers["X-Requested-With"], "XMLHttpRequest", StringComparison.OrdinalIgnoreCase)
-                                 || context.HttpContext.Request.Headers.Accept.ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase);
-
-                    if (isAjax)
-                    {
-                        context.HttpContext.Response.ContentType = "application/json; charset=utf-8";
-                        await context.HttpContext.Response.WriteAsync(
-                            "{\"success\": false, \"message\": \"Bạn đang thao tác quá nhanh. Vui lòng thử lại sau 1 phút!\"}",
-                            cancellationToken);
-                    }
-                    else
-                    {
-                        context.HttpContext.Response.ContentType = "text/html; charset=utf-8";
-                        await context.HttpContext.Response.WriteAsync(@"
-<!DOCTYPE html>
-<html lang='vi'>
-<head>
-    <meta charset='utf-8' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
-    <title>429 - Thao tác quá nhanh</title>
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css' />
-    <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css' />
-</head>
-<body class='bg-light d-flex align-items-center justify-content-center' style='min-height: 100vh; font-family: Segoe UI, sans-serif;'>
-    <div class='card shadow-sm border-0 p-4 text-center' style='max-width: 480px; border-radius: 12px;'>
-        <div class='mb-3 text-warning'>
-            <i class='bi bi-hourglass-split' style='font-size: 54px;'></i>
-        </div>
-        <h4 class='fw-bold text-dark'>Thao tác quá nhanh!</h4>
-        <p class='text-muted small mt-2'>
-            Hệ thống phát hiện có quá nhiều yêu cầu gửi liên tục từ bạn trong thời gian ngắn để bảo vệ an toàn máy chủ.
-        </p>
-        <div class='alert alert-warning py-2 small'>
-            <i class='bi bi-shield-lock me-1'></i>Vui lòng chờ khoảng <strong>1 phút</strong> rồi thử lại.
-        </div>
-        <div class='mt-3'>
-            <a href='javascript:history.back()' class='btn btn-primary px-4'>
-                <i class='bi bi-arrow-left me-1'></i>Quay lại trang trước
-            </a>
-        </div>
-    </div>
-</body>
-</html>", cancellationToken);
-                    }
-                };
-
-                // 1. Điểm nóng Đăng nhập: Tối đa 5 lần / 1 phút theo IP (Chống Brute Force dò mật khẩu)
-                options.AddPolicy("login_limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 5,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueLimit = 0
-                        }));
-
-                // 2. Điểm nóng Nộp hồ sơ: Tối đa 3 lần / 1 phút (Chống click đúp và spam nộp hồ sơ liên tiếp)
-                options.AddPolicy("submit_limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 3,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueLimit = 0
-                        }));
-
-                // 3. Điểm nóng Tải lên tệp minh chứng: Tối đa 5 lần / 1 phút (Chống spam upload làm đầy server)
-                options.AddPolicy("upload_limit", httpContext =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip",
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            PermitLimit = 5,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueLimit = 0
-                        }));
-            });
+            // Bộ nhớ đệm dự phòng khi không có Redis
+            services.AddMemoryCache();
 
             return services;
+        }
+
+        private static ConfigurationOptions ParseRedisConfiguration(string raw)
+        {
+            if (raw.StartsWith("redis://", StringComparison.OrdinalIgnoreCase) ||
+                raw.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase))
+            {
+                var uri = new Uri(raw);
+                var parts = uri.UserInfo.Split(':', 2);
+                var password = parts.Length > 1 ? parts[1] : parts[0];
+                var user = parts.Length > 1 ? parts[0] : null;
+
+                var options = new ConfigurationOptions
+                {
+                    EndPoints = { { uri.Host, uri.Port > 0 ? uri.Port : 6379 } },
+                    Password = string.IsNullOrEmpty(password) ? null : password,
+                    User = string.IsNullOrEmpty(user) || user == "default" ? null : user,
+                    Ssl = raw.StartsWith("rediss://", StringComparison.OrdinalIgnoreCase),
+                    AbortOnConnectFail = false,
+                    ConnectTimeout = 3000,
+                    SyncTimeout = 3000
+                };
+                return options;
+            }
+
+            var standard = ConfigurationOptions.Parse(raw);
+            standard.AbortOnConnectFail = false;
+            return standard;
         }
     }
 }

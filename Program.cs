@@ -9,7 +9,7 @@ builder.AddDotEnvConfiguration();
 builder.Services
     .AddPersistenceLayer(builder.Configuration)
     .AddApplicationServices()
-    .AddAppRateLimiting();
+    .AddRedisRateLimiting(builder.Configuration);
 
 builder.Services.AddControllersWithViews();
 
@@ -36,7 +36,7 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 app.UseStatusCodePagesWithReExecute("/Home/PageNotFound");
 app.UseHttpsRedirection();
 app.UseRouting();
-app.UseRateLimiter(); // Kích hoạt Rate Limiting Middleware trước khi vào Auth & Controller
+app.UseMiddleware<RedisRateLimitMiddleware>(); // Kích hoạt Redis Rate Limiting Middleware (kèm In-Memory Fallback)
 app.UseMiddleware<JwtAuthMiddleware>(); // Xác minh JWT AccessToken & tự động làm mới bằng RefreshToken trong DB
 app.UseAuthorization();
 
