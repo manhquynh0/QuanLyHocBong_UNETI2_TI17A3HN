@@ -26,9 +26,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var homNay = DateTime.Today;
             var dangXuLy = TrangThaiHoSo.DangXuLy;
 
-            // 1. Truy vấn gốc: chỉ học bổng đang nhận hồ sơ
+            // 1. Truy vấn gốc: chỉ học bổng đang nhận hồ sơ và chưa bị xóa
             var query = _context.HocBong.AsNoTracking()
-                .Where(h => h.TrangThai == TrangThaiHocBong.DangNhanHoSo);
+                .Where(h => !h.DaXoa && h.TrangThai == TrangThaiHocBong.DangNhanHoSo);
 
             // 2. Tìm kiếm theo tên học bổng / tên đơn vị tài trợ
             if (!string.IsNullOrWhiteSpace(keyword))
@@ -114,7 +114,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         {
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == id && h.TrangThai != "Chưa mở");
+                .FirstOrDefaultAsync(h => h.MaHocBong == id && !h.DaXoa && h.TrangThai != "Chưa mở");
             if (hb == null) return NotFound();
 
             var sv = await LaySinhVienHienTaiAsync();
