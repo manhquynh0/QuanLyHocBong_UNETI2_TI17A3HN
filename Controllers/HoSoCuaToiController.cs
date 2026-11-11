@@ -111,7 +111,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");   // chưa có hồ sơ sinh viên
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong);
+                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong && !h.DaXoa);
             if (hb == null) return NotFound();
 
             var model = new NopHoSoViewModel { MaHocBong = maHocBong };
@@ -133,7 +133,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong);
+                .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong && !h.DaXoa);
             if (hb == null) return NotFound();
 
             // Kiểm tra tệp đính kèm (số lượng, dung lượng, định dạng, nội dung thật) TRƯỚC khi làm gì khác.
