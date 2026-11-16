@@ -26,7 +26,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var homNay = DateTime.Today;
             var dangXuLy = TrangThaiHoSo.DangXuLy;
 
-            // 1. Truy vấn gốc: chỉ học bổng đang nhận hồ sơ và chưa bị xóa mềm
+            // 1. Truy vấn gốc: chỉ học bổng đang nhận hồ sơ và chưa bị xóa
             var query = _context.HocBong.AsNoTracking()
                 .Where(h => !h.DaXoa && h.TrangThai == TrangThaiHocBong.DangNhanHoSo);
 

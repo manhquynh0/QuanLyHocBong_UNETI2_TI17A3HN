@@ -35,9 +35,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             if (sv == null || sv.TrangThai != TrangThaiSinhVien.DangHoc)
                 loi.Add("Sinh viên không tồn tại hoặc không còn ở trạng thái hoạt động.");
 
-            if (hb == null)
+            if (hb == null || hb.DaXoa)
             {
-                loi.Add("Học bổng không tồn tại.");
+                loi.Add("Học bổng không tồn tại hoặc đã bị xóa.");
                 return loi;
             }
 

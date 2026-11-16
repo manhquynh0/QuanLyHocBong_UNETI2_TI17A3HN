@@ -230,6 +230,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
             }
 
             hocBong.DaXoa = true;
+            hocBong.TrangThai = TrangThaiHocBong.DaDong;
             await _unitOfWork.SaveChangesAsync();
             return (true, null);
         }
