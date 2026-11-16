@@ -62,13 +62,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 
         public async Task<string?> UploadFileAsync(IFormFile file, string folder = "minhchung")
         {
-            // 1. Kiểm tra file rỗng
             if (file == null || file.Length == 0)
             {
                 return null;
             }
 
-            // 2. Kiểm tra đuôi file và dung lượng (tối đa 10 MB)
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             string[] duoiHopLe = { ".pdf", ".jpg", ".jpeg", ".png", ".webp" };
             if (!duoiHopLe.Contains(ext) || file.Length > 10 * 1024 * 1024)
@@ -76,6 +74,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 return null;
             }
 
+            await using var stream = file.OpenReadStream();
+            return await UploadStreamInternalAsync(stream, file.FileName, folder);
+        }
+
+        public async Task<string?> UploadLocalFileAsync(string localFilePath, string originalFileName, string folder = "minhchung")
+        {
+            if (string.IsNullOrWhiteSpace(localFilePath) || !File.Exists(localFilePath))
+            {
+                _logger.LogWarning("[SupabaseStorage] Không tìm thấy tệp trên ổ đĩa để upload: {Path}", localFilePath);
+                return null;
+            }
+
+            var fileNameForExt = !string.IsNullOrWhiteSpace(originalFileName) ? originalFileName : Path.GetFileName(localFilePath);
+            await using var stream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return await UploadStreamInternalAsync(stream, fileNameForExt, folder);
+        }
+
+        private async Task<string?> UploadStreamInternalAsync(Stream stream, string fileNameOrigin, string folder)
+        {
             var (projectId, secretKey, bucket) = GetCredentials();
             if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(secretKey))
             {
@@ -85,7 +102,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 
             try
             {
-                var rawName = Path.GetFileNameWithoutExtension(file.FileName);
+                var ext = Path.GetExtension(fileNameOrigin).ToLowerInvariant();
+                var rawName = Path.GetFileNameWithoutExtension(fileNameOrigin);
                 var safeName = Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
                 if (safeName.Length > 40)
                 {
@@ -101,7 +119,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 request.Headers.Add("apikey", secretKey);
                 request.Headers.Add("Authorization", $"Bearer {secretKey}");
 
-                using var stream = file.OpenReadStream();
                 using var content = new StreamContent(stream);
                 content.Headers.ContentType = new MediaTypeHeaderValue(GetContentTypeByExtension(ext));
                 request.Content = content;
@@ -116,7 +133,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi upload file: {FileName}", file.FileName);
+                _logger.LogError(ex, "Lỗi khi upload file lên Supabase: {FileName}", fileNameOrigin);
                 return null;
             }
         }

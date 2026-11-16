@@ -325,7 +325,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             var sinhVien = await _context.SinhVien.Include(s => s.TaiKhoan).FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
             if (sinhVien == null || sinhVien.MaSinhVien != model.MaSinhVien)
             {
-                return Forbid();
+                return RedirectToAction("AccessDenied", "TaiKhoan");
             }
 
             ModelState.Remove("TaiKhoan");
@@ -376,6 +376,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return RedirectToAction(nameof(ThongTinCaNhan));
             }
 
+            model.TaiKhoan = sinhVien.TaiKhoan;
             return View("ThongTinCaNhan", model);
         }
 

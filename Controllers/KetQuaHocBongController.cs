@@ -242,28 +242,37 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 if (!string.IsNullOrWhiteSpace(studentEmail))
                 {
-                    bool isDuocCap = KetQua == "Được cấp học bổng";
-                    string subject = isDuocCap
-                        ? $"[UNETI] CHÚC MỪNG TRÚNG TUYỂN: Bạn đã ĐƯỢC CẤP học bổng #{hoSo.MaHoSoHocBong} - {hoSo.HocBong?.TenHocBong}"
-                        : $"[UNETI] THÔNG BÁO KẾT QUẢ: Hồ sơ học bổng #{hoSo.MaHoSoHocBong} - KHÔNG ĐƯỢC CẤP HỌC BỔNG";
+                    try
+                    {
+                        bool isDuocCap = KetQua == "Được cấp học bổng";
+                        string subject = isDuocCap
+                            ? $"[UNETI] CHÚC MỪNG TRÚNG TUYỂN: Bạn đã ĐƯỢC CẤP học bổng #{hoSo.MaHoSoHocBong} - {hoSo.HocBong?.TenHocBong}"
+                            : $"[UNETI] THÔNG BÁO KẾT QUẢ: Hồ sơ học bổng #{hoSo.MaHoSoHocBong} - KHÔNG ĐƯỢC CẤP HỌC BỔNG";
 
-                    string bannerColor = isDuocCap ? "#059669" : "#dc2626";
-                    string bannerTitle = isDuocCap ? "🏆 CHÚC MỪNG BẠN ĐÃ TRÚNG TUYỂN HỌC BỔNG!" : "THÔNG BÁO KẾT QUẢ XÉT DUYỆT HỌC BỔNG";
+                        string bannerColor = isDuocCap ? "#059669" : "#dc2626";
+                        string bannerTitle = isDuocCap ? "🏆 CHÚC MỪNG BẠN ĐÃ TRÚNG TUYỂN HỌC BỔNG!" : "THÔNG BÁO KẾT QUẢ XÉT DUYỆT HỌC BỔNG";
+                        var safeName = System.Net.WebUtility.HtmlEncode(hoSo.SinhVien?.HoTen ?? "");
+                        var safeTenHb = System.Net.WebUtility.HtmlEncode(hoSo.HocBong?.TenHocBong ?? "");
 
-                    string message = $@"
-                        <div style='background: {bannerColor}; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
-                            <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>{bannerTitle}</h2>
-                        </div>
-                        <p>Kính gửi sinh viên <strong>{hoSo.SinhVien?.HoTen}</strong>,</p>
-                        <p>Hội đồng xét duyệt học bổng UNETI xin thông báo kết quả chính thức cho hồ sơ <strong>#{hoSo.MaHoSoHocBong}</strong> ({hoSo.HocBong?.TenHocBong}):</p>
-                        <ul>
-                            <li><strong>Kết quả:</strong> {KetQua}</li>
-                            <li><strong>Điểm đánh giá:</strong> {(DiemDanhGia.HasValue ? DiemDanhGia.Value.ToString("0.0") + " / 100" : "N/A")}</li>
-                            <li><strong>Nhận xét:</strong> {safeNhanXet}</li>
-                        </ul>
-                        <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
+                        string message = $@"
+                            <div style='background: {bannerColor}; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
+                                <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>{bannerTitle}</h2>
+                            </div>
+                            <p>Kính gửi sinh viên <strong>{safeName}</strong>,</p>
+                            <p>Hội đồng xét duyệt học bổng UNETI xin thông báo kết quả chính thức cho hồ sơ <strong>#{hoSo.MaHoSoHocBong}</strong> ({safeTenHb}):</p>
+                            <ul>
+                                <li><strong>Kết quả:</strong> {KetQua}</li>
+                                <li><strong>Điểm đánh giá:</strong> {(DiemDanhGia.HasValue ? DiemDanhGia.Value.ToString("0.0") + " / 100" : "N/A")}</li>
+                                <li><strong>Nhận xét:</strong> {safeNhanXet}</li>
+                            </ul>
+                            <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
 
-                    await _emailService.SendEmailAsync(studentEmail, subject, message);
+                        await _emailService.SendEmailAsync(studentEmail, subject, message);
+                    }
+                    catch
+                    {
+                        // Lỗi email không làm gián đoạn nghiệp vụ chính
+                    }
                 }
 
                 // Gửi thông báo Realtime (SignalR) cho Sinh viên về kết quả xét học bổng

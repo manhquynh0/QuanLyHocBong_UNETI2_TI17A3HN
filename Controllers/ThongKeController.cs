@@ -1,5 +1,5 @@
-﻿// Họ và tên: Vũ Mạnh Quỳnh
-// Nội dung thực hiện: Module 5 - Báo cáo thống kê 10 chỉ tiêu bằng LINQ và xuất dữ liệu CSV an toàn.
+// Họ và tên: Vũ Mạnh Quỳnh
+// Nội dung thực hiện: Module 5 - Báo cáo thống kê 10 chỉ tiêu bằng LINQ và xuất dữ liệu Excel chuẩn.
 
 using System;
 using System.Collections.Generic;
@@ -256,44 +256,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
             return File(bytes, "application/vnd.ms-excel", $"BaoCao_HocBong_UNETI_{DateTime.Now:yyyyMMdd_HHmm}.xls");
-        }
-
-        // ====================================================================
-        // GET: ThongKe/ExportCsv (Chức năng nâng cao: Xuất báo cáo CSV / Excel)
-        // ====================================================================
-        public async Task<IActionResult> ExportCsv()
-        {
-            var apps = await _context.HoSoHocBong
-                .Include(hs => hs.SinhVien)
-                .Include(hs => hs.HocBong)
-                    .ThenInclude(hb => hb.DonViTaiTro)
-                .Include(hs => hs.KetQuaHocBong)
-                .OrderByDescending(hs => hs.NgayNop)
-                .ToListAsync();
-
-            var sb = new StringBuilder();
-            // Header
-            sb.AppendLine("MaHoSo,SinhVien,Email,Nganh,GPA,HocBong,DonViTaiTro,NgayNop,TrangThai,DiemDanhGia,KetQua");
-
-            static string CsvSafe(string? val)
-            {
-                if (string.IsNullOrEmpty(val)) return string.Empty;
-                var escaped = val.Replace("\"", "\"\"");
-                if (escaped.Length > 0 && (escaped[0] == '=' || escaped[0] == '+' || escaped[0] == '-' || escaped[0] == '@'))
-                {
-                    escaped = "'" + escaped;
-                }
-                return escaped;
-            }
-
-            foreach (var a in apps)
-            {
-                var row = $"\"{a.MaHoSoHocBong}\",\"{CsvSafe(a.SinhVien?.HoTen)}\",\"{CsvSafe(a.SinhVien?.Email)}\",\"{CsvSafe(a.SinhVien?.Nganh)}\",\"{a.SinhVien?.DiemTrungBinhTichLuy:0.00}\",\"{CsvSafe(a.HocBong?.TenHocBong)}\",\"{CsvSafe(a.HocBong?.DonViTaiTro?.TenDonViTaiTro)}\",\"{a.NgayNop:yyyy-MM-dd}\",\"{CsvSafe(a.TrangThai)}\",\"{a.KetQuaHocBong?.DiemDanhGia:0.##}\",\"{CsvSafe(a.KetQuaHocBong?.KetQua)}\"";
-                sb.AppendLine(row);
-            }
-
-            var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
-            return File(bytes, "text/csv", $"BaoCao_HocBong_UNETI_{DateTime.Now:yyyyMMdd_HHmm}.csv");
         }
     }
 }

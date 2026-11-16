@@ -253,21 +253,40 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 await _context.SaveChangesAsync();
 
-                if (!string.IsNullOrWhiteSpace(hoSo?.SinhVien?.Email))
+                var svEmail = !string.IsNullOrWhiteSpace(hoSo?.SinhVien?.Email)
+                    ? hoSo.SinhVien.Email
+                    : (hoSo?.SinhVien != null
+                        ? await _context.TaiKhoan.AsNoTracking().Where(t => t.MaTaiKhoan == hoSo.SinhVien.MaTaiKhoan).Select(t => t.Email).FirstOrDefaultAsync()
+                        : null);
+
+                if (!string.IsNullOrWhiteSpace(svEmail))
                 {
-                    string subject = $"[UNETI] Giấy báo lịch phỏng vấn xét học bổng #{lich.MaHoSoHocBong}";
-                    string message = $"<p>Kính gửi sinh viên <strong>{hoSo.SinhVien?.HoTen}</strong>,</p>" +
-                                     $"<p>Bạn đã được xếp lịch phỏng vấn cho hồ sơ học bổng <strong>#{hoSo.MaHoSoHocBong}</strong> với thông tin chi tiết như sau:</p>" +
-                                     $"<ul>" +
-                                     $"<li><strong>Thời gian:</strong> {lich.ThoiGianBatDau:HH:mm dd/MM/yyyy} - {lich.ThoiGianKetThuc:HH:mm dd/MM/yyyy}</li>" +
-                                     $"<li><strong>Hình thức:</strong> {lich.HinhThucPhongVan}</li>" +
-                                     $"<li><strong>Địa điểm / Đường dẫn:</strong> {lich.DiaDiemHoacLienKet}</li>" +
-                                     $"<li><strong>Hội đồng phỏng vấn:</strong> {lich.NguoiPhongVan}</li>" +
-                                     $"<li><strong>Ghi chú:</strong> {(string.IsNullOrWhiteSpace(lich.GhiChu) ? "Không có" : lich.GhiChu)}</li>" +
-                                     $"</ul>" +
-                                     $"<p>Vui lòng có mặt đúng giờ và chuẩn bị đầy đủ hồ sơ/minh chứng theo yêu cầu.</p>" +
-                                     $"<p>Trân trọng,<br/>Phòng Công tác sinh viên - Đại học Kinh tế - Kỹ thuật Công nghiệp (UNETI)</p>";
-                    await _emailService.SendEmailAsync(hoSo.SinhVien.Email, subject, message);
+                    try
+                    {
+                        var safeName = System.Net.WebUtility.HtmlEncode(hoSo?.SinhVien?.HoTen ?? "");
+                        var safeHinhThuc = System.Net.WebUtility.HtmlEncode(lich.HinhThucPhongVan ?? "");
+                        var safeDiaDiem = System.Net.WebUtility.HtmlEncode(lich.DiaDiemHoacLienKet ?? "");
+                        var safeNguoiPv = System.Net.WebUtility.HtmlEncode(lich.NguoiPhongVan ?? "");
+                        var safeGhiChu = string.IsNullOrWhiteSpace(lich.GhiChu) ? "Không có" : System.Net.WebUtility.HtmlEncode(lich.GhiChu);
+
+                        string subject = $"[UNETI] Giấy báo lịch phỏng vấn xét học bổng #{lich.MaHoSoHocBong}";
+                        string message = $"<p>Kính gửi sinh viên <strong>{safeName}</strong>,</p>" +
+                                         $"<p>Bạn đã được xếp lịch phỏng vấn cho hồ sơ học bổng <strong>#{hoSo?.MaHoSoHocBong}</strong> với thông tin chi tiết như sau:</p>" +
+                                         $"<ul>" +
+                                         $"<li><strong>Thời gian:</strong> {lich.ThoiGianBatDau:HH:mm dd/MM/yyyy} - {lich.ThoiGianKetThuc:HH:mm dd/MM/yyyy}</li>" +
+                                         $"<li><strong>Hình thức:</strong> {safeHinhThuc}</li>" +
+                                         $"<li><strong>Địa điểm / Đường dẫn:</strong> {safeDiaDiem}</li>" +
+                                         $"<li><strong>Hội đồng phỏng vấn:</strong> {safeNguoiPv}</li>" +
+                                         $"<li><strong>Ghi chú:</strong> {safeGhiChu}</li>" +
+                                         $"</ul>" +
+                                         $"<p>Vui lòng có mặt đúng giờ và chuẩn bị đầy đủ hồ sơ/minh chứng theo yêu cầu.</p>" +
+                                         $"<p>Trân trọng,<br/>Phòng Công tác sinh viên - Đại học Kinh tế - Kỹ thuật Công nghiệp (UNETI)</p>";
+                        await _emailService.SendEmailAsync(svEmail, subject, message);
+                    }
+                    catch
+                    {
+                        // Lỗi email không làm gián đoạn nghiệp vụ chính
+                    }
                 }
 
                 // Gửi thông báo Realtime (SignalR) cho Sinh viên
@@ -331,6 +350,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
+            if (lich.HoSoHocBong != null &&
+                (lich.HoSoHocBong.TrangThai == "Được cấp học bổng" || lich.HoSoHocBong.TrangThai == "Không được cấp học bổng"))
+            {
+                TempData["ErrorMessage"] = "Hồ sơ này đã có kết quả xét duyệt cuối cùng, không thể thay đổi lại trạng thái phỏng vấn.";
+                return RedirectToAction(nameof(Index));
+            }
+
             lich.TrangThai = "Đã hoàn thành";
 
             // Cập nhật trạng thái hồ sơ thành "Đã phỏng vấn" theo Mục 9.3 doc.docx
@@ -363,6 +389,12 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             if (lich != null)
             {
+                if (lich.TrangThai == "Đã hoàn thành" || lich.TrangThai == "Đã hủy")
+                {
+                    TempData["ErrorMessage"] = $"Lịch phỏng vấn đang ở trạng thái '{lich.TrangThai}', không thể hủy.";
+                    return RedirectToAction(nameof(Index));
+                }
+
                 // Kiem tra nghiep vu: Khoa chuc nang huy neu ho so da co ket qua xet hoc bong
                 bool daCoKetQua = (lich.HoSoHocBong?.KetQuaHocBong != null) ||
                                   (lich.HoSoHocBong != null && (lich.HoSoHocBong.TrangThai == "Được cấp học bổng" || lich.HoSoHocBong.TrangThai == "Không được cấp học bổng"));
@@ -378,19 +410,33 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 }
                 await _context.SaveChangesAsync();
 
-                var svEmail = lich.HoSoHocBong?.SinhVien?.Email;
+                var svEmail = !string.IsNullOrWhiteSpace(lich.HoSoHocBong?.SinhVien?.Email)
+                    ? lich.HoSoHocBong.SinhVien.Email
+                    : (lich.HoSoHocBong?.SinhVien != null
+                        ? await _context.TaiKhoan.AsNoTracking().Where(t => t.MaTaiKhoan == lich.HoSoHocBong.SinhVien.MaTaiKhoan).Select(t => t.Email).FirstOrDefaultAsync()
+                        : null);
+
                 if (!string.IsNullOrWhiteSpace(svEmail))
                 {
-                    string subject = $"[UNETI] THÔNG BÁO: Hủy / Thay đổi lịch phỏng vấn học bổng #{lich.MaHoSoHocBong}";
-                    string message = $@"
-                        <div style='background: #e11d48; color: #ffffff; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
-                            <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>THÔNG BÁO HỦY / THAY ĐỔI LỊCH PHỎNG VẤN</h2>
-                        </div>
-                        <p>Kính gửi sinh viên <strong>{lich.HoSoHocBong?.SinhVien?.HoTen}</strong>,</p>
-                        <p>Hội đồng xét duyệt học bổng UNETI xin thông báo: Buổi phỏng vấn dự kiến vào lúc <strong>{lich.ThoiGianBatDau:HH:mm dd/MM/yyyy}</strong> cho chương trình <strong>{lich.HoSoHocBong?.HocBong?.TenHocBong}</strong> đã được hủy hoặc điều chỉnh kế hoạch.</p>
-                        <p>Hồ sơ của bạn hiện được chuyển lại trạng thái <em>Đạt xét duyệt sơ bộ</em> để Hội đồng sắp xếp lịch phỏng vấn mới phù hợp hơn.</p>
-                        <p>Trân trọng,<br/><strong>Phòng Công tác sinh viên - Trường ĐH Kinh tế - Kỹ thuật Công nghiệp (UNETI)</strong></p>";
-                    await _emailService.SendEmailAsync(svEmail, subject, message);
+                    try
+                    {
+                        var safeName = System.Net.WebUtility.HtmlEncode(lich.HoSoHocBong?.SinhVien?.HoTen ?? "");
+                        var safeTenHb = System.Net.WebUtility.HtmlEncode(lich.HoSoHocBong?.HocBong?.TenHocBong ?? "");
+                        string subject = $"[UNETI] THÔNG BÁO: Hủy / Thay đổi lịch phỏng vấn học bổng #{lich.MaHoSoHocBong}";
+                        string message = $@"
+                            <div style='background: #e11d48; color: #ffffff; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
+                                <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>THÔNG BÁO HỦY / THAY ĐỔI LỊCH PHỎNG VẤN</h2>
+                            </div>
+                            <p>Kính gửi sinh viên <strong>{safeName}</strong>,</p>
+                            <p>Hội đồng xét duyệt học bổng UNETI xin thông báo: Buổi phỏng vấn dự kiến vào lúc <strong>{lich.ThoiGianBatDau:HH:mm dd/MM/yyyy}</strong> cho chương trình <strong>{safeTenHb}</strong> đã được hủy hoặc điều chỉnh kế hoạch.</p>
+                            <p>Hồ sơ của bạn hiện được chuyển lại trạng thái <em>Đạt xét duyệt sơ bộ</em> để Hội đồng sắp xếp lịch phỏng vấn mới phù hợp hơn.</p>
+                            <p>Trân trọng,<br/><strong>Phòng Công tác sinh viên - Trường ĐH Kinh tế - Kỹ thuật Công nghiệp (UNETI)</strong></p>";
+                        await _emailService.SendEmailAsync(svEmail, subject, message);
+                    }
+                    catch
+                    {
+                        // Lỗi email không làm gián đoạn nghiệp vụ chính
+                    }
                 }
 
                 // Gửi thông báo Realtime (SignalR) cho Sinh viên khi hủy lịch phỏng vấn

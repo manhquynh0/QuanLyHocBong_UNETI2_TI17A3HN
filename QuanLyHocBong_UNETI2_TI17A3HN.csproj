@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <NoWarn>$(NoWarn);CS8618;CS8981</NoWarn>
+    <NoWarn>$(NoWarn);CS8618;CS8981;CS8602;CS8600;CS8601;CS8603;CS8604</NoWarn>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
   </PropertyGroup>
 

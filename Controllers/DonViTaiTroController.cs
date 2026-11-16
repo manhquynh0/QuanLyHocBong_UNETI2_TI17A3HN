@@ -25,6 +25,7 @@ public class DonViTaiTroController(QuanLyHocBong_UNETI2_TI17A3HNContext db) : Co
     {
         if (id != model.MaDonViTaiTro) return BadRequest(); await CheckDuplicate(model, id);
         if (!ModelState.IsValid) return View("Form", model);
+        if (!await db.DonViTaiTro.AsNoTracking().AnyAsync(x => x.MaDonViTaiTro == id)) return NotFound();
         model.TenDonViTaiTro = model.TenDonViTaiTro.Trim(); db.Update(model); await db.SaveChangesAsync(); return RedirectToAction(nameof(Index));
     }
     [HttpPost, ValidateAntiForgeryToken]
