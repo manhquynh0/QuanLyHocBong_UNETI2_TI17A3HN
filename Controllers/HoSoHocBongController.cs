@@ -119,12 +119,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Gửi thông báo Realtime (SignalR) cho sinh viên về kết quả xét duyệt sơ bộ
             if (hoSo?.SinhVien != null)
             {
+                bool isDat = model.KetQua == "Đạt xét duyệt sơ bộ" || model.KetQua == "Dat";
+                var ketQuaText = isDat ? "Đạt xét duyệt sơ bộ" : "Không đạt xét duyệt sơ bộ";
+
                 try
                 {
-                    var tieuDe = model.KetQua == "Đạt xét duyệt sơ bộ"
+                    var tieuDe = isDat
                         ? "Hồ sơ đạt xét duyệt sơ bộ"
                         : "Kết quả xét duyệt sơ bộ hồ sơ";
-                    var noiDung = $"Hồ sơ học bổng \"{hoSo.HocBong?.TenHocBong}\" của bạn: {model.KetQua}. {(string.IsNullOrWhiteSpace(model.NhanXetXetDuyet) ? "" : $"Nhận xét: {model.NhanXetXetDuyet}")}";
+                    var noiDung = $"Hồ sơ học bổng \"{hoSo.HocBong?.TenHocBong}\" của bạn: {ketQuaText}. {(string.IsNullOrWhiteSpace(model.NhanXetXetDuyet) ? "" : $"Nhận xét: {model.NhanXetXetDuyet}")}";
 
                     await _notificationService.GuiThongBaoAsync(
                         maTaiKhoan: hoSo.SinhVien.MaTaiKhoan,
@@ -149,23 +152,28 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                     if (!string.IsNullOrWhiteSpace(studentEmail))
                     {
-                        bool isDat = model.KetQua == "Đạt xét duyệt sơ bộ" || model.KetQua == "Dat";
                         var bannerColor = isDat ? "#059669" : "#dc2626";
                         var bannerTitle = isDat ? "HỒ SƠ ĐÃ ĐẠT XÉT DUYỆT SƠ BỘ" : "KẾT QUẢ XÉT DUYỆT SƠ BỘ HỒ SƠ";
                         var subject = isDat
                             ? $"[UNETI] Chúc mừng: Hồ sơ #{model.MaHoSoHocBong} đã ĐẠT xét duyệt sơ bộ - {hoSo.HocBong?.TenHocBong}"
                             : $"[UNETI] Thông báo kết quả xét duyệt sơ bộ hồ sơ #{model.MaHoSoHocBong} - {hoSo.HocBong?.TenHocBong}";
 
+                        var safeName = System.Net.WebUtility.HtmlEncode(hoSo.SinhVien.HoTen);
+                        var safeTenHb = System.Net.WebUtility.HtmlEncode(hoSo.HocBong?.TenHocBong ?? "");
+                        var safeNhanXet = string.IsNullOrWhiteSpace(model.NhanXetXetDuyet)
+                            ? "Không có"
+                            : System.Net.WebUtility.HtmlEncode(model.NhanXetXetDuyet);
+
                         var message = $@"
                             <div style='background: {bannerColor}; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
                                 <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>{bannerTitle}</h2>
                             </div>
-                            <p>Kính gửi sinh viên <strong>{hoSo.SinhVien.HoTen}</strong>,</p>
-                            <p>Hội đồng xét duyệt học bổng UNETI xin thông báo kết quả thẩm định sơ bộ cho hồ sơ <strong>#{model.MaHoSoHocBong}</strong> ({hoSo.HocBong?.TenHocBong}):</p>
+                            <p>Kính gửi sinh viên <strong>{safeName}</strong>,</p>
+                            <p>Hội đồng xét duyệt học bổng UNETI xin thông báo kết quả thẩm định sơ bộ cho hồ sơ <strong>#{model.MaHoSoHocBong}</strong> ({safeTenHb}):</p>
                             <ul>
-                                <li><strong>Kết quả sơ bộ:</strong> <strong style='color: {bannerColor};'>{model.KetQua}</strong></li>
+                                <li><strong>Kết quả sơ bộ:</strong> <strong style='color: {bannerColor};'>{ketQuaText}</strong></li>
                                 <li><strong>Thời gian xử lý:</strong> {DateTime.Now:HH:mm dd/MM/yyyy}</li>
-                                <li><strong>Nhận xét từ Hội đồng:</strong> {(string.IsNullOrWhiteSpace(model.NhanXetXetDuyet) ? "Không có" : model.NhanXetXetDuyet)}</li>
+                                <li><strong>Nhận xét từ Hội đồng:</strong> {safeNhanXet}</li>
                             </ul>
                             {(isDat ? "<p>Hồ sơ của bạn đã đáp ứng yêu cầu sơ tuyển và được chuyển sang bước tiếp theo để sắp xếp lịch phỏng vấn. Bạn vui lòng theo dõi thông báo trên hệ thống và email để nắm thông tin lịch phỏng vấn.</p>" : "<p>Rất tiếc hồ sơ chưa đáp ứng tiêu chí đợt này. Chúc bạn tiếp tục nỗ lực và gặt hái thành công ở các cơ hội học bổng tiếp theo.</p>")}
                             <p>Trân trọng,<br/><strong>Hội đồng Xét duyệt Học bổng UNETI</strong></p>";
@@ -187,10 +195,11 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // GET: /HoSoHocBong/KiemTraSoSuat/5
         [HttpGet]
         [RoleAuthorize("Admin", "Cán bộ học bổng")]
-        public async Task<IActionResult> KiemTraSoSuat(int maHocBong)
+        public async Task<IActionResult> KiemTraSoSuat(int id, int? maHocBong = null)
         {
-            var soDaCap = await _hoSoService.DemSoDaCapAsync(maHocBong);
-            return Json(new { MaHocBong = maHocBong, SoDaCap = soDaCap });
+            int targetId = maHocBong ?? id;
+            var soDaCap = await _hoSoService.DemSoDaCapAsync(targetId);
+            return Json(new { MaHocBong = targetId, SoDaCap = soDaCap });
         }
 
         // 6. HỒ SƠ CỦA TÔI (SINH VIÊN)
@@ -257,7 +266,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
             var hocBong = await _context.HocBong
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == MaHocBong);
+                .FirstOrDefaultAsync(h => h.MaHocBong == MaHocBong && !h.DaXoa);
             if (hocBong == null) return NotFound();
 
             var sv = await _context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == maTaiKhoan.Value);
@@ -281,7 +290,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             bool daNop = await _context.HoSoHocBong.AnyAsync(h =>
                 h.MaSinhVien == sv.MaSinhVien &&
                 h.MaHocBong == MaHocBong &&
-                h.TrangThai != "Đã hủy");
+                h.TrangThai != "Đã hủy" &&
+                h.TrangThai != "Không đạt xét duyệt sơ bộ" &&
+                h.TrangThai != "Không được cấp học bổng");
             if (daNop)
             {
                 TempData["ErrorMessage"] = "Bạn đã nộp hồ sơ cho chương trình học bổng này rồi.";

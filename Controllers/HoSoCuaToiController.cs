@@ -9,6 +9,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Helpers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models.Jobs;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
@@ -18,18 +19,21 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private readonly ISupabaseStorageService _storageService;
         private readonly INotificationService _notificationService;
         private readonly IEmailService _emailService;
+        private readonly IBackgroundQueueService _queueService;
 
         public HoSoCuaToiController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
             IWebHostEnvironment env,
             ISupabaseStorageService storageService,
             INotificationService notificationService,
-            IEmailService emailService) : base(context)
+            IEmailService emailService,
+            IBackgroundQueueService queueService) : base(context)
         {
             _env = env;
             _storageService = storageService;
             _notificationService = notificationService;
             _emailService = emailService;
+            _queueService = queueService;
         }
 
         // Truy vấn hồ sơ của MỘT sinh viên -> mọi action đọc dữ liệu đều đi qua đây nên không lộ hồ sơ người khác.
@@ -111,7 +115,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");   // chưa có hồ sơ sinh viên
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong);
+                .FirstOrDefaultAsync(h => h.MaHocBong == maHocBong && !h.DaXoa);
             if (hb == null) return NotFound();
 
             var model = new NopHoSoViewModel { MaHocBong = maHocBong };
@@ -133,7 +137,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             if (sv == null) return RedirectToAction("Index", "HoSoCaNhan");
             var hb = await _context.HocBong.AsNoTracking()
                 .Include(h => h.DonViTaiTro)
-                .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong);
+                .FirstOrDefaultAsync(h => h.MaHocBong == model.MaHocBong && !h.DaXoa);
             if (hb == null) return NotFound();
 
             // Kiểm tra tệp đính kèm (số lượng, dung lượng, định dạng, nội dung thật) TRƯỚC khi làm gì khác.
@@ -162,12 +166,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
-            string? cloudUrl = null;
-            if (tep.Count > 0)
-            {
-                cloudUrl = await _storageService.UploadFileAsync(tep[0], "minhchung");
-            }
-
             var daLuuVaoDb = false;
             try
             {
@@ -192,7 +190,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     ThuXinHocBong = model.ThuXinHocBong.Trim(),
                     GhiChu = model.GhiChu?.Trim() ?? string.Empty, // cột DB là NOT NULL
                     TrangThai = TrangThaiHoSo.ChoDuyet,           // hồ sơ mới luôn là Chờ duyệt
-                    FileMinhChung = cloudUrl
+                    FileMinhChung = null                          // sẽ được RedisQueueWorker cập nhật ngầm sau khi đẩy lên Cloud
                 };
                 _context.HoSoHocBong.Add(hoSo);
                 await _context.SaveChangesAsync();
@@ -206,6 +204,23 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
                 await tx.CommitAsync();
                 daLuuVaoDb = true;
+                // Đẩy tác vụ Upload tệp minh chứng lên Supabase Cloud vào Hàng đợi Redis (BullMQ pattern)
+                if (daLuu.Count > 0)
+                {
+                    var localPath = TaiLieuHoSoStorage.DuongDan(_env.ContentRootPath, daLuu[0].TenFileLuu);
+                    if (!string.IsNullOrEmpty(localPath))
+                    {
+                        await _queueService.EnqueueUploadAsync(new UploadFileJob
+                        {
+                            LocalFilePath = localPath,
+                            OriginalFileName = daLuu[0].TenFileGoc,
+                            Folder = "minhchung",
+                            EntityType = "HoSoHocBong",
+                            EntityId = hoSo.MaHoSoHocBong
+                        });
+                    }
+                }
+
 
                 // Gửi thông báo Realtime (SignalR) cho Cán bộ & Admin và cho Sinh viên
                 try
@@ -235,20 +250,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 // Gửi email xác nhận nộp hồ sơ thành công tới sinh viên
                 try
                 {
-                    var studentEmail = !string.IsNullOrWhiteSpace(sv.Email) ? sv.Email : null;
+                    var studentEmail = !string.IsNullOrWhiteSpace(sv.Email)
+                        ? sv.Email
+                        : (await _context.TaiKhoan.AsNoTracking().Where(t => t.MaTaiKhoan == sv.MaTaiKhoan).Select(t => t.Email).FirstOrDefaultAsync());
                     if (!string.IsNullOrWhiteSpace(studentEmail))
                     {
+                        var safeName = System.Net.WebUtility.HtmlEncode(sv.HoTen);
+                        var safeTenHb = System.Net.WebUtility.HtmlEncode(hb.TenHocBong);
+                        var safeDvtt = System.Net.WebUtility.HtmlEncode(hb.DonViTaiTro?.TenDonViTaiTro ?? "");
                         var subject = $"[UNETI] Xác nhận tiếp nhận hồ sơ xin học bổng #{hoSo.MaHoSoHocBong} - {hb.TenHocBong}";
                         var message = $@"
                             <div style='background: #1e3a8a; color: #ffffff; padding: 18px 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;'>
                                 <h2 style='margin: 0; font-size: 18px; font-weight: 700;'>XÁC NHẬN TIẾP NHẬN HỒ SƠ ỨNG TUYỂN</h2>
                             </div>
-                            <p>Kính gửi sinh viên <strong>{sv.HoTen}</strong>,</p>
+                            <p>Kính gửi sinh viên <strong>{safeName}</strong>,</p>
                             <p>Cổng thông tin Học bổng UNETI xác nhận đã tiếp nhận thành công hồ sơ xin học bổng của bạn với các thông tin sau:</p>
                             <ul>
                                 <li><strong>Mã hồ sơ:</strong> #{hoSo.MaHoSoHocBong}</li>
-                                <li><strong>Chương trình:</strong> {hb.TenHocBong}</li>
-                                <li><strong>Đơn vị tài trợ:</strong> {hb.DonViTaiTro?.TenDonViTaiTro}</li>
+                                <li><strong>Chương trình:</strong> {safeTenHb}</li>
+                                <li><strong>Đơn vị tài trợ:</strong> {safeDvtt}</li>
                                 <li><strong>Thời gian nộp:</strong> {hoSo.NgayNop:HH:mm dd/MM/yyyy}</li>
                                 <li><strong>Trạng thái hồ sơ:</strong> Chờ xét duyệt sơ bộ</li>
                             </ul>
@@ -298,6 +318,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             }
 
             hoSo.TrangThai = TrangThaiHoSo.DaHuy;
+            hoSo.NgayXuLy = DateTime.Now;
             await _context.SaveChangesAsync();
 
             TempData["ThongBao"] = "Đã hủy hồ sơ.";

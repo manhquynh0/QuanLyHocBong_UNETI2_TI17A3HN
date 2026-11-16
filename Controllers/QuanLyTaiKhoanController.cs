@@ -17,7 +17,8 @@ public class QuanLyTaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) :
     {
         if (string.IsNullOrWhiteSpace(model.MatKhau)) ModelState.AddModelError(nameof(model.MatKhau), "Mật khẩu là bắt buộc");
         ValidateRole(model.VaiTro);
-        if (await db.TaiKhoan.AnyAsync(x => x.TenDangNhap == model.TenDangNhap.Trim())) ModelState.AddModelError(nameof(model.TenDangNhap), "Tên đăng nhập đã tồn tại");
+        var username = model.TenDangNhap?.Trim() ?? string.Empty;
+        if (!string.IsNullOrEmpty(username) && await db.TaiKhoan.AnyAsync(x => x.TenDangNhap == username)) ModelState.AddModelError(nameof(model.TenDangNhap), "Tên đăng nhập đã tồn tại");
         if (!ModelState.IsValid) return View("Form", model);
         var account = new TaiKhoan { TenDangNhap=model.TenDangNhap.Trim(), HoTen=model.HoTen.Trim(), Email=model.Email.Trim(), VaiTro=model.VaiTro, TrangThai=model.TrangThai };
         account.MatKhau = new PasswordHasher<TaiKhoan>().HashPassword(account, model.MatKhau!);
@@ -32,7 +33,8 @@ public class QuanLyTaiKhoanController(QuanLyHocBong_UNETI2_TI17A3HNContext db) :
     public async Task<IActionResult> Edit(int id, TaiKhoanFormViewModel model)
     {
         if (id != model.MaTaiKhoan) return BadRequest(); ValidateRole(model.VaiTro);
-        if (await db.TaiKhoan.AnyAsync(x => x.TenDangNhap == model.TenDangNhap.Trim() && x.MaTaiKhoan != id)) ModelState.AddModelError(nameof(model.TenDangNhap), "Tên đăng nhập đã tồn tại");
+        var username = model.TenDangNhap?.Trim() ?? string.Empty;
+        if (!string.IsNullOrEmpty(username) && await db.TaiKhoan.AnyAsync(x => x.TenDangNhap == username && x.MaTaiKhoan != id)) ModelState.AddModelError(nameof(model.TenDangNhap), "Tên đăng nhập đã tồn tại");
         var account = await db.TaiKhoan.FindAsync(id); if (account is null) return NotFound();
         if (!ModelState.IsValid) return View("Form", model);
         account.TenDangNhap=model.TenDangNhap.Trim(); account.HoTen=model.HoTen.Trim(); account.Email=model.Email.Trim(); account.VaiTro=model.VaiTro; account.TrangThai=model.TrangThai;

@@ -15,6 +15,7 @@ using QuanLyHocBong_UNETI2_TI17A3HN.Middleware;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models.Jobs;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
@@ -25,16 +26,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private readonly ISupabaseStorageService _storageService;
         private readonly IWebHostEnvironment _env;
         private readonly JwtService _jwtService;
+        private readonly IBackgroundQueueService _queueService;
 
         public HoSoCaNhanController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
             ISupabaseStorageService storageService,
             IWebHostEnvironment env,
-            JwtService jwtService) : base(context)
+            JwtService jwtService,
+            IBackgroundQueueService queueService) : base(context)
         {
             _storageService = storageService;
             _env = env;
             _jwtService = jwtService;
+            _queueService = queueService;
         }
 
         // GET: /HoSoCaNhan
@@ -118,22 +122,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return View(model);
             }
 
+            string? uploadedAvatarPath = null;
+            string? uploadedAvatarOrigName = null;
+
             if (fileUpload != null && fileUpload.Length > 0)
             {
-                var avatarUrl = await _storageService.UploadFileAsync(fileUpload, "avatars");
-                if (string.IsNullOrEmpty(avatarUrl))
+                var ext = Path.GetExtension(fileUpload.FileName).ToLowerInvariant();
+                var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                Directory.CreateDirectory(uploadFolder);
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    var ext = Path.GetExtension(fileUpload.FileName).ToLowerInvariant();
-                    var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
-                    Directory.CreateDirectory(uploadFolder);
-                    var fileName = $"{Guid.NewGuid():N}{ext}";
-                    var filePath = Path.Combine(uploadFolder, fileName);
-                    await using var stream = new FileStream(filePath, FileMode.Create);
                     await fileUpload.CopyToAsync(stream);
-                    avatarUrl = $"/uploads/avatars/{fileName}";
                 }
 
-                sv.AnhDaiDien = avatarUrl;
+                // Hiển thị ngay bằng đường dẫn cục bộ
+                sv.AnhDaiDien = $"/uploads/avatars/{fileName}";
+                uploadedAvatarPath = filePath;
+                uploadedAvatarOrigName = fileUpload.FileName;
             }
 
             var soDienThoai = model.SoDienThoai.StartsWith("+84") ? "0" + model.SoDienThoai[3..] : model.SoDienThoai;
@@ -162,6 +169,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             {
                 await _context.SaveChangesAsync();
                 CapNhatTokenHienThi(tk, sv.AnhDaiDien);
+
+                // Chỉ đẩy Job lên Redis Queue sau khi đã lưu DB thành công
+                if (!string.IsNullOrEmpty(uploadedAvatarPath) && !string.IsNullOrEmpty(uploadedAvatarOrigName))
+                {
+                    await _queueService.EnqueueUploadAsync(new UploadFileJob
+                    {
+                        LocalFilePath = uploadedAvatarPath,
+                        OriginalFileName = uploadedAvatarOrigName,
+                        Folder = "avatars",
+                        EntityType = "SinhVienAvatar",
+                        EntityId = sv.MaSinhVien
+                    });
+                }
             }
             catch (DbUpdateException)
             {
@@ -191,27 +211,35 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                var avatarUrl = await _storageService.UploadFileAsync(AnhDaiDienUpload, "avatars");
-                if (string.IsNullOrEmpty(avatarUrl))
+                var ext = Path.GetExtension(AnhDaiDienUpload.FileName).ToLowerInvariant();
+                var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                Directory.CreateDirectory(uploadFolder);
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                var filePath = Path.Combine(uploadFolder, fileName);
+                await using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    var ext = Path.GetExtension(AnhDaiDienUpload.FileName).ToLowerInvariant();
-                    var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "avatars");
-                    Directory.CreateDirectory(uploadFolder);
-                    var fileName = $"{Guid.NewGuid():N}{ext}";
-                    var filePath = Path.Combine(uploadFolder, fileName);
-                    await using var stream = new FileStream(filePath, FileMode.Create);
                     await AnhDaiDienUpload.CopyToAsync(stream);
-                    avatarUrl = $"/uploads/avatars/{fileName}";
                 }
 
+                var avatarUrl = $"/uploads/avatars/{fileName}";
                 sv.AnhDaiDien = avatarUrl;
                 var tk = await _context.TaiKhoan.FindAsync(sv.MaTaiKhoan);
                 if (tk != null) tk.AnhDaiDien = avatarUrl;
                 await _context.SaveChangesAsync();
                 CapNhatTokenHienThi(tk, avatarUrl);
+
+                // Đẩy tác vụ Upload ảnh đại diện lên Supabase Cloud vào Hàng đợi Redis
+                await _queueService.EnqueueUploadAsync(new UploadFileJob
+                {
+                    LocalFilePath = filePath,
+                    OriginalFileName = AnhDaiDienUpload.FileName,
+                    Folder = "avatars",
+                    EntityType = "SinhVienAvatar",
+                    EntityId = sv.MaSinhVien
+                });
+
                 TempData["ThongBao"] = "Đã cập nhật ảnh đại diện thành công.";
             }
-
             return RedirectToAction(nameof(Index));
         }
 

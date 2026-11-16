@@ -1,6 +1,6 @@
 /**
  * UNETI Realtime Notification Client (SignalR + WebSocket)
- * Tự động đồng bộ số thông báo chưa đọc, hiển thị toast và cập nhật dropdown theo thời gian thực.
+ * Đồng bộ số thông báo chưa đọc, hiển thị toast và cập nhật dropdown theo thời gian thực.
  */
 (function () {
     'use strict';
@@ -10,204 +10,16 @@
     const markAllBtn = document.getElementById('btnMarkAllRead');
     const toastContainer = document.getElementById('notificationToastContainer');
 
-    // Chỉ khởi tạo nếu người dùng đã đăng nhập (dropdown tồn tại trên layout)
+    // Chỉ khởi tạo khi đã đăng nhập (có chuông thông báo trên layout)
     if (!badgeEl || !listEl) return;
 
     let unreadCount = 0;
 
-    // 1. CẬP NHẬT BADGE HIỂN THỊ
-    function updateBadge(count) {
-        unreadCount = Math.max(0, count);
-        if (unreadCount > 0) {
-            badgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
-            badgeEl.classList.remove('d-none');
-        } else {
-            badgeEl.textContent = '0';
-            badgeEl.classList.add('d-none');
-        }
-    }
-
-    // 2. TẠO HTML ELEMENT CHO TỪNG BẢN GHI THÔNG BÁO (Chống XSS: dùng textContent)
-    function createNotificationItem(item) {
-        const itemLink = document.createElement('a');
-        itemLink.href = item.lienKet || 'javascript:void(0);';
-        itemLink.className = `dropdown-item p-3 border-bottom text-wrap d-flex align-items-start gap-2 ${item.daDoc ? 'opacity-75' : 'bg-light-subtle'}`;
-        itemLink.dataset.id = item.maThongBao;
-        itemLink.style.transition = 'background-color 0.15s ease';
-
-        // Icon theo loại thông báo
-        let iconClass = 'bi-bell-fill text-primary';
-        if (item.loaiThongBao === 'LichPhongVan') iconClass = 'bi-calendar-event-fill text-warning';
-        else if (item.loaiThongBao === 'KetQua') iconClass = 'bi-award-fill text-success';
-        else if (item.loaiThongBao === 'HoSo') iconClass = 'bi-folder-check text-info';
-
-        const iconCol = document.createElement('div');
-        iconCol.className = 'mt-1 flex-shrink-0';
-        iconCol.innerHTML = `<i class="bi ${iconClass} fs-5"></i>`;
-
-        const contentCol = document.createElement('div');
-        contentCol.className = 'flex-grow-1';
-
-        const titleRow = document.createElement('div');
-        titleRow.className = 'd-flex align-items-center justify-content-between mb-1';
-
-        const titleEl = document.createElement('strong');
-        titleEl.className = 'fs-6 text-dark';
-        titleEl.textContent = item.tieuDe;
-
-        const timeEl = document.createElement('small');
-        timeEl.className = 'text-muted ms-2';
-        timeEl.textContent = item.thoiGianTuongDoi || item.ngayTao || '';
-
-        titleRow.appendChild(titleEl);
-        titleRow.appendChild(timeEl);
-
-        const bodyEl = document.createElement('p');
-        bodyEl.className = 'm-0 text-muted small lh-sm';
-        bodyEl.textContent = item.noiDung;
-
-        contentCol.appendChild(titleRow);
-        contentCol.appendChild(bodyEl);
-
-        if (!item.daDoc) {
-            const dotCol = document.createElement('div');
-            dotCol.className = 'ms-1 mt-2';
-            dotCol.innerHTML = '<span class="badge bg-primary p-1 rounded-circle" style="display:inline-block; width:8px; height:8px;" title="Chưa đọc"></span>';
-            itemLink.appendChild(iconCol);
-            itemLink.appendChild(contentCol);
-            itemLink.appendChild(dotCol);
-        } else {
-            itemLink.appendChild(iconCol);
-            itemLink.appendChild(contentCol);
-        }
-
-        // Click để đánh dấu đã đọc
-        itemLink.addEventListener('click', function (e) {
-            if (!item.daDoc) {
-                markAsRead(item.maThongBao);
-                item.daDoc = true;
-                itemLink.classList.remove('bg-light-subtle');
-                itemLink.classList.add('opacity-75');
-                const dot = itemLink.querySelector('.badge.bg-primary');
-                if (dot) dot.remove();
-            }
-        });
-
-        return itemLink;
-    }
-
-    // 3. TẢI DANH SÁCH THÔNG BÁO BAN ĐẦU
-    function loadNotifications() {
-        fetch('/ThongBao/GetMyNotifications?top=15')
-            .then(res => res.json())
-            .then(res => {
-                if (res.success) {
-                    updateBadge(res.unreadCount);
-                    listEl.innerHTML = '';
-
-                    if (!res.data || res.data.length === 0) {
-                        listEl.innerHTML = '<div class="p-4 text-center text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i>Bạn không có thông báo nào.</div>';
-                        return;
-                    }
-
-                    res.data.forEach(item => {
-                        listEl.appendChild(createNotificationItem(item));
-                    });
-                }
-            })
-            .catch(err => {
-                listEl.innerHTML = '<div class="p-3 text-center text-danger small">Không thể tải thông báo.</div>';
-                console.warn('Lỗi tải thông báo:', err);
-            });
-    }
-
-    // 4. ĐÁNH DẤU 1 THÔNG BÁO LÀ ĐÃ ĐỌC
-    function markAsRead(id) {
-        fetch(`/ThongBao/DanhDauDaDoc/${id}`, {
-            method: 'POST',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-            .then(res => res.json())
-            .then(res => {
-                if (res.success) {
-                    updateBadge(res.unreadCount);
-                }
-            })
-            .catch(err => console.warn('Lỗi đánh dấu đã đọc:', err));
-    }
-
-    // 5. ĐÁNH DẤU TẤT CẢ ĐÃ ĐỌC
-    if (markAllBtn) {
-        markAllBtn.addEventListener('click', function (e) {
-            e.preventDefault();
-            fetch('/ThongBao/DanhDauTatCaDaDoc', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.success) {
-                        updateBadge(0);
-                        // Cập nhật giao diện tất cả items sang đã đọc
-                        const dots = listEl.querySelectorAll('.badge.bg-primary');
-                        dots.forEach(d => d.remove());
-                        const items = listEl.querySelectorAll('.dropdown-item');
-                        items.forEach(it => {
-                            it.classList.remove('bg-light-subtle');
-                            it.classList.add('opacity-75');
-                        });
-                    }
-                })
-                .catch(err => console.warn('Lỗi đánh dấu tất cả đã đọc:', err));
-        });
-    }
-
-    // 6. HIỂN THỊ TOAST THÔNG BÁO POPUP
-    function showNotificationToast(item) {
-        if (!toastContainer) return;
-
-        const toastId = 'toast_' + Date.now();
-        const toastEl = document.createElement('div');
-        toastEl.className = 'toast align-items-center text-bg-light border shadow-lg';
-        toastEl.id = toastId;
-        toastEl.setAttribute('role', 'alert');
-        toastEl.setAttribute('aria-live', 'assertive');
-        toastEl.setAttribute('aria-atomic', 'true');
-
-        const toastHeader = document.createElement('div');
-        toastHeader.className = 'toast-header bg-primary text-white';
-        toastHeader.innerHTML = `
-            <i class="bi bi-bell-fill me-2"></i>
-            <strong class="me-auto">${escapeHtml(item.tieuDe)}</strong>
-            <small class="text-white-50">Vừa xong</small>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-        `;
-
-        const toastBody = document.createElement('div');
-        toastBody.className = 'toast-body text-dark';
-        toastBody.textContent = item.noiDung;
-
-        if (item.lienKet) {
-            const linkBtn = document.createElement('a');
-            linkBtn.href = item.lienKet;
-            linkBtn.className = 'btn btn-sm btn-outline-primary mt-2 d-block text-start';
-            linkBtn.innerHTML = '<i class="bi bi-arrow-right-circle me-1"></i>Xem chi tiết';
-            toastBody.appendChild(linkBtn);
-        }
-
-        toastEl.appendChild(toastHeader);
-        toastEl.appendChild(toastBody);
-        toastContainer.appendChild(toastEl);
-
-        const bsToast = new bootstrap.Toast(toastEl, { delay: 6000 });
-        bsToast.show();
-
-        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
-    }
+    const ICON_MAP = {
+        LichPhongVan: 'bi-calendar-event-fill text-warning',
+        KetQua: 'bi-award-fill text-success',
+        HoSo: 'bi-folder-check text-info'
+    };
 
     function escapeHtml(str) {
         if (!str) return '';
@@ -216,7 +28,128 @@
         return p.innerHTML;
     }
 
-    // 7. KHỞI TẠO SIGNALR HUB CONNECTION
+    function updateBadge(count) {
+        unreadCount = Math.max(0, count);
+        badgeEl.textContent = unreadCount > 99 ? '99+' : unreadCount;
+        badgeEl.classList.toggle('d-none', unreadCount === 0);
+    }
+
+    function createNotificationItem(item) {
+        const iconClass = ICON_MAP[item.loaiThongBao] || 'bi-bell-fill text-primary';
+        const link = document.createElement('a');
+        link.href = item.lienKet || 'javascript:void(0);';
+        link.dataset.id = item.maThongBao;
+        link.className = `dropdown-item p-3 border-bottom text-wrap d-flex align-items-start gap-2 ${item.daDoc ? 'opacity-75' : 'bg-light-subtle'}`;
+
+        link.innerHTML = `
+            <div class="mt-1 flex-shrink-0"><i class="bi ${iconClass} fs-5"></i></div>
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <strong class="fs-6 text-dark">${escapeHtml(item.tieuDe)}</strong>
+                    <small class="text-muted ms-2">${escapeHtml(item.thoiGianTuongDoi || item.ngayTao || '')}</small>
+                </div>
+                <p class="m-0 text-muted small lh-sm">${escapeHtml(item.noiDung)}</p>
+            </div>
+            ${item.daDoc ? '' : '<div class="ms-1 mt-2"><span class="badge bg-primary p-1 rounded-circle" style="display:inline-block; width:8px; height:8px;" title="Chưa đọc"></span></div>'}
+        `;
+
+        link.addEventListener('click', () => {
+            if (item.daDoc) return;
+            item.daDoc = true;
+            markAsRead(item.maThongBao);
+            link.classList.remove('bg-light-subtle');
+            link.classList.add('opacity-75');
+            link.querySelector('.badge.bg-primary')?.remove();
+        });
+
+        return link;
+    }
+
+    function loadNotifications() {
+        fetch('/ThongBao/GetMyNotifications?top=15')
+            .then(res => res.json())
+            .then(res => {
+                if (!res.success) return;
+                updateBadge(res.unreadCount);
+                listEl.innerHTML = '';
+
+                if (!res.data || res.data.length === 0) {
+                    listEl.innerHTML = '<div class="p-4 text-center text-muted"><i class="bi bi-inbox fs-3 d-block mb-1"></i>Bạn không có thông báo nào.</div>';
+                    return;
+                }
+
+                res.data.forEach(item => listEl.appendChild(createNotificationItem(item)));
+            })
+            .catch(err => {
+                listEl.innerHTML = '<div class="p-3 text-center text-danger small">Không thể tải thông báo.</div>';
+                console.warn('Lỗi tải thông báo:', err);
+            });
+    }
+
+    function markAsRead(id) {
+        fetch(`/ThongBao/DanhDauDaDoc/${id}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(res => res.json())
+            .then(res => { if (res.success) updateBadge(res.unreadCount); })
+            .catch(err => console.warn('Lỗi đánh dấu đã đọc:', err));
+    }
+
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            fetch('/ThongBao/DanhDauTatCaDaDoc', {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(res => res.json())
+                .then(res => {
+                    if (!res.success) return;
+                    updateBadge(0);
+                    listEl.querySelectorAll('.badge.bg-primary').forEach(d => d.remove());
+                    listEl.querySelectorAll('.dropdown-item').forEach(it => {
+                        it.classList.remove('bg-light-subtle');
+                        it.classList.add('opacity-75');
+                    });
+                })
+                .catch(err => console.warn('Lỗi đánh dấu tất cả đã đọc:', err));
+        });
+    }
+
+    function showNotificationToast(item) {
+        if (!toastContainer) return;
+
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast align-items-center text-bg-light border shadow-lg';
+        toastEl.setAttribute('role', 'alert');
+        toastEl.setAttribute('aria-live', 'assertive');
+        toastEl.setAttribute('aria-atomic', 'true');
+
+        const linkHtml = item.lienKet
+            ? `<a href="${escapeHtml(item.lienKet)}" class="btn btn-sm btn-outline-primary mt-2 d-block text-start"><i class="bi bi-arrow-right-circle me-1"></i>Xem chi tiết</a>`
+            : '';
+
+        toastEl.innerHTML = `
+            <div class="toast-header bg-primary text-white">
+                <i class="bi bi-bell-fill me-2"></i>
+                <strong class="me-auto">${escapeHtml(item.tieuDe)}</strong>
+                <small class="text-white-50">Vừa xong</small>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body text-dark">
+                ${escapeHtml(item.noiDung)}
+                ${linkHtml}
+            </div>
+        `;
+
+        toastContainer.appendChild(toastEl);
+        const bsToast = new bootstrap.Toast(toastEl, { delay: 6000 });
+        bsToast.show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
+
+    // Kết nối SignalR nhận thông báo Realtime
     if (typeof signalR !== 'undefined') {
         const connection = new signalR.HubConnectionBuilder()
             .withUrl('/hubs/notification')
@@ -224,114 +157,80 @@
             .configureLogging(signalR.LogLevel.Warning)
             .build();
 
-        connection.on('NhanThongBao', function (data) {
-            // Cập nhật số chưa đọc
-            if (data.unreadCount !== undefined) {
-                updateBadge(data.unreadCount);
-            } else {
-                updateBadge(unreadCount + 1);
-            }
+        connection.on('NhanThongBao', (data) => {
+            updateBadge(data.unreadCount !== undefined ? data.unreadCount : unreadCount + 1);
 
-            // Xóa thông báo trống nếu có
             const emptyEl = listEl.querySelector('.text-center');
             if (emptyEl && emptyEl.textContent.includes('không có')) {
                 listEl.innerHTML = '';
             }
 
-            // Chèn bản ghi mới lên đầu danh sách
-            const newItemEl = createNotificationItem(data);
-            listEl.insertBefore(newItemEl, listEl.firstChild);
+            listEl.insertBefore(createNotificationItem(data), listEl.firstChild);
 
-            // Bật hiệu ứng rung nhẹ chuông
             const btn = document.getElementById('notificationDropdownBtn');
             if (btn) {
                 btn.classList.add('animate__animated', 'animate__swing');
                 setTimeout(() => btn.classList.remove('animate__animated', 'animate__swing'), 1000);
             }
 
-            // Hiện popup Toast
             showNotificationToast(data);
         });
 
-        connection.start()
-            .then(() => {
-                // Kết nối thành công
-            })
-            .catch(err => {
-                console.warn('SignalR Hub kết nối thất bại:', err);
-            });
+        connection.start().catch(err => console.warn('SignalR Hub kết nối thất bại:', err));
     }
 
-    // 8. TỰ ĐỘNG KÍCH HOẠT CÁC TOAST RENDER TỪ TEMPDATA
     function initServerToasts() {
         if (!toastContainer) return;
-        const serverToasts = toastContainer.querySelectorAll('.toast');
-        serverToasts.forEach(el => {
-            const bsToast = new bootstrap.Toast(el);
-            bsToast.show();
+        toastContainer.querySelectorAll('.toast').forEach(el => {
+            new bootstrap.Toast(el).show();
             el.addEventListener('hidden.bs.toast', () => el.remove());
         });
     }
 
-    // 9. HÀM TOAST TOÀN CỤC CHO CLIENT-SIDE JAVASCRIPT
+    // Hàm Toast toàn cục cho JS
     window.showToast = function (message, type = 'success', title = '') {
         if (!toastContainer) return;
 
-        const isDanger = type === 'danger' || type === 'error';
-        const isWarning = type === 'warning';
-        const isInfo = type === 'info';
-
-        const bgClass = isDanger ? 'text-bg-danger'
-            : isWarning ? 'text-bg-warning text-dark'
-            : isInfo ? 'text-bg-primary'
-            : 'text-bg-success';
-
-        const iconClass = isDanger ? 'bi-exclamation-triangle-fill'
-            : isWarning ? 'bi-exclamation-circle-fill'
-            : isInfo ? 'bi-info-circle-fill'
-            : 'bi-check-circle-fill';
-
-        const defaultTitle = isDanger ? 'Thông báo lỗi'
-            : isWarning ? 'Cảnh báo'
-            : isInfo ? 'Thông tin'
-            : 'Thành công';
-
-        const closeBtnClass = isWarning ? '' : 'btn-close-white';
+        const STYLES = {
+            danger: { bg: 'text-bg-danger', icon: 'bi-exclamation-triangle-fill', title: 'Thông báo lỗi', delay: 6500 },
+            error: { bg: 'text-bg-danger', icon: 'bi-exclamation-triangle-fill', title: 'Thông báo lỗi', delay: 6500 },
+            warning: { bg: 'text-bg-warning text-dark', icon: 'bi-exclamation-circle-fill', title: 'Cảnh báo', delay: 4500, darkClose: true },
+            info: { bg: 'text-bg-primary', icon: 'bi-info-circle-fill', title: 'Thông tin', delay: 4500 },
+            success: { bg: 'text-bg-success', icon: 'bi-check-circle-fill', title: 'Thành công', delay: 4500 }
+        };
+        const cfg = STYLES[type] || STYLES.success;
 
         const toastEl = document.createElement('div');
-        toastEl.className = `toast align-items-center ${bgClass} border-0 shadow-lg mb-2`;
+        toastEl.className = `toast align-items-center ${cfg.bg} border-0 shadow-lg mb-2`;
         toastEl.setAttribute('role', 'alert');
         toastEl.setAttribute('aria-live', 'assertive');
         toastEl.setAttribute('aria-atomic', 'true');
-
         toastEl.innerHTML = `
             <div class="d-flex">
                 <div class="toast-body d-flex align-items-center py-2 px-3">
-                    <i class="bi ${iconClass} fs-5 me-2 flex-shrink-0"></i>
+                    <i class="bi ${cfg.icon} fs-5 me-2 flex-shrink-0"></i>
                     <div>
-                        <div class="fw-semibold">${escapeHtml(title || defaultTitle)}</div>
+                        <div class="fw-semibold">${escapeHtml(title || cfg.title)}</div>
                         <div class="small">${escapeHtml(message)}</div>
                     </div>
                 </div>
-                <button type="button" class="btn-close ${closeBtnClass} me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
+                <button type="button" class="btn-close ${cfg.darkClose ? '' : 'btn-close-white'} me-2 m-auto" data-bs-dismiss="toast" aria-label="Đóng"></button>
             </div>
         `;
 
         toastContainer.appendChild(toastEl);
-        const bsToast = new bootstrap.Toast(toastEl, { delay: isDanger ? 6500 : 4500 });
-        bsToast.show();
+        new bootstrap.Toast(toastEl, { delay: cfg.delay }).show();
         toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
     };
 
-    // 10. TẢI DỮ LIỆU BAN ĐẦU KHI TRANG SẴN SÀNG
     function initAll() {
         loadNotifications();
         initServerToasts();
     }
 
-    document.addEventListener('DOMContentLoaded', initAll);
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAll);
+    } else {
         initAll();
     }
 })();
-

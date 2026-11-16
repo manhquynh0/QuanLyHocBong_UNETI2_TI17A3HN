@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models.Jobs;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 {
@@ -15,22 +16,50 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
         private readonly ILogger<EmailService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IBackgroundQueueService _queueService;
 
         public EmailService(
             ILogger<EmailService> logger, 
             IConfiguration configuration,
-            IHttpClientFactory httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            IBackgroundQueueService queueService)
         {
             _logger = logger;
             _configuration = configuration;
             _httpClientFactory = httpClientFactory;
+            _queueService = queueService;
         }
 
+        /// <summary>
+        /// Đẩy công việc gửi Email vào Hàng đợi Redis (queue:email) để phản hồi tức thì (~1ms), không làm treo giao diện người dùng.
+        /// </summary>
         public async Task<bool> SendEmailAsync(string toEmail, string subject, string htmlMessage)
         {
             if (string.IsNullOrWhiteSpace(toEmail))
             {
                 _logger.LogWarning("[EmailService] Bỏ qua gửi email do địa chỉ người nhận trống.");
+                return false;
+            }
+
+            var job = new EmailJob
+            {
+                ToEmail = toEmail.Trim(),
+                Subject = subject,
+                HtmlMessage = htmlMessage,
+                RetryCount = 0
+            };
+
+            await _queueService.EnqueueEmailAsync(job);
+            return true;
+        }
+
+        /// <summary>
+        /// Hàm gửi Email trực tiếp qua SMTP / Brevo API (được RedisQueueWorker gọi ở tiến trình chạy ngầm).
+        /// </summary>
+        public async Task<bool> SendEmailDirectlyAsync(string toEmail, string subject, string htmlMessage)
+        {
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
                 return false;
             }
 
@@ -132,6 +161,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                     {
                         _logger.LogWarning("[Brevo Email] Brevo trả về lỗi ({StatusCode}) khi gửi tới {ToEmail}: {Response}", 
                             response.StatusCode, toEmail, responseBody);
+                        return false;
                     }
                 }
                 else

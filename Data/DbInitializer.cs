@@ -28,7 +28,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
                     CREATE TABLE [RefreshToken] (
                         [Id] int IDENTITY(1,1) NOT NULL,
                         [MaTaiKhoan] int NOT NULL,
-                        [Token] varchar(255) NOT NULL,
+                        [Token] varchar(1000) NOT NULL,
                         [ExpiryDate] datetime2 NOT NULL,
                         [CreatedAt] datetime2 NOT NULL DEFAULT GETDATE(),
                         [IsRevoked] bit NOT NULL DEFAULT 0,
@@ -39,6 +39,15 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Data
                 END
                 ELSE
                 BEGIN
+                    IF COL_LENGTH('RefreshToken', 'Token') < 1000
+                    BEGIN
+                        IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_RefreshToken_Token' AND object_id = OBJECT_ID('RefreshToken'))
+                            DROP INDEX [IX_RefreshToken_Token] ON [RefreshToken];
+                        ALTER TABLE [RefreshToken] ALTER COLUMN [Token] varchar(1000) NOT NULL;
+                        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_RefreshToken_Token' AND object_id = OBJECT_ID('RefreshToken'))
+                            CREATE NONCLUSTERED INDEX [IX_RefreshToken_Token] ON [RefreshToken] ([Token]);
+                    END
+
                     IF COL_LENGTH('RefreshToken', 'ExpiryDate') IS NULL AND COL_LENGTH('RefreshToken', 'NgayHetHan') IS NOT NULL
                     BEGIN
                         EXEC sp_rename 'RefreshToken.NgayHetHan', 'ExpiryDate', 'COLUMN';

@@ -8,6 +8,7 @@ using Microsoft.Net.Http.Headers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
 using QuanLyHocBong_UNETI2_TI17A3HN.Helpers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
+using QuanLyHocBong_UNETI2_TI17A3HN.Models.Jobs;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
@@ -24,15 +25,18 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         private readonly QuanLyHocBong_UNETI2_TI17A3HNContext _context;
         private readonly IWebHostEnvironment _env;
         private readonly ISupabaseStorageService _storageService;
+        private readonly IBackgroundQueueService _queueService;
 
         public TaiLieuHoSoController(
             QuanLyHocBong_UNETI2_TI17A3HNContext context,
             IWebHostEnvironment env,
-            ISupabaseStorageService storageService)
+            ISupabaseStorageService storageService,
+            IBackgroundQueueService queueService)
         {
             _context = context;
             _env = env;
             _storageService = storageService;
+            _queueService = queueService;
         }
 
         private sealed record NguoiDung(int MaTaiKhoan, string Quyen, int? MaSinhVien)
@@ -196,16 +200,25 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             try
             {
                 daLuu = await TaiLieuHoSoStorage.LuuAsync(_env.ContentRootPath, tep);
-                if (string.IsNullOrEmpty(hoSo.FileMinhChung))
-                {
-                    var cloudUrl = await _storageService.UploadFileAsync(tep[0], "minhchung");
-                    if (!string.IsNullOrEmpty(cloudUrl))
-                    {
-                        hoSo.FileMinhChung = cloudUrl;
-                    }
-                }
                 _context.TaiLieuHoSo.AddRange(TaiLieuHoSoStorage.TaoBanGhi(maHoSo, daLuu, loai, nd.MaTaiKhoan));
                 await _context.SaveChangesAsync();
+
+                // Đẩy tác vụ Upload tệp lên Supabase Cloud vào Hàng đợi Redis (BullMQ pattern)
+                if (string.IsNullOrEmpty(hoSo.FileMinhChung) && daLuu.Count > 0)
+                {
+                    var localPath = TaiLieuHoSoStorage.DuongDan(_env.ContentRootPath, daLuu[0].TenFileLuu);
+                    if (!string.IsNullOrEmpty(localPath))
+                    {
+                        await _queueService.EnqueueUploadAsync(new UploadFileJob
+                        {
+                            LocalFilePath = localPath,
+                            OriginalFileName = daLuu[0].TenFileGoc,
+                            Folder = "minhchung",
+                            EntityType = "HoSoHocBong",
+                            EntityId = maHoSo
+                        });
+                    }
+                }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or DbUpdateException)
             {

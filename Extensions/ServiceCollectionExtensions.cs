@@ -82,6 +82,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Extensions
             // HttpClient & Cloud Storage Service
             services.AddHttpClient();
             services.AddScoped<ISupabaseStorageService, SupabaseStorageService>();
+            // Module Hàng đợi Redis (BullMQ Pattern: Queue + Background Worker cho Email & Upload File)
+            services.AddSingleton<IBackgroundQueueService, RedisQueueService>();
+            services.AddHostedService<RedisQueueWorker>();
 
             return services;
         }

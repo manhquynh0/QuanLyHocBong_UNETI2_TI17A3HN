@@ -131,6 +131,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         public Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
         {
             return _unitOfWork.DonViTaiTros.Query(asNoTracking: true)
+                .Where(d => d.TrangThai)
                 .OrderBy(d => d.TenDonViTaiTro)
                 .ToListAsync();
         }

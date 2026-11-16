@@ -33,7 +33,7 @@ public class TaiKhoanController(
         if (!ModelState.IsValid) return View(model);
 
         var username = model.TenDangNhap.Trim();
-        var account = await db.TaiKhoan.SingleOrDefaultAsync(x => x.TenDangNhap == username || x.Email == username);
+        var account = await db.TaiKhoan.FirstOrDefaultAsync(x => x.TenDangNhap == username || x.Email == username);
         if (account is null)
         {
             ModelState.AddModelError("", "Tên đăng nhập không tồn tại.");
@@ -80,9 +80,9 @@ public class TaiKhoanController(
             }
         }
 
-        // 1. Tạo JWT AccessToken (15 phút) và RefreshToken (7 ngày)
+        // 1. Tạo JWT AccessToken (15 phút) và RefreshToken (7 ngày, cũng là JWT với secret riêng)
         var accessToken = jwtService.GenerateAccessToken(account, avatar);
-        var refreshToken = jwtService.GenerateRefreshToken();
+        var refreshToken = jwtService.GenerateRefreshToken(account);
 
         // 2. Lưu bản ghi RefreshToken vào bảng riêng RefreshToken trong Database
         var tokenEntity = new RefreshToken
@@ -113,6 +113,14 @@ public class TaiKhoanController(
             return Unauthorized(new { message = "Không tìm thấy Refresh Token." });
         }
 
+        // Kiểm tra tính hợp lệ của RefreshToken (JWT) bằng _refreshSecretKey
+        var refreshPayload = jwtService.ValidateRefreshToken(tokenToCheck);
+        if (refreshPayload == null)
+        {
+            JwtAuthMiddleware.ClearTokenCookies(HttpContext);
+            return Unauthorized(new { message = "Refresh Token (JWT) không hợp lệ hoặc đã hết hạn." });
+        }
+
         var tokenRecord = await db.RefreshToken
             .Include(r => r.TaiKhoan)
             .FirstOrDefaultAsync(r => r.Token == tokenToCheck && !r.IsRevoked);
@@ -134,7 +142,7 @@ public class TaiKhoanController(
         }
 
         var newAccessToken = jwtService.GenerateAccessToken(tokenRecord.TaiKhoan, avatar);
-        var newRefreshToken = jwtService.GenerateRefreshToken();
+        var newRefreshToken = jwtService.GenerateRefreshToken(tokenRecord.TaiKhoan);
 
         // Tạo bản ghi token mới trong bảng RefreshToken
         db.RefreshToken.Add(new RefreshToken

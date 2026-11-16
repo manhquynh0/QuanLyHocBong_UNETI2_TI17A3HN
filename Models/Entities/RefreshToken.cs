@@ -14,8 +14,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Models
         public int MaTaiKhoan { get; set; }
 
         [Required]
-        [StringLength(255)]
-        [Column(TypeName = "varchar(255)")]
+        [StringLength(1000)]
+        [Column(TypeName = "varchar(1000)")]
         public string Token { get; set; } = string.Empty;
 
         [Required]
