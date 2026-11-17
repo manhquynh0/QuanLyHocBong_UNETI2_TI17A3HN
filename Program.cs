@@ -38,6 +38,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseMiddleware<RedisRateLimitMiddleware>(); // Kích hoạt Redis Rate Limiting Middleware (kèm In-Memory Fallback)
 app.UseMiddleware<JwtAuthMiddleware>(); // Xác minh JWT AccessToken & tự động làm mới bằng RefreshToken trong DB
+app.UseMiddleware<RoleAuthMiddleware>(); // Kiểm tra phân quyền [RoleAuthorize] sớm ở tầng Middleware
 app.UseAuthorization();
 
 // 4. Ánh xạ Route MVC & Static Assets

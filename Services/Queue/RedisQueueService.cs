@@ -32,17 +32,13 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             _redis = redis;
         }
 
-        public Task EnqueueEmailAsync(EmailJob job)
-            => PushJobAsync(EmailQueueKey, job, _emailFallback);
+        public Task EnqueueEmailAsync(EmailJob job)  => PushJobAsync(EmailQueueKey, job, _emailFallback);
 
-        public Task EnqueueUploadAsync(UploadFileJob job)
-            => PushJobAsync(UploadQueueKey, job, _uploadFallback);
+        public Task EnqueueUploadAsync(UploadFileJob job)  => PushJobAsync(UploadQueueKey, job, _uploadFallback);
 
-        public Task<EmailJob?> DequeueEmailAsync()
-            => PopJobAsync(EmailQueueKey, _emailFallback);
+        public Task<EmailJob?> DequeueEmailAsync()  => PopJobAsync(EmailQueueKey, _emailFallback);
 
-        public Task<UploadFileJob?> DequeueUploadAsync()
-            => PopJobAsync(UploadQueueKey, _uploadFallback);
+        public Task<UploadFileJob?> DequeueUploadAsync() => PopJobAsync(UploadQueueKey, _uploadFallback);
 
         private async Task PushJobAsync<T>(string queueKey, T job, ConcurrentQueue<T> fallbackQueue)
         {

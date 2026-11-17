@@ -1,0 +1,28 @@
+@* Loading Overlay toàn cục *@
+<div class="loading-overlay" id="loadingOverlay" aria-hidden="true">
+    <div class="loading-dialog bg-white rounded-3 shadow-lg p-4 text-center">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <div class="fw-semibold text-dark">Đang xử lý, vui lòng đợi...</div>
+    </div>
+</div>
+
+@* Modal xác nhận thao tác dùng chung cho window.unetiConfirm & .js-confirm *@
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold text-dark" id="confirmModalTitle">Xác nhận</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body text-secondary" id="confirmModalBody">
+                Bạn có chắc chắn muốn thực hiện hành động này?
+            </div>
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Hủy bỏ</button>
+                <button type="button" class="btn btn-danger" id="confirmModalOk">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -11,11 +11,6 @@
         <a asp-action="Create" class="sponsor-add-button"><span aria-hidden="true">＋</span> Thêm đơn vị</a>
     </div>
 
-    @if (TempData["Error"] is not null)
-    {
-        <div class="alert alert-danger sponsor-alert" role="alert">@TempData["Error"]</div>
-    }
-
     <section class="sponsor-table-card">
         <div class="sponsor-table-heading">
             <div><h2>Danh sách đơn vị</h2><span>@Model.Count() đơn vị tài trợ</span></div>

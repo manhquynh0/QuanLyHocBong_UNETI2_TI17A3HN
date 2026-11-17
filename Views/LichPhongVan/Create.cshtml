@@ -4,7 +4,7 @@
     bool hasEligible = ViewBag.HasEligibleApplications ?? false;
 }
 
-<div class="sponsor-page" style="max-width: 780px;">
+<div class="sponsor-page">
     <div class="page-hero">
         <div class="page-hero-copy">
             <h2>Thiết lập lịch phỏng vấn</h2>
@@ -17,14 +17,6 @@
 
     <div class="ui-card">
         <div class="ui-card-body">
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
-                    @TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            }
-
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="alert alert-danger mb-3">

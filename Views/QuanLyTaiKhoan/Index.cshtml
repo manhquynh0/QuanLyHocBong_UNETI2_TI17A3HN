@@ -14,14 +14,6 @@
         </a>
     </div>
 
-    @if (TempData["Error"] is not null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    }
-
     <div class="ui-card">
         <div class="ui-card-head">
             <h5>Danh sách tài khoản</h5>
@@ -52,7 +44,21 @@
                         <tr>
                             <td class="fw-bold text-primary text-nowrap" style="font-variant-numeric: tabular-nums;">#@a.MaTaiKhoan</td>
                             <td class="text-nowrap"><code>@a.TenDangNhap</code></td>
-                            <td class="fw-semibold text-nowrap">@a.HoTen</td>
+                            <td class="fw-semibold text-nowrap">
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (!string.IsNullOrEmpty(a.AnhDaiDien))
+                                    {
+                                        <img src="@a.AnhDaiDien" alt="@a.HoTen" class="rounded-circle border" style="width: 30px; height: 30px; object-fit: cover;" />
+                                    }
+                                    else
+                                    {
+                                        <span class="rounded-circle bg-secondary-subtle text-secondary d-inline-flex align-items-center justify-content-center fw-bold" style="width: 30px; height: 30px; font-size: 11px;">
+                                            @(string.IsNullOrWhiteSpace(a.HoTen) ? "TK" : string.Join("", a.HoTen.Split(' ', StringSplitOptions.RemoveEmptyEntries).TakeLast(2).Select(w => w[0])).ToUpper())
+                                        </span>
+                                    }
+                                    <span>@a.HoTen</span>
+                                </div>
+                            </td>
                             <td class="text-muted text-nowrap">@a.Email</td>
                             <td class="text-nowrap"><span class="st @roleClass">@a.VaiTro</span></td>
                             <td class="text-nowrap">

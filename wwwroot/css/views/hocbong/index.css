@@ -55,8 +55,8 @@
 
 .scholarship-toast {
   position: fixed;
-  z-index: 1100;
-  top: 22px;
+  z-index: 1090;
+  bottom: 24px;
   right: 24px;
   display: grid;
   width: min(420px, calc(100vw - 32px));

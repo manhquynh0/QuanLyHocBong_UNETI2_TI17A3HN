@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -154,6 +155,19 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 sv.AnhDaiDien = cloudUrl;
                 var tk = await context.TaiKhoan.FindAsync(new object[] { sv.MaTaiKhoan }, stoppingToken);
                 if (tk != null) tk.AnhDaiDien = cloudUrl;
+
+                await context.SaveChangesAsync(stoppingToken);
+                return;
+            }
+
+            if (job.EntityType == "TaiKhoanAvatar")
+            {
+                var tk = await context.TaiKhoan.FindAsync(new object[] { job.EntityId }, stoppingToken);
+                if (tk == null) return;
+
+                tk.AnhDaiDien = cloudUrl;
+                var sv = await context.SinhVien.FirstOrDefaultAsync(s => s.MaTaiKhoan == tk.MaTaiKhoan, stoppingToken);
+                if (sv != null) sv.AnhDaiDien = cloudUrl;
 
                 await context.SaveChangesAsync(stoppingToken);
             }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Models;
 
@@ -16,4 +17,6 @@ public class TaiKhoanFormViewModel
     [Required]
     public string VaiTro { get; set; } = "Sinh viên";
     public bool TrangThai { get; set; } = true;
+    public string? AnhDaiDien { get; set; }
+    public IFormFile? AnhDaiDienUpload { get; set; }
 }

@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,7 +12,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
 {
     public class SupabaseStorageService : ISupabaseStorageService
     {
-        private readonly IConfiguration _configuration;
+        private readonly string? _projectId;
+        private readonly string? _secretKey;
+        private readonly string _bucket;
         private readonly HttpClient _httpClient;
         private readonly ILogger<SupabaseStorageService> _logger;
 
@@ -22,143 +23,54 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             HttpClient httpClient,
             ILogger<SupabaseStorageService> logger)
         {
-            _configuration = configuration;
+            _projectId = configuration["PROJECT_ID"]?.Trim();
+            _secretKey = (configuration["SUPBER_BASE_API_KEY_SECRET"] ?? configuration["SUPBER_BASE_API_KEY"])?.Trim();
+            _bucket = configuration["SUPABASE_BUCKET"]?.Trim() ?? "QLHB";
             _httpClient = httpClient;
             _logger = logger;
         }
 
-        private (string? projectId, string? secretKey, string bucket) GetCredentials()
-        {
-            var projectId = _configuration["PROJECT_ID"]?.Trim();
-            var secretKey = (_configuration["SUPBER_BASE_API_KEY_SECRET"] ?? _configuration["SUPBER_BASE_API_KEY"])?.Trim();
-            var bucket = _configuration["SUPABASE_BUCKET"]?.Trim() ?? "QLHB";
-
-            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(secretKey))
-            {
-                var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
-                if (File.Exists(envPath))
-                {
-                    foreach (var line in File.ReadAllLines(envPath))
-                    {
-                        var trimmed = line.Trim();
-                        if (string.IsNullOrEmpty(trimmed) || trimmed.StartsWith("#")) continue;
-                        var parts = trimmed.Split('=', 2);
-                        if (parts.Length == 2)
-                        {
-                            var key = parts[0].Trim();
-                            var val = parts[1].Trim();
-                            _configuration[key] = val;
-                            if (key == "PROJECT_ID") projectId = val;
-                            if (key == "SUPBER_BASE_API_KEY_SECRET") secretKey = val;
-                            if (key == "SUPBER_BASE_API_KEY" && string.IsNullOrEmpty(secretKey)) secretKey = val;
-                            if (key == "SUPABASE_BUCKET") bucket = val;
-                        }
-                    }
-                }
-            }
-
-            return (projectId, secretKey, bucket);
-        }
-
         public async Task<string?> UploadFileAsync(IFormFile file, string folder = "minhchung")
         {
-            if (file == null || file.Length == 0)
-            {
+            if (file == null || file.Length == 0 || file.Length > 10 * 1024 * 1024)
                 return null;
-            }
 
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-            string[] duoiHopLe = { ".pdf", ".jpg", ".jpeg", ".png", ".webp" };
-            if (!duoiHopLe.Contains(ext) || file.Length > 10 * 1024 * 1024)
-            {
+            string[] allowedExts = { ".pdf", ".jpg", ".jpeg", ".png", ".webp" };
+            if (!allowedExts.Contains(ext))
                 return null;
-            }
 
             await using var stream = file.OpenReadStream();
-            return await UploadStreamInternalAsync(stream, file.FileName, folder);
+            return await UploadStreamAsync(stream, ext, folder);
         }
 
         public async Task<string?> UploadLocalFileAsync(string localFilePath, string originalFileName, string folder = "minhchung")
         {
             if (string.IsNullOrWhiteSpace(localFilePath) || !File.Exists(localFilePath))
-            {
-                _logger.LogWarning("[SupabaseStorage] Không tìm thấy tệp trên ổ đĩa để upload: {Path}", localFilePath);
                 return null;
-            }
 
-            var fileNameForExt = !string.IsNullOrWhiteSpace(originalFileName) ? originalFileName : Path.GetFileName(localFilePath);
+            var ext = Path.GetExtension(string.IsNullOrWhiteSpace(originalFileName) ? localFilePath : originalFileName).ToLowerInvariant();
             await using var stream = new FileStream(localFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-            return await UploadStreamInternalAsync(stream, fileNameForExt, folder);
-        }
-
-        private async Task<string?> UploadStreamInternalAsync(Stream stream, string fileNameOrigin, string folder)
-        {
-            var (projectId, secretKey, bucket) = GetCredentials();
-            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(secretKey))
-            {
-                _logger.LogError("Thiếu cấu hình Cloud Storage trong .env");
-                return null;
-            }
-
-            try
-            {
-                var ext = Path.GetExtension(fileNameOrigin).ToLowerInvariant();
-                var rawName = Path.GetFileNameWithoutExtension(fileNameOrigin);
-                var safeName = Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
-                if (safeName.Length > 40)
-                {
-                    safeName = safeName.Substring(0, 40);
-                }
-
-                var fileName = $"{Guid.NewGuid():N}_{safeName}{ext}";
-                var storagePath = string.IsNullOrWhiteSpace(folder) ? fileName : $"{folder.Trim('/')}/{fileName}";
-
-                var uploadEndpoint = $"https://{projectId}.supabase.co/storage/v1/object/{bucket}/{storagePath}";
-
-                using var request = new HttpRequestMessage(HttpMethod.Post, uploadEndpoint);
-                request.Headers.Add("apikey", secretKey);
-                request.Headers.Add("Authorization", $"Bearer {secretKey}");
-
-                using var content = new StreamContent(stream);
-                content.Headers.ContentType = new MediaTypeHeaderValue(GetContentTypeByExtension(ext));
-                request.Content = content;
-
-                var response = await _httpClient.SendAsync(request);
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-
-                return $"https://{projectId}.supabase.co/storage/v1/object/public/{bucket}/{storagePath}";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Lỗi khi upload file lên Supabase: {FileName}", fileNameOrigin);
-                return null;
-            }
+            return await UploadStreamAsync(stream, ext, folder);
         }
 
         public async Task<bool> DeleteFileAsync(string fileUrlOrPath)
         {
-            if (string.IsNullOrWhiteSpace(fileUrlOrPath)) return false;
-
-            var (projectId, secretKey, bucket) = GetCredentials();
-            if (string.IsNullOrEmpty(projectId) || string.IsNullOrEmpty(secretKey)) return false;
+            if (string.IsNullOrWhiteSpace(fileUrlOrPath) || string.IsNullOrEmpty(_projectId) || string.IsNullOrEmpty(_secretKey))
+                return false;
 
             try
             {
-                string storagePath = fileUrlOrPath;
-                var marker = $"/storage/v1/object/public/{bucket}/";
-                if (storagePath.Contains(marker))
-                {
-                    storagePath = storagePath.Substring(storagePath.IndexOf(marker) + marker.Length);
-                }
+                var marker = $"/storage/v1/object/public/{_bucket}/";
+                var storagePath = fileUrlOrPath.Contains(marker)
+                    ? fileUrlOrPath[(fileUrlOrPath.IndexOf(marker) + marker.Length)..]
+                    : fileUrlOrPath;
                 storagePath = storagePath.TrimStart('/');
 
-                var deleteEndpoint = $"https://{projectId}.supabase.co/storage/v1/object/{bucket}/{storagePath}";
-                using var request = new HttpRequestMessage(HttpMethod.Delete, deleteEndpoint);
-                request.Headers.Add("apikey", secretKey);
-                request.Headers.Add("Authorization", $"Bearer {secretKey}");
+                var url = $"https://{_projectId}.supabase.co/storage/v1/object/{_bucket}/{storagePath}";
+                using var request = new HttpRequestMessage(HttpMethod.Delete, url);
+                request.Headers.Add("apikey", _secretKey);
+                request.Headers.Add("Authorization", $"Bearer {_secretKey}");
 
                 var response = await _httpClient.SendAsync(request);
                 return response.IsSuccessStatusCode;
@@ -169,16 +81,38 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
             }
         }
 
-        private static string GetContentTypeByExtension(string ext)
+        private async Task<string?> UploadStreamAsync(Stream stream, string ext, string folder)
         {
-            return ext switch
+            if (string.IsNullOrEmpty(_projectId) || string.IsNullOrEmpty(_secretKey))
             {
-                ".pdf" => "application/pdf",
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".webp" => "image/webp",
-                _ => "application/octet-stream"
-            };
+                _logger.LogError("Thiếu cấu hình PROJECT_ID hoặc SUPBER_BASE_API_KEY trong .env");
+                return null;
+            }
+
+            try
+            {
+                var fileName = $"{Guid.NewGuid():N}{ext}";
+                var storagePath = string.IsNullOrWhiteSpace(folder) ? fileName : $"{folder.Trim('/')}/{fileName}";
+                var url = $"https://{_projectId}.supabase.co/storage/v1/object/{_bucket}/{storagePath}";
+
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Headers.Add("apikey", _secretKey);
+                request.Headers.Add("Authorization", $"Bearer {_secretKey}");
+
+                using var content = new StreamContent(stream);
+                content.Headers.ContentType = new MediaTypeHeaderValue(TaiLieuHoSoRules.LayMimeType(ext));
+                request.Content = content;
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode) return null;
+
+                return $"https://{_projectId}.supabase.co/storage/v1/object/public/{_bucket}/{storagePath}";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Lỗi khi upload file lên Supabase");
+                return null;
+            }
         }
     }
 }
