@@ -25,22 +25,6 @@
     }
 </div>
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
-
 <!-- Bộ lọc tìm kiếm lịch -->
 <form method="get" class="uneti-filter-card">
     <div class="row g-2 align-items-end">
@@ -165,7 +149,7 @@
                                         }
                                     }
                                 }
-                                <a asp-controller="HoSoHocBong" asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary" title="Chi tiết hồ sơ">
+                                <a asp-controller="@(isCanBoOrAdmin ? "HoSoHocBong" : "HoSoCuaToi")" asp-action="Details" asp-route-id="@item.MaHoSoHocBong" class="btn btn-sm btn-outline-secondary" title="Chi tiết hồ sơ">
                                     Hồ sơ
                                 </a>
                             </td>

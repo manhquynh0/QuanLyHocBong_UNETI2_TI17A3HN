@@ -1,4 +1,4 @@
-﻿window.showLoading = function () {
+window.showLoading = function () {
     document.getElementById("loadingOverlay")?.classList.add("show");
 };
 
@@ -22,8 +22,8 @@ window.unetiConfirm = function (options) {
     }
 
     titleEl.textContent = title;
-    bodyEl.innerHTML = body;
-    okBtn.innerHTML = '<i class="bi bi-trash me-1"></i> ' + okText;
+    bodyEl.textContent = body;
+    okBtn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> ' + okText;
 
     var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
     var handler = function () {
@@ -45,4 +45,23 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-// Write your JavaScript code.
+    document.querySelectorAll(".js-confirm").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            var form = btn.closest("form");
+            window.unetiConfirm({
+                title: btn.dataset.confirmTitle || "Xác nhận thao tác?",
+                body: btn.dataset.confirmBody || "Bạn có chắc chắn muốn thực hiện hành động này?",
+                okText: btn.dataset.confirmOk || "Xác nhận",
+                onOk: function () {
+                    if (form) {
+                        window.showLoading();
+                        form.submit();
+                    } else if (btn.href) {
+                        window.location.href = btn.href;
+                    }
+                }
+            });
+        });
+    });
+});

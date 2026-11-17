@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Mail;
@@ -19,7 +20,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
         private readonly IBackgroundQueueService _queueService;
 
         public EmailService(
-            ILogger<EmailService> logger, 
+            ILogger<EmailService> logger,
             IConfiguration configuration,
             IHttpClientFactory httpClientFactory,
             IBackgroundQueueService queueService)
@@ -31,7 +32,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
         }
 
         /// <summary>
-        /// Đẩy công việc gửi Email vào Hàng đợi Redis (queue:email) để phản hồi tức thì (~1ms), không làm treo giao diện người dùng.
+        /// Đẩy công việc gửi Email vào Hàng đợi Redis để phản hồi ngay lập tức.
         /// </summary>
         public async Task<bool> SendEmailAsync(string toEmail, string subject, string htmlMessage)
         {
@@ -41,142 +42,144 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services
                 return false;
             }
 
-            var job = new EmailJob
+            await _queueService.EnqueueEmailAsync(new EmailJob
             {
                 ToEmail = toEmail.Trim(),
                 Subject = subject,
-                HtmlMessage = htmlMessage,
-                RetryCount = 0
-            };
-
-            await _queueService.EnqueueEmailAsync(job);
+                HtmlMessage = htmlMessage
+            });
             return true;
         }
 
         /// <summary>
-        /// Hàm gửi Email trực tiếp qua SMTP / Brevo API (được RedisQueueWorker gọi ở tiến trình chạy ngầm).
+        /// Gửi Email trực tiếp qua SMTP hoặc Brevo API (được RedisQueueWorker gọi ở nền).
         /// </summary>
         public async Task<bool> SendEmailDirectlyAsync(string toEmail, string subject, string htmlMessage)
         {
-            if (string.IsNullOrWhiteSpace(toEmail))
-            {
-                return false;
-            }
+            if (string.IsNullOrWhiteSpace(toEmail)) return false;
 
             try
             {
                 var senderName = _configuration["EmailSettings:SenderName"]
-                                 ?? _configuration["BREVO_SENDER_NAME"] 
-                                 ?? _configuration["Brevo:SenderName"] 
+                                 ?? _configuration["BREVO_SENDER_NAME"]
+                                 ?? _configuration["Brevo:SenderName"]
                                  ?? "Học bổng UNETI";
 
-                // Định dạng giao diện Email thương hiệu UNETI chuẩn đẹp
-                var styledHtml = $@"
-                <div style=""font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"">
-                    <div style=""background: linear-gradient(135deg, #0e1d35 0%, #1e3a8a 60%, #2563eb 100%); color: #ffffff; padding: 26px 30px; text-align: center;"">
-                        <h2 style=""margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;"">TRƯỜNG ĐẠI HỌC KINH TẾ - KỸ THUẬT CÔNG NGHIỆP</h2>
-                        <p style=""margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;"">Cổng thông tin & Quản lý Xét duyệt Học bổng UNETI</p>
-                    </div>
-                    <div style=""padding: 30px; color: #1e293b; line-height: 1.65; font-size: 14.5px;"">
-                        {htmlMessage}
-                    </div>
-                    <div style=""background: #f8fafc; padding: 18px 30px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;"">
-                        <p style=""margin: 0 0 4px 0; font-weight: 600;"">Hệ thống Thông tin Quản lý Học bổng Trực tuyến UNETI</p>
-                        <p style=""margin: 0;"">Cơ sở Hà Nội: 456 Minh Khai, Hai Bà Trưng | 218 Lĩnh Nam, Hoàng Mai, Hà Nội</p>
-                        <p style=""margin: 4px 0 0 0; font-style: italic; color: #94a3b8;"">Email này được gửi tự động từ hệ thống xét học bổng UNETI, vui lòng không phản hồi trực tiếp email này.</p>
-                    </div>
-                </div>";
+                var styledHtml = WrapEmailTemplate(htmlMessage);
 
-                // 1. Ưu tiên gửi qua Standard SMTP nếu cấu hình (Gmail, Outlook, Mail Server)
-                var smtpHost = _configuration["EmailSettings:SmtpHost"] ?? _configuration["SMTP_HOST"];
-                var smtpPortStr = _configuration["EmailSettings:SmtpPort"] ?? _configuration["SMTP_PORT"] ?? "587";
-                var smtpSenderEmail = _configuration["EmailSettings:SenderEmail"] ?? _configuration["SMTP_EMAIL"] ?? _configuration["BREVO_SENDER_EMAIL"] ?? "vumanhquynh2852005@gmail.com";
-                var smtpPassword = _configuration["EmailSettings:SenderPassword"] ?? _configuration["SMTP_PASSWORD"];
-                var enableSsl = !string.Equals(_configuration["EmailSettings:EnableSsl"], "false", StringComparison.OrdinalIgnoreCase);
-
-                if (!string.IsNullOrWhiteSpace(smtpHost) && !string.IsNullOrWhiteSpace(smtpPassword))
-                {
-                    int.TryParse(smtpPortStr, out int smtpPort);
-                    if (smtpPort == 0) smtpPort = 587;
-
-                    using var smtpClient = new SmtpClient(smtpHost, smtpPort)
-                    {
-                        EnableSsl = enableSsl,
-                        Credentials = new System.Net.NetworkCredential(smtpSenderEmail, smtpPassword),
-                        DeliveryMethod = SmtpDeliveryMethod.Network,
-                        Timeout = 10000
-                    };
-
-                    using var mailMsg = new MailMessage
-                    {
-                        From = new MailAddress(smtpSenderEmail, senderName),
-                        Subject = subject,
-                        Body = styledHtml,
-                        IsBodyHtml = true
-                    };
-                    mailMsg.To.Add(toEmail);
-
-                    await smtpClient.SendMailAsync(mailMsg);
-                    _logger.LogInformation("[Smtp Email] Đã gửi email thành công tới {ToEmail} qua máy chủ {Host}!", toEmail, smtpHost);
+                // 1. Ưu tiên gửi qua SMTP nếu có cấu hình mật khẩu
+                if (await TrySendViaSmtpAsync(toEmail, subject, styledHtml, senderName))
                     return true;
-                }
 
-                // 2. Gửi qua Brevo API REST v3 nếu có API Key
-                var apiKey = _configuration["BREVO_API_KEY"] 
-                             ?? _configuration["Brevo:ApiKey"] 
-                             ?? Environment.GetEnvironmentVariable("BREVO_API_KEY");
+                // 2. Dự phòng gửi qua Brevo REST API nếu có API Key
+                var brevoResult = await TrySendViaBrevoAsync(toEmail, subject, styledHtml, senderName);
+                if (brevoResult.HasValue)
+                    return brevoResult.Value;
 
-                var brevoSenderEmail = _configuration["BREVO_SENDER_EMAIL"] 
-                                  ?? _configuration["Brevo:SenderEmail"] 
-                                  ?? smtpSenderEmail;
-
-                if (!string.IsNullOrWhiteSpace(apiKey) && apiKey.StartsWith("xkeysib-"))
-                {
-                    var client = _httpClientFactory.CreateClient();
-                    client.DefaultRequestHeaders.Clear();
-                    client.DefaultRequestHeaders.Add("api-key", apiKey);
-                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-                    var payload = new
-                    {
-                        sender = new { name = senderName, email = brevoSenderEmail },
-                        to = new[] { new { email = toEmail } },
-                        subject = subject,
-                        htmlContent = styledHtml
-                    };
-
-                    var jsonString = JsonSerializer.Serialize(payload);
-                    var httpContent = new StringContent(jsonString, Encoding.UTF8, "application/json");
-
-                    var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", httpContent);
-                    var responseBody = await response.Content.ReadAsStringAsync();
-
-                    if (response.IsSuccessStatusCode)
-                    {
-                        _logger.LogInformation("[Brevo Email] Gửi email thành công tới {ToEmail}! Tiêu đề: '{Subject}'. Phản hồi: {Response}", 
-                            toEmail, subject, responseBody);
-                        return true;
-                    }
-                    else
-                    {
-                        _logger.LogWarning("[Brevo Email] Brevo trả về lỗi ({StatusCode}) khi gửi tới {ToEmail}: {Response}", 
-                            response.StatusCode, toEmail, responseBody);
-                        return false;
-                    }
-                }
-                else
-                {
-                    _logger.LogInformation("[EmailService] Chưa cấu hình SMTP Password hoặc Brevo API Key. Hệ thống đã mô phỏng gửi email thành công tới {ToEmail}: '{Subject}'", 
-                        toEmail, subject);
-                }
-
+                // 3. Chưa cấu hình kênh gửi -> mô phỏng thành công để không chặn luồng test/dev
+                _logger.LogInformation("[EmailService] Chưa cấu hình SMTP/Brevo. Mô phỏng gửi email tới {ToEmail}: '{Subject}'", toEmail, subject);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "[EmailService] Ngoại lệ khi gửi email tới {ToEmail}. Tiếp tục xử lý nghiệp vụ bình thường.", toEmail);
+                _logger.LogError(ex, "[EmailService] Lỗi khi gửi email tới {ToEmail}.", toEmail);
                 return false;
             }
         }
+
+        private async Task<bool> TrySendViaSmtpAsync(string toEmail, string subject, string styledHtml, string senderName)
+        {
+            var smtpHost = _configuration["EmailSettings:SmtpHost"] ?? _configuration["SMTP_HOST"];
+            var smtpPassword = _configuration["EmailSettings:SenderPassword"] ?? _configuration["SMTP_PASSWORD"];
+            if (string.IsNullOrWhiteSpace(smtpHost) || string.IsNullOrWhiteSpace(smtpPassword))
+                return false;
+
+            var smtpPortStr = _configuration["EmailSettings:SmtpPort"] ?? _configuration["SMTP_PORT"] ?? "587";
+            int.TryParse(smtpPortStr, out int smtpPort);
+            if (smtpPort == 0) smtpPort = 587;
+
+            var senderEmail = _configuration["EmailSettings:SenderEmail"]
+                              ?? _configuration["SMTP_EMAIL"]
+                              ?? _configuration["BREVO_SENDER_EMAIL"]
+                              ?? "vumanhquynh2852005@gmail.com";
+            var enableSsl = !string.Equals(_configuration["EmailSettings:EnableSsl"], "false", StringComparison.OrdinalIgnoreCase);
+
+            using var smtpClient = new SmtpClient(smtpHost, smtpPort)
+            {
+                EnableSsl = enableSsl,
+                Credentials = new NetworkCredential(senderEmail, smtpPassword),
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                Timeout = 10000
+            };
+
+            using var mailMsg = new MailMessage
+            {
+                From = new MailAddress(senderEmail, senderName),
+                Subject = subject,
+                Body = styledHtml,
+                IsBodyHtml = true
+            };
+            mailMsg.To.Add(toEmail);
+
+            await smtpClient.SendMailAsync(mailMsg);
+            _logger.LogInformation("[Smtp Email] Đã gửi thành công tới {ToEmail} qua {Host}.", toEmail, smtpHost);
+            return true;
+        }
+
+        private async Task<bool?> TrySendViaBrevoAsync(string toEmail, string subject, string styledHtml, string senderName)
+        {
+            var apiKey = _configuration["BREVO_API_KEY"]
+                         ?? _configuration["Brevo:ApiKey"]
+                         ?? Environment.GetEnvironmentVariable("BREVO_API_KEY");
+            if (string.IsNullOrWhiteSpace(apiKey) || !apiKey.StartsWith("xkeysib-"))
+                return null;
+
+            var senderEmail = _configuration["BREVO_SENDER_EMAIL"]
+                              ?? _configuration["Brevo:SenderEmail"]
+                              ?? _configuration["EmailSettings:SenderEmail"]
+                              ?? "vumanhquynh2852005@gmail.com";
+
+            var client = _httpClientFactory.CreateClient();
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Add("api-key", apiKey);
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            var payload = new
+            {
+                sender = new { name = senderName, email = senderEmail },
+                to = new[] { new { email = toEmail } },
+                subject,
+                htmlContent = styledHtml
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+            var response = await client.PostAsync("https://api.brevo.com/v3/smtp/email", content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("[Brevo Email] Đã gửi thành công tới {ToEmail}. Phản hồi: {Response}", toEmail, responseBody);
+                return true;
+            }
+
+            _logger.LogWarning("[Brevo Email] Gửi thất bại ({StatusCode}) tới {ToEmail}: {Response}", response.StatusCode, toEmail, responseBody);
+            return false;
+        }
+
+        private static string WrapEmailTemplate(string htmlMessage) => $@"
+            <div style=""font-family: 'Segoe UI', Arial, sans-serif; max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);"">
+                <div style=""background: linear-gradient(135deg, #0e1d35 0%, #1e3a8a 60%, #2563eb 100%); color: #ffffff; padding: 26px 30px; text-align: center;"">
+                    <h2 style=""margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 0.5px;"">TRƯỜNG ĐẠI HỌC KINH TẾ - KỸ THUẬT CÔNG NGHIỆP</h2>
+                    <p style=""margin: 6px 0 0 0; font-size: 14px; opacity: 0.9;"">Cổng thông tin & Quản lý Xét duyệt Học bổng UNETI</p>
+                </div>
+                <div style=""padding: 30px; color: #1e293b; line-height: 1.65; font-size: 14.5px;"">
+                    {htmlMessage}
+                </div>
+                <div style=""background: #f8fafc; padding: 18px 30px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;"">
+                    <p style=""margin: 0 0 4px 0; font-weight: 600;"">Hệ thống Thông tin Quản lý Học bổng Trực tuyến UNETI</p>
+                    <p style=""margin: 0;"">Cơ sở Hà Nội: 456 Minh Khai, Hai Bà Trưng | 218 Lĩnh Nam, Hoàng Mai, Hà Nội</p>
+                    <p style=""margin: 4px 0 0 0; font-style: italic; color: #94a3b8;"">Email này được gửi tự động từ hệ thống xét học bổng UNETI, vui lòng không phản hồi trực tiếp email này.</p>
+                </div>
+            </div>";
     }
 }

@@ -35,6 +35,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/theme-uneti.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/ui-uneti.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/QuanLyHocBong_UNETI2_TI17A3HN.styles.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -218,6 +219,8 @@
 <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;" id="notificationToastContainer">
     <partial name="_ToastNotification" />
 </div>
+
+<partial name="_CommonModals" />
 
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
