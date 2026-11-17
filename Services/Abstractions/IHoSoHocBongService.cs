@@ -34,5 +34,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface
         /// </summary>
         Task<int> DemSoDaCapAsync(int maHocBong);
         Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync();
+        Task<ThongTinGuiThongBaoDto?> LayThongTinGuiThongBaoAsync(int maHoSo);
     }
 }

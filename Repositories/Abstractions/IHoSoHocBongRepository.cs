@@ -13,6 +13,8 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Repositories.Abstractions
         Task<int> CountByHocBongAsync(int maHocBong);
         Task<int> CountApprovedByHocBongAsync(int maHocBong);
         Task<List<TaiLieuItem>> GetTaiLieuItemsAsync(int maHoSo);
+        Task<HoSoFilterViewModel> GetDanhSachAsync(
+            HoSoFilterViewModel filter);
     }
 }
 

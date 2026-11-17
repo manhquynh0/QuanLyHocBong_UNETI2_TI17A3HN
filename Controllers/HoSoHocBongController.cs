@@ -3,16 +3,16 @@
 // Nội dung thực hiện: Module 4 - Controller xử lý tiếp nhận hồ sơ,
 // xét duyệt sơ bộ, quản lý trạng thái và kiểm soát số suất.
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Attributes;
-using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 using QuanLyHocBong_UNETI2_TI17A3HN.Data;
+using QuanLyHocBong_UNETI2_TI17A3HN.Helpers;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services;
 using QuanLyHocBong_UNETI2_TI17A3HN.Services.Interface;
 using QuanLyHocBong_UNETI2_TI17A3HN.ViewModels;
+using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 
 namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 {
@@ -40,7 +40,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
         // GET: /HoSoHocBong
-        [RoleAuthorize("Admin", "Cán bộ học bổng")]
+        [RoleAuthorize(VaiTro.Admin, VaiTro.CanBoHocBong)]
         public async Task<IActionResult> Index(HoSoFilterViewModel filter)
         {
             var model = await _hoSoService.LayDanhSachAsync(filter);
@@ -55,7 +55,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 2. CHI TIẾT HỒ SƠ
         // GET: /HoSoHocBong/Details/5
-        [RoleAuthorize("Admin", "Cán bộ học bổng")]
+        [RoleAuthorize(VaiTro.CanBoHocBong, VaiTro.Admin)]
         public async Task<IActionResult> Details(int id)
         {
             var model = await _hoSoService.LayChiTietAsync(id);
@@ -71,7 +71,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
 
         // 3. FORM XÉT DUYỆT SƠ BỘ (GET)
         // GET: /HoSoHocBong/XetDuyetSoBo/5
-        [RoleAuthorize("Admin", "Cán bộ học bổng")]
+        [RoleAuthorize(VaiTro.CanBoHocBong, VaiTro.Admin)]
         public async Task<IActionResult> XetDuyetSoBo(int id)
         {
             var model = await _hoSoService.LayFormXetDuyetAsync(id);
@@ -89,7 +89,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // POST: /HoSoHocBong/XetDuyetSoBo
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize("Admin", "Cán bộ học bổng")]
+        [RoleAuthorize(VaiTro.CanBoHocBong, VaiTro.Admin)]
         public async Task<IActionResult> XetDuyetSoBo(XetDuyetSoBoViewModel model)
         {
             var hoSo = await _context.HoSoHocBong
@@ -119,7 +119,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             // Gửi thông báo Realtime (SignalR) cho sinh viên về kết quả xét duyệt sơ bộ
             if (hoSo?.SinhVien != null)
             {
-                bool isDat = model.KetQua == "Đạt xét duyệt sơ bộ" || model.KetQua == "Dat";
+                bool isDat = model.KetQua == Constants.TrangThaiHoSo.DatXetDuyetSoBo || model.KetQua == "Dat";
                 var ketQuaText = isDat ? "Đạt xét duyệt sơ bộ" : "Không đạt xét duyệt sơ bộ";
 
                 try
@@ -194,7 +194,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
         // 5. KIỂM TRA SỐ SUẤT ĐÃ CẤP (JSON - dùng cho AJAX)
         // GET: /HoSoHocBong/KiemTraSoSuat/5
         [HttpGet]
-        [RoleAuthorize("Admin", "Cán bộ học bổng")]
+        [RoleAuthorize(VaiTro.CanBoHocBong, VaiTro.Admin)]
         public async Task<IActionResult> KiemTraSoSuat(int id, int? maHocBong = null)
         {
             int targetId = maHocBong ?? id;
@@ -275,7 +275,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             ViewBag.HocBong = hocBong;
             ViewBag.SinhVien = sv;
 
-            if (hocBong.TrangThai != "Đang nhận hồ sơ" || hocBong.HanNopHoSo < DateTime.Today || hocBong.NgayBatDauNhanHoSo > DateTime.Today)
+            if (hocBong.TrangThai != Constants.TrangThaiHocBong.DangNhanHoSo || hocBong.HanNopHoSo < DateTime.Today || hocBong.NgayBatDauNhanHoSo > DateTime.Today)
             {
                 TempData["ErrorMessage"] = "Học bổng này chưa mở, tạm dừng, đã đóng hoặc hết hạn nhận hồ sơ.";
                 return View(new HoSoHocBong { MaHocBong = MaHocBong, ThuXinHocBong = ThuXinHocBong ?? "", GhiChu = GhiChu ?? "" });
@@ -290,9 +290,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
             bool daNop = await _context.HoSoHocBong.AnyAsync(h =>
                 h.MaSinhVien == sv.MaSinhVien &&
                 h.MaHocBong == MaHocBong &&
-                h.TrangThai != "Đã hủy" &&
-                h.TrangThai != "Không đạt xét duyệt sơ bộ" &&
-                h.TrangThai != "Không được cấp học bổng");
+                h.TrangThai != Constants.TrangThaiHoSo.DaHuy &&
+                h.TrangThai != Constants.TrangThaiHoSo.KhongDatXetDuyetSoBo &&
+                h.TrangThai != Constants.TrangThaiHoSo.KhongDuocCapHocBong);
             if (daNop)
             {
                 TempData["ErrorMessage"] = "Bạn đã nộp hồ sơ cho chương trình học bổng này rồi.";
@@ -319,7 +319,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 NgayNop = DateTime.Now,
                 ThuXinHocBong = (ThuXinHocBong ?? "").Trim(),
                 GhiChu = (GhiChu ?? "Đã nộp đầy đủ hồ sơ").Trim(),
-                TrangThai = "Chờ duyệt",
+                TrangThai = Constants.TrangThaiHoSo.ChoDuyet,
                 FileMinhChung = fileUrl
             };
 
@@ -347,9 +347,9 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Controllers
                 return NotFound();
             }
 
-            if (hoSo.TrangThai == "Chờ duyệt")
+            if (hoSo.TrangThai == Constants.TrangThaiHoSo.ChoDuyet)
             {
-                hoSo.TrangThai = "Đã hủy";
+                hoSo.TrangThai = Constants.TrangThaiHoSo.DaHuy;
                 hoSo.NgayXuLy = DateTime.Now;
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã hủy hồ sơ #{id} thành công.";

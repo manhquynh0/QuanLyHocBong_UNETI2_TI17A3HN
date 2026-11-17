@@ -2,11 +2,6 @@
 // Mã sinh viên: 23103100145
 // Nội dung thực hiện: Module 4 - Xử lý nghiệp vụ tiếp nhận hồ sơ,
 // xét duyệt sơ bộ, quản lý trạng thái và kiểm soát số suất (kết hợp Repository & UnitOfWork).
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using QuanLyHocBong_UNETI2_TI17A3HN.Constants;
 using QuanLyHocBong_UNETI2_TI17A3HN.Models;
@@ -28,77 +23,7 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         // 1. DANH SÁCH HỒ SƠ + TÌM KIẾM + LỌC + SẮP XẾP + PHÂN TRANG
         public async Task<HoSoFilterViewModel> LayDanhSachAsync(HoSoFilterViewModel filter)
         {
-            var query = _unitOfWork.HoSoHocBongs.QueryWithDetails(asNoTracking: true);
-
-            // Tìm kiếm theo tên SV hoặc tên học bổng
-            if (!string.IsNullOrWhiteSpace(filter.TuKhoa))
-            {
-                var tuKhoa = filter.TuKhoa.Trim();
-                query = query.Where(h =>
-                    h.SinhVien.HoTen.Contains(tuKhoa) ||
-                    h.HocBong.TenHocBong.Contains(tuKhoa));
-            }
-
-            // Lọc theo đơn vị tài trợ
-            if (filter.MaDonViTaiTro.HasValue)
-                query = query.Where(h => h.HocBong.MaDonViTaiTro == filter.MaDonViTaiTro.Value);
-
-            // Lọc theo trạng thái
-            if (!string.IsNullOrWhiteSpace(filter.TrangThai))
-                query = query.Where(h => h.TrangThai == filter.TrangThai);
-
-            // Lọc theo ngày nộp
-            if (filter.TuNgay.HasValue)
-                query = query.Where(h => h.NgayNop >= filter.TuNgay.Value);
-
-            if (filter.DenNgay.HasValue)
-            {
-                // Bao gồm cả ngày kết thúc (đến 23:59:59)
-                var denNgay = filter.DenNgay.Value.Date.AddDays(1).AddSeconds(-1);
-                query = query.Where(h => h.NgayNop <= denNgay);
-            }
-
-            // Sắp xếp
-            query = filter.SapXep switch
-            {
-                "ngay_nop_asc" => query.OrderBy(h => h.NgayNop),
-                "ngay_nop_desc" => query.OrderByDescending(h => h.NgayNop),
-                "ten_sv_asc" => query.OrderBy(h => h.SinhVien.HoTen),
-                "ten_sv_desc" => query.OrderByDescending(h => h.SinhVien.HoTen),
-                _ => query.OrderByDescending(h => h.NgayNop)
-            };
-
-            // Phân trang
-            int pageSize = filter.KichThuocTrang > 0 ? filter.KichThuocTrang : 10;
-            int page = filter.Trang > 0 ? filter.Trang : 1;
-            int total = await query.CountAsync();
-
-            filter.TongSoBanGhi = total;
-            filter.TongSoTrang = (int)Math.Ceiling((double)total / pageSize);
-            if (filter.TongSoTrang == 0) filter.TongSoTrang = 1;
-            filter.KichThuocTrang = pageSize;
-
-            var taiLieuQuery = _unitOfWork.TaiLieuHoSos.Query(asNoTracking: true);
-
-            filter.DanhSach = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(h => new HoSoItemViewModel
-                {
-                    MaHoSoHocBong = h.MaHoSoHocBong,
-                    TenSinhVien = h.SinhVien.HoTen,
-                    TenHocBong = h.HocBong.TenHocBong,
-                    TenDonViTaiTro = h.HocBong.DonViTaiTro.TenDonViTaiTro,
-                    NgayNop = h.NgayNop,
-                    TrangThai = h.TrangThai,
-                    DiemTrungBinh = h.SinhVien.DiemTrungBinhTichLuy,
-                    DiemYeuCau = h.HocBong.DiemTrungBinhToiThieu,
-                    SoTaiLieu = taiLieuQuery.Count(t => t.MaHoSoHocBong == h.MaHoSoHocBong),
-                    FileMinhChung = h.FileMinhChung
-                })
-                .ToListAsync();
-
-            return filter;
+            return await _unitOfWork.HoSoHocBongs.GetDanhSachAsync(filter);
         }
 
         // 2. CHI TIẾT HỒ SƠ
@@ -242,7 +167,6 @@ namespace QuanLyHocBong_UNETI2_TI17A3HN.Services.Implementations
         {
             return _unitOfWork.HoSoHocBongs.CountApprovedByHocBongAsync(maHocBong);
         }
-
         public Task<List<DonViTaiTro>> LayDanhSachDonViTaiTroAsync()
         {
             return _unitOfWork.DonViTaiTros.Query(asNoTracking: true)
